@@ -1,0 +1,68 @@
+The premise is that there's a text adventure engine, but also the ability to write scenarios via scripts and scenario files.
+Scenario folders are added to the Scenarios folder.
+A scenario folder MUST contain the following other folders: 'entities', 'meta', 'saves', 'scenes', and 'templates'
+It must also contain a file called 'settings.dat'
+Entity scripts are added to the 'entities' folder. They have '.entity' as their extension.
+Scene scripts are added to the 'scenes' folder. They have '.scene' as their extension.
+
+#include file_name
+Includes the contents of a specified file from the scenario's 'templates' folder. Basically a macro.
+
+#import file_name
+Includes the contents of a specified file from the game's 'packages' folder. Basically a macro.
+
+Can initialize variables just by assigning their value. Using curly braces can create arrays.
+Arrays can also work like maps, pairing values with arbitrary strings as keys.
+Can get the size of an array with size(arr).
+
+While loops exist but not for loops.
+
+Can use 'generic_output_substitution(chance, sentence)' in scripts to get a sentence that can use the thesuarus files to swap words &
+expressions as defined in the file. formal_substitution, medieval_substitution, and technical_substitution are options too.
+Very WIP.
+
+Can reference entities via entity(name), entity_here(name), first_entity_here(name), and any_entity_here(name)
+	The first one will refer to the entity no matter where it is via true name (only).
+perspective_entity() - returns the current entity the player controls
+any_entity_here(...) - gets any random entity with a true name OR alias that matches the input in the scene it's called from.
+first_entity_here(...) - gets the first entity loaded with a true name OR alias that matches the input in the scene it's called from
+first_entity(...) - gets the first entity loaded anywhere with a true name OR alias that matches the input
+entity_here(true_name) - gets the entity with the corresponding true name but only if it's in the scene the function is called from
+entity_by_alias(alias_or_name) - gets an entity using an alias OR true name only. When called from a scene, it's limited to the scene it's 
+	called from.
+
+'scene()' can get a reference to the current scene; when called from a scene, it returns that scene - but when called from an entity, it returns
+	the scene that entity currently occupies.
+scene(name) - reference a scene by name
+
+'concat(str1,str2)' can join two strings and output the response, tho the original strings are left untouched.
+to_uppercase(str) - outputs a string made uppercase
+to_lowercase(str) - outputs a string made lowercase
+substr(start_index, substring_length, full_string) - returns a substring of the final argument, starting at the index specified by the first
+argument, and as long as substring_length
+substr(length, full_string) - Gets the first 'length' characters from full_string
+
+SETTINGS.DAT
+
+allow_custom_character : no //Would disable custom character creation, forcing a player to choose from presets
+allow_character: ~main : Default Main Character //Would enable a specific entity to be a perspective entity. "Default Main Character" would be the option shown to the player, while "~main" is the perspective entity's true name.
+
+If an optional CharacterName is supplied in settings.dat, it will use that - otherwise it allows player to choose
+
+CUSTOM COMMANDS
+
+Can add commands to entities and scenes via the following:
+
+function command:some command with $input1 and $input(user, inp1, inp2)
+...
+end
+
+'user' is the entity using the command (typically the player, but all entities can be programmed with the ability to do things),
+while inp1 and inp2 would correspond to $input1 and $input2 respectively.
+
+Absent an explicit return value the engine will assume the command executed successfully. 
+'return NO MATCH' will make it assume that the command actually wasn't a match after all.
+'return REPEAT' or 'return LOOP' will make it simply repeat that command again.
+'return FAILURE' will make it assume there was a mistake or typo in the command, and report that information to the player ("That doesn't seem to be an option here.")
+returning 'END', 'DONE', 'FINISH', or 'SUCCESS' is equivalent to having no explicit return value.
+Any other return value will be shown to the entity executing the command after it returns.

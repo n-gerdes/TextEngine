@@ -1,0 +1,9 @@
+
+get_name(): Returns the name of a scene
+get_children(): Returns an array containing the true names of all the entities present in the scene
+entity_exists($name): Returns whether or not there exists an entity with the specified true name.
+entity_exists_here($name): Returns whether or not this scene contains an entity with the specified true name.
+get_global_value($variable_name): Returns the value of the specified global variable.
+get_meta_value($variable_name): Returns the value of the specified meta variable.
+set_value($variable_name, $value): Set the value of the specified variable
+get_value($variable_name): Return the value of the specified variable.
