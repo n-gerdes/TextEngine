@@ -18,6 +18,13 @@ void engine::clear_screen()
 {
 	for (int i = 0; i < 100; ++i)
 		std::cout << std::endl;
+#ifdef _WIN32
+	if (FULL_CLEAR)system("cls");
+#endif
+
+#if defined(__linux__) || defined(__unix__) || defined(__unix) || defined(__APPLE__) || defined(__MACH__)
+	if (FULL_CLEAR)system("clear");
+#endif
 }
 
 std::string engine::correct_tokenizer_bug(const std::string original) const

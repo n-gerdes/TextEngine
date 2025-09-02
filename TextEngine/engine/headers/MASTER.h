@@ -14,3 +14,5 @@ const static char dummy_star = 129;
 const static char dummy_dash = 130;
 const static char dummy_percent = 131;
 const static char dummy_space = 132;
+
+const static bool FULL_CLEAR = false;

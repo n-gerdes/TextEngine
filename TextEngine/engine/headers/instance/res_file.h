@@ -52,7 +52,7 @@ public:
 	std::string					call_function(game* game_instance, const std::string& function_name, std::initializer_list<std::string> arg_values, std::string& return_value);
 	virtual std::string			call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& arg_values);
 public:
-	bool						evaluate_condition(game* game_instance, const std::string& condition, std::string& err_msg, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values);
+	bool						evaluate_condition(game* game_instance, const std::string& condition, std::string& err_msg, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values);
 private:
 	void						execute_line(game* game_instance, line_num& line, std::string& err_msg, int& look_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values, bool& early_return, std::string& return_value, std::vector<uint32_t>& if_conditions);
 	//Executes the specified line of code & increments the line count, and sets the err_msg if necessary.

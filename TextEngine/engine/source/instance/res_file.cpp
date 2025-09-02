@@ -1724,6 +1724,8 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("delete_aliases", "wipe_aliases");
 	substitute_alias_function("erase_aliases", "wipe_aliases");
 	substitute_alias_function("reset_aliases", "wipe_aliases");
+	substitute_alias_function("rm_aliases", "wipe_aliases");
+	substitute_alias_function("remove_aliases", "wipe_aliases");
 
 	substitute_alias_function("take_damage", "damage");
 	substitute_alias_function("reduce_hp", "damage");
@@ -1783,6 +1785,10 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 		quoted_material.pop_front();
 	}
 	string_utils.strip(line);
+	if (line[line.size() - 1] == ';')
+	{
+		line.pop_back();
+	}
 }
 
 void res_file::check_line_match(const std::string& line, line_num line_num)
@@ -2006,7 +2012,7 @@ std::string res_file::call_innate_function(game* game_instance, const std::strin
 	return "";
 }
 
-bool res_file::evaluate_condition(game* game_instance, const std::string& condition, std::string& err_msg, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values)
+bool res_file::evaluate_condition(game* game_instance, const std::string& condition, std::string& err_msg, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values)
 {
 	string_utils string_utils;
 	std::string processed_condition = resolve_expression(condition, variable_names, variable_values, game_instance);
@@ -2022,7 +2028,7 @@ bool res_file::evaluate_condition(game* game_instance, const std::string& condit
 	}
 	else
 	{
-		if (   (string_utils.get_lowercase(processed_condition) == "true") || (string_utils.get_lowercase(processed_condition) == "yes")   )
+		if (   (string_utils.get_lowercase(processed_condition) == "true") || (string_utils.get_lowercase(processed_condition) == "yes") || (string_utils.get_lowercase(processed_condition) == "true"))
 			return true;
 		else
 			return false;
@@ -2441,7 +2447,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	std::string poststring;
 
 	
-	typedef std::string(*char_getter_handler)(game*, entity*, std::vector<std::string>&);
+	typedef std::string(*char_getter_handler)(game*, entity*, std::vector<std::string>&, const std::vector<std::string>&, const std::vector<std::string>&, res_file*);
 
 	auto register_entity_getter = [&](const std::string& char_script_func_name, char_getter_handler func, entity* this_entity)
 	{
@@ -2466,7 +2472,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
 					//std::cout << "EGASRGAE " << raw_value << std::endl;
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2494,7 +2500,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2522,7 +2528,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2550,7 +2556,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2577,7 +2583,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2609,7 +2615,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2638,7 +2644,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2667,7 +2673,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2696,7 +2702,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2724,7 +2730,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2769,7 +2775,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2812,7 +2818,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2854,7 +2860,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2897,7 +2903,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -2943,7 +2949,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -2982,7 +2988,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3021,7 +3027,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3061,7 +3067,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3101,7 +3107,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3143,7 +3149,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3185,7 +3191,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3228,7 +3234,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3274,7 +3280,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3313,7 +3319,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3352,7 +3358,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3392,7 +3398,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3420,7 +3426,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3451,7 +3457,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3481,7 +3487,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3511,7 +3517,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 			else
@@ -3542,7 +3548,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3574,7 +3580,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
 				{
@@ -3605,7 +3611,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3632,7 +3638,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -3677,7 +3683,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						}
 						else
 						{
-							raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+							raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 						}
 					}
 				}
@@ -3701,7 +3707,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						else if (!(args.size() == 1 && args[0] == ")"))
 						{
 							//std::cout << "AEGHSRGEAWFE " << raw_value << std::endl;
-							raw_value = prestring + func(game_instance, char_ptr, args) + poststring;
+							raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 						}
 						else
 						{
@@ -3718,7 +3724,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 	//THIS IS WHERE CODE GOES THAT HANDLES GETTING RETURN VALUES FROM ENTITY INNATE FUNCTIONS
 
-	char_getter_handler get_val_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_val_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -3730,7 +3736,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_global_val_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_global_val_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -3742,7 +3748,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_meta_val_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_meta_val_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -3756,7 +3762,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 
 	//TODO: Make it so user can toggle whether or not the display name retrieved is randomized.
-	char_getter_handler get_display_name_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_display_name_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0 && args.size() != 1)
 		{
@@ -3791,7 +3797,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler entity_exists_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler entity_exists_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -3812,7 +3818,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler entity_exists_here_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler entity_exists_here_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -3833,7 +3839,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_command_repeats_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_command_repeats_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -3847,7 +3853,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler knows_alias_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler knows_alias_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 2)
 		{
@@ -3875,7 +3881,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_true_name_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_true_name_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -3894,7 +3900,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_hp_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_hp_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -3906,7 +3912,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_max_hp_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_max_hp_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -3918,7 +3924,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_interrupted_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_interrupted_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -3935,7 +3941,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_interrupter_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_interrupter_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -3952,7 +3958,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_last_command_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_last_command_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -3964,7 +3970,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_attachment_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_attachment_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -3976,7 +3982,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	char_getter_handler get_attachments_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args) -> std::string
+	char_getter_handler get_attachments_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -4002,6 +4008,292 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
+	char_getter_handler entity_and_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() == 0)
+			{
+				return "INVALID ARGS FOR 'and'; EXPECTED >0, GOT " + args.size();
+			}
+			else
+			{
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					std::string v = self->resolve_expression(args[i], variable_names, variable_values, game_instance);
+					std::string err = "";
+					bool c = self->evaluate_condition(game_instance,v,err,variable_names,variable_values);
+					if (err != "")
+						c = false;
+
+					if (!c)
+						return "false";
+				}
+				return "true";
+			}
+		};
+
+	char_getter_handler entity_or_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() == 0)
+			{
+				return "INVALID ARGS FOR 'or'; EXPECTED >0, GOT " + args.size();
+			}
+			else
+			{
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					std::string v = self->resolve_expression(args[i], variable_names, variable_values, game_instance);
+					std::string err = "";
+					bool c = self->evaluate_condition(game_instance, v, err, variable_names, variable_values);
+					if (err != "")
+						c = false;
+
+					if (c)
+						return "true";
+				}
+				return "false";
+			}
+		};
+
+	char_getter_handler entity_not_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1)
+			{
+				return "INVALID ARGS FOR 'not'; EXPECTED 1, GOT " + args.size();
+			}
+			else
+			{
+				std::string v = self->resolve_expression(args[0], variable_names, variable_values, game_instance);
+				std::string err = "";
+				bool c = self->evaluate_condition(game_instance, v, err, variable_names, variable_values);
+
+				if (err != "")
+					return "false";
+
+				if (c)
+				{
+					return "false";
+				}
+				else
+				{
+					return "true";
+				}
+			}
+		};
+
+	char_getter_handler entity_xor_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() == 0)
+			{
+				return "INVALID ARGS FOR 'xor'; EXPECTED >0, GOT " + args.size();
+			}
+			else
+			{
+				int trues = 0;
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					std::string v = self->resolve_expression(args[i], variable_names, variable_values, game_instance);
+					std::string err = "";
+					bool c = self->evaluate_condition(game_instance, v, err, variable_names, variable_values);
+					if (err != "")
+						return "false";
+
+					if (c)
+						++trues;
+				}
+				if (trues == 1)
+					return "true";
+				else
+					return "false";
+			}
+		};
+
+	char_getter_handler entity_is_perspective_entity_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 0)
+			{
+				return "INVALID ARGS FOR 'is_perspective'; EXPECTED 0, GOT " + args.size();
+			}
+			else
+			{
+				if (game_instance->get_perspective_entity() == char_ptr)
+				{
+					return "true";
+				}
+				else
+				{
+					return "false";
+				}
+			}
+		};
+
+	char_getter_handler entity_prompt_int = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1 && args.size()!=2)
+			{
+				return "INVALID ARGS FOR 'prompt_int'; EXPECTED 1 OR 2 ARGS, GOT " + args.size();
+			}
+			else
+			{
+				std::string prompt;
+				std::string default_value = self->resolve_expression(args[0], variable_names, variable_values, game_instance);
+				std::string value;
+				if (args.size() == 2)
+				{
+					prompt = self->resolve_expression(args[1], variable_names, variable_values, game_instance);
+				}
+				::string_utils util;
+				if (game_instance->get_perspective_entity() == char_ptr)
+				{
+					value = "";
+					game_instance->get_engine()->print(prompt);
+					std::cout << " ";
+					value = std::to_string(game_instance->get_engine()->get_integer_input());
+					return value;
+				}
+				else
+				{
+					if (util.is_integer(default_value))
+					{
+						value = default_value;
+					}
+					else
+					{
+						value = "ERROR";
+					}
+					return value;
+				}
+			}
+		};
+
+	char_getter_handler entity_prompt_num = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1 && args.size() != 2)
+			{
+				return "INVALID ARGS FOR 'prompt_num'; EXPECTED 1 OR 2 ARGS, GOT " + args.size();
+			}
+			else
+			{
+				std::string prompt;
+				std::string default_value = self->resolve_expression(args[0], variable_names, variable_values, game_instance);
+				std::string value;
+				if (args.size() == 2)
+				{
+					prompt = self->resolve_expression(args[1], variable_names, variable_values, game_instance);
+				}
+				::string_utils util;
+				if (game_instance->get_perspective_entity() == char_ptr)
+				{
+					value = "";
+
+					while (!util.is_numeric(value))
+					{
+						game_instance->get_engine()->print(prompt);
+						std::cout << " ";
+						std::getline(std::cin, value);
+					}
+					return value;
+				}
+				else
+				{
+					if (util.is_numeric(default_value))
+					{
+						value = default_value;
+					}
+					else
+					{
+						value = "ERROR";
+					}
+					return value;
+				}
+			}
+		};
+
+	char_getter_handler entity_prompt_string = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1 && args.size() != 2)
+			{
+				return "INVALID ARGS FOR 'prompt_string'; EXPECTED 1 OR 2 ARGS, GOT " + args.size();
+			}
+			else
+			{
+				std::string prompt;
+				std::string default_value = self->resolve_expression(args[0], variable_names, variable_values, game_instance);
+				std::string value;
+				if (args.size() == 2)
+				{
+					prompt = self->resolve_expression(args[1], variable_names, variable_values, game_instance);
+				}
+				::string_utils util;
+				if (game_instance->get_perspective_entity() == char_ptr)
+				{
+					game_instance->get_engine()->print(prompt);
+					std::cout << " ";
+					value = game_instance->get_engine()->get_input();
+					return value;
+				}
+				else
+				{
+					value = default_value;
+					return value;
+				}
+			}
+		};
+
+	char_getter_handler entity_prompt_bool = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1 && args.size() != 2)
+			{
+				return "INVALID ARGS FOR 'prompt_bool'; EXPECTED 1 OR 2 ARGS, GOT " + args.size();
+			}
+			else
+			{
+				std::string prompt;
+				std::string default_value = self->resolve_expression(args[0], variable_names, variable_values, game_instance);
+				std::string value;
+				if (args.size() == 2)
+				{
+					prompt = self->resolve_expression(args[1], variable_names, variable_values, game_instance);
+				}
+				::string_utils util;
+				if (game_instance->get_perspective_entity() == char_ptr)
+				{
+					value = "";
+					std::string err;
+					while (err!="" || ((value != "true") && (value != "false")))
+					{
+						game_instance->get_engine()->print(prompt);
+						std::cout << " ";
+						value = game_instance->get_engine()->get_input();
+						
+						bool c = self->evaluate_condition(game_instance, value, err, variable_names, variable_values);
+						if (err != "")
+						{
+							value = "";
+						}
+						else
+						{
+							if (c)
+								value = "true";
+							else
+								value = "false";
+						}
+					}
+					return value;
+				}
+				else
+				{
+					std::string err;
+					bool c = self->evaluate_condition(game_instance, default_value, err, variable_names, variable_values);
+					if (err != "")
+						return "ERROR";
+					else if (c)
+						return "true";
+					else
+						return "false";
+				}
+			}
+		};
+
 
 	entity* this_entity = dynamic_cast<entity*>(const_cast<res_file*>(this));
 	register_entity_getter("get_value", get_val_handler, this_entity);
@@ -4024,6 +4316,16 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_entity_getter("get_last_command", get_last_command_handler, this_entity);
 	register_entity_getter("get_attachment", get_attachment_handler, this_entity);
 	register_entity_getter("get_attachments", get_attachments_handler, this_entity);
+	register_entity_getter("and", entity_and_handler, this_entity);
+	register_entity_getter("or", entity_or_handler, this_entity);
+	register_entity_getter("not", entity_not_handler, this_entity);
+	register_entity_getter("xor", entity_xor_handler, this_entity);
+	register_entity_getter("is_perspective_entity", entity_is_perspective_entity_handler, this_entity);
+
+	register_entity_getter("prompt_int", entity_prompt_int, this_entity);
+	register_entity_getter("prompt_num", entity_prompt_num, this_entity);
+	register_entity_getter("prompt_bool", entity_prompt_bool, this_entity);
+	register_entity_getter("prompt_string", entity_prompt_string, this_entity);
 
 	//////////////////////////////////////////////////////////////////////////////////
 	/* HERE IS WHERE CODE GOES THAT CAN HANDLE GETTING RETURN VALUES FROM USER-FUNCTION CALLS TO ENTITIES */
@@ -4253,7 +4555,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	//////////////////////////////////////////////////////////////////////////////////
 	/*     HERE IS WHERE CODE GOES THAT HANDLES CALLS TO USER FUNCTIONS IN SCENES    */
 	
-	typedef std::string(*scene_getter_handler)(game*, scene*, std::vector<std::string>&);
+	typedef std::string(*scene_getter_handler)(game*, scene*, std::vector<std::string>&, const std::vector<std::string>&, const std::vector<std::string>&, res_file*);
 
 	auto register_scene_getter = [&](const std::string& scene_script_func_name, scene_getter_handler func, scene* this_scene, entity* this_entity)
 	{
@@ -4261,7 +4563,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = true;
 		while (has_subbed)
 		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene($)." + scene_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false);
+			has_subbed = string_utils.complex_replacement(raw_value, "scene($)." + scene_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
 				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
@@ -4271,7 +4573,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					scene* scene_ptr = game_instance->get_scene(scene_name);
 					if (scene_ptr)
 					{
-						raw_value = prestring + func(game_instance, scene_ptr, args) + poststring;
+						raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 				}
 				else
@@ -4294,7 +4596,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				scene* scene_ptr = game_instance->get_scene(scene_name);
 				if (scene_ptr)
 				{
-					raw_value = prestring + func(game_instance, scene_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -4305,14 +4607,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = true;
 			while (has_subbed)
 			{
-				has_subbed = string_utils.complex_replacement(raw_value, "scene()." + scene_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false);
+				has_subbed = string_utils.complex_replacement(raw_value, "scene()." + scene_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 				if (has_subbed)
 				{
 					std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
 					if (!(args.size() == 1 && args[0] == ")"))
 					{
 						scene* scene_ptr = this_entity->get_scene();
-						raw_value = prestring + func(game_instance, scene_ptr, args) + poststring;
+						raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -4329,7 +4631,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::vector<std::string> args;
 					scene* scene_ptr = this_entity->get_scene();
-					raw_value = prestring + func(game_instance, scene_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -4342,14 +4644,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = true;
 			while (has_subbed)
 			{
-				has_subbed = string_utils.complex_replacement(raw_value, "scene()."+scene_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false);
+				has_subbed = string_utils.complex_replacement(raw_value, "scene()."+scene_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 				if (has_subbed)
 				{
 					std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
 					if (!(args.size() == 1 && args[0] == ")"))
 					{
 						scene* scene_ptr = this_scene;
-						raw_value = prestring + func(game_instance, scene_ptr, args) + poststring;
+						raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -4366,7 +4668,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::vector<std::string> args;
 					scene* scene_ptr = this_scene;
-					raw_value = prestring + func(game_instance, scene_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 
@@ -4374,14 +4676,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = true;
 			while (has_subbed)
 			{
-				has_subbed = string_utils.complex_replacement(raw_value, scene_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false);
+				has_subbed = string_utils.complex_replacement(raw_value, scene_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 				if (has_subbed)
 				{
 					std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
 					if (!(args.size() == 1 && args[0] == ")"))
 					{
 						scene* scene_ptr = this_scene;
-						raw_value = prestring + func(game_instance, scene_ptr, args) + poststring;
+						raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -4398,7 +4700,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::vector<std::string> args;
 					scene* scene_ptr = this_scene;
-					raw_value = prestring + func(game_instance, scene_ptr, args) + poststring;
+					raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -4406,7 +4708,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	};
 	scene* this_scene = dynamic_cast<scene*>(const_cast<res_file*>(this));
 
-	scene_getter_handler scene_get_name_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args) -> std::string
+	scene_getter_handler scene_get_name_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -4425,7 +4727,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	scene_getter_handler scene_get_children_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args) -> std::string
+	scene_getter_handler scene_get_children_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
 		{
@@ -4455,7 +4757,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	scene_getter_handler scene_entity_exists_here_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args) -> std::string
+	scene_getter_handler scene_entity_exists_here_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -4476,7 +4778,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	scene_getter_handler scene_entity_exists_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args) -> std::string
+	scene_getter_handler scene_entity_exists_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -4497,7 +4799,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	scene_getter_handler scene_get_global_val_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args) -> std::string
+	scene_getter_handler scene_get_global_val_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -4509,7 +4811,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	scene_getter_handler scene_get_meta_val_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args) -> std::string
+	scene_getter_handler scene_get_meta_val_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -4521,7 +4823,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	scene_getter_handler scene_get_value_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args) -> std::string
+	scene_getter_handler scene_get_value_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -4533,6 +4835,110 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
+	scene_getter_handler scene_and_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() == 0)
+			{
+				return "INVALID ARGS FOR 'and'; EXPECTED >0, GOT " + args.size();
+			}
+			else
+			{
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					std::string v = self->resolve_expression(args[i], variable_names, variable_values, game_instance);
+					std::string err = "";
+					bool c = self->evaluate_condition(game_instance, v, err, variable_names, variable_values);
+					if (err != "")
+					{
+						c = false;
+					}
+
+					if (!c)
+					{
+						return "false";
+					}
+				}
+
+				return "true";
+			}
+		};
+
+	scene_getter_handler scene_or_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() == 0)
+			{
+				return "INVALID ARGS FOR 'and'; EXPECTED >0, GOT " + args.size();
+			}
+			else
+			{
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					std::string v = self->resolve_expression(args[i], variable_names, variable_values, game_instance);
+					std::string err = "";
+					bool c = self->evaluate_condition(game_instance, v, err, variable_names, variable_values);
+					if (err != "")
+						c = false;
+
+					if (c)
+						return "true";
+				}
+				return "false";
+			}
+		};
+
+	scene_getter_handler scene_not_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1)
+			{
+				return "INVALID ARGS FOR 'not'; EXPECTED 1, GOT " + args.size();
+			}
+			else
+			{
+				std::string v = self->resolve_expression(args[0], variable_names, variable_values, game_instance);
+				std::string err = "";
+				bool c = self->evaluate_condition(game_instance, v, err, variable_names, variable_values);
+
+				if (err != "")
+					return "false";
+
+				if (c)
+				{
+					return "false";
+				}
+				else
+				{
+					return "true";
+				}
+			}
+		};
+
+	scene_getter_handler scene_xor_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() == 0)
+			{
+				return "INVALID ARGS FOR 'and'; EXPECTED >0, GOT " + args.size();
+			}
+			else
+			{
+				int trues = 0;
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					std::string v = self->resolve_expression(args[i], variable_names, variable_values, game_instance);
+					std::string err = "";
+					bool c = self->evaluate_condition(game_instance, v, err, variable_names, variable_values);
+					if (err != "")
+						return "false";
+
+					if (c)
+						++trues;
+				}
+				if (trues == 1)
+					return "true";
+				else
+					return "false";
+			}
+		};
+
 
 	register_scene_getter("get_name", scene_get_name_handler, this_scene, this_entity);
 	register_scene_getter("get_children", scene_get_children_handler, this_scene, this_entity);
@@ -4541,7 +4947,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_scene_getter("get_global_value", scene_entity_exists_handler, this_scene, this_entity);
 	register_scene_getter("get_meta_value", scene_entity_exists_handler, this_scene, this_entity);
 	register_scene_getter("get_value", scene_get_value_handler, this_scene, this_entity);
-
+	register_scene_getter("and", scene_and_handler, this_scene, this_entity);
+	register_scene_getter("or", scene_or_handler, this_scene, this_entity);
+	register_scene_getter("not", scene_not_handler, this_scene, this_entity);
+	register_scene_getter("xor", scene_xor_handler, this_scene, this_entity);
 	{
 		has_subbed = true;
 		while (has_subbed)

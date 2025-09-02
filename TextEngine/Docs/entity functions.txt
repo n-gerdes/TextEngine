@@ -1,13 +1,13 @@
 tell($message): Will tell an entity whatever is in the argument. Because NPCs don't have displays, this
-only writes to the screen when used on the perspective entity.
+	only writes to the screen when used on the perspective entity.
 
 set_value($variable_name, $variable_value): Will set whatever the specified variable is to the specified
-value.
+	value.
 
 get_value($variable_name): Can retrieve a previously saved value. 0 if no value currently exists.
 
 transfer($scene_name): Transfer the entity to the specified scene. Any attached entities are moved with
-it.
+	it.
 
 add_alias($alias): Add the specified alias to the entity
 add_title($alias): Add the specified title to the entity - which is very similar to an alias but may add "the" when displaying output names.
@@ -92,11 +92,23 @@ get_global_value($name): Return the value of the specified global variable; thes
 get_meta_value($name): Return the value of the specified meta variable; these are shared between all saves in the scenario.
 get_value($name): Return the specified variable value from this entity.
 
+prompt_int(default_value, [prompt text]) - prompts the entity to give a whole number. A perspective entity gets this from the player, but otherwise it returns the default value.
+
 knows_alias($alias, $other_entity): Returns whether or not this entity (the one the function is called
 	from) knows the specified alias for the other entity given.
 
 	
 wipe_aliases(): Delete all of the caller's aliases and titles.
+
+is_perspective_entity(): Check whether or not this is the perspective entity
+
+prompt_int(default_value, [prompt]): Prompt an entity for an integer. A default value must be supplied, and is returned when the entity is not the perspective entity.
+									 If this is called on the perspective entity, it prompts the player for input until they enter a valid integer.
+									 Returns "ERROR" if it couldn't fetch a legal integer.
+
+prompt_num(default_value, [prompt]): Prompt an entity for a number.
+prompt_bool(default_value, [prompt]): Prompt an entity for a true/false value.
+prompt_string(default_value, [prompt]): Prompt an entity for any string.
 
 When referring to an entity in scripts, its true name should generally be used to avoid ambiguity if multiple entities share an alias.
 When adding aliases, remember to consider that these aliases can be used both for players to refer to an

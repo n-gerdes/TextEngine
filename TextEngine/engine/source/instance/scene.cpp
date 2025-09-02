@@ -42,6 +42,8 @@ void transfer_func(game* game_instance, scene* s, std::vector<std::string>& args
 
 void say_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
 {
+	if (game_instance->get_perspective_entity() == nullptr)
+		return;
 	if (game_instance->get_perspective_entity()->get_scene() == s)
 	{
 		game_instance->get_perspective_entity()->println(game_instance, game_instance->get_engine()->correct_tokenizer_bug(args[0]));

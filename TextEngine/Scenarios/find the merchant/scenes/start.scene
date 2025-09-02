@@ -2,14 +2,111 @@ Notes can be freely written outside of functions and the first line & other sett
 However, within blocks of code, comments must be denoted by writing // at the beginning of the line.
 
 function initialize()
-	starting_location = random(1,5)
-	if(starting_location == 1)
+
+	player_start = random(1,5)
+	merchant_start = random(1,5)
+	merchant_finish = random(1,5)
+	while(player_start == merchant_finish)
+		merchant_finish = random(1,5)
+	end
+	
+	//1 = town
+	//2 = farm
+	//3 = castle
+	//4 = forest
+	//5 = docks
+	if (merchant_start == 1)
+		if(merchant_finish == 1)
+			entity(~merchant).transfer(town)
+		else if (merchant_finish == 2)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(farm)
+		else if (merchant_finish == 3)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(castle)
+		else if (merchant_finish == 4)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(forest)
+		else
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(docks)
+		end
+	else if (merchant_start==2) then
+		if(merchant_finish == 1)
+			entity(~merchant).transfer(farm)
+			entity(~merchant).transfer(town)
+		else if (merchant_finish == 2)
+			entity(~merchant).transfer(farm)
+		else if (merchant_finish == 3)
+			entity(~merchant).transfer(farm)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(castle)
+		else if (merchant_finish == 4)
+			entity(~merchant).transfer(farm)
+			entity(~merchant).transfer(forest)
+		else
+			entity(~merchant).transfer(farm)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(docks)
+		end
+	else if (merchant_start==3) then
+		if(merchant_finish == 1)
+			entity(~merchant).transfer(castle)
+			entity(~merchant).transfer(town)
+		else if (merchant_finish == 2)
+			entity(~merchant).transfer(castle)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(farm)
+		else if (merchant_finish == 3)
+			entity(~merchant).transfer(castle)
+		else if (merchant_finish == 4)
+			entity(~merchant).transfer(castle)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(forest)
+		else
+			entity(~merchant).transfer(castle)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(docks)
+		end
+	else if (merchant_start == 4) then
+		entity(~merchant).transfer(forest)
+		if(merchant_finish == 1)
+			entity(~merchant).transfer(town)
+		else if (merchant_finish == 2)
+			entity(~merchant).transfer(farm)
+		else if (merchant_finish == 3)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(castle)
+		else if (merchant_finish == 4)
+			//do nothing
+		else
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(docks)
+		end
+	else
+		entity(~merchant).transfer(docks)
+		if(merchant_finish == 1)
+			entity(~merchant).transfer(town)
+		else if (merchant_finish == 2)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(farm)
+		else if (merchant_finish == 3)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(castle)
+		else if (merchant_finish == 4)
+			entity(~merchant).transfer(town)
+			entity(~merchant).transfer(forest)
+		end
+	end
+	
+	player_start = 1
+	if (player_start == 1)
 		entity(~player).transfer(town)
-	else if (starting_location == 2)
+	else if (player_start == 2)
 		entity(~player).transfer(farm)
-	else if (starting_location == 3)
+	else if (player_start == 3)
 		entity(~player).transfer(castle)
-	else if (starting_location == 4)
+	else if (player_start == 4)
 		entity(~player).transfer(forest)
 	else
 		entity(~player).transfer(docks)

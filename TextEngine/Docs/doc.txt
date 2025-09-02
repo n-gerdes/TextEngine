@@ -59,6 +59,17 @@ substr(length, full_string) - Gets the first 'length' characters from full_strin
 
 random(min,max) - returns a random number in the interval [min,max]
 
+not(...) - inverts the argument
+and(...) - returns "true" if all of its arguments are true
+or(...) - returns "true" if any of its arguments are true
+xor(...) - returns "true" if exactly one of its arguments are true
+
+
+Scripting supports "if" statements, lines ending with optional "then". Conditions must be inside parenthises.
+Semicolons at the end of lines are optional.
+
+While-loops are also supported, with an optional "do" (while (...) do)
+
 SETTINGS.DAT
 
 allow_custom_character : no //Would disable custom character creation, forcing a player to choose from presets
