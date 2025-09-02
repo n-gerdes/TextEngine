@@ -6,6 +6,8 @@
 #include "engine/headers/MASTER.h"
 #include <deque>
 
+//This class is for reading/loading/executing resource/script files. It forms the basis for both entities and scenes
+
 inline void increment_execution_layer(int& execution_layer)
 {
 	++execution_layer;

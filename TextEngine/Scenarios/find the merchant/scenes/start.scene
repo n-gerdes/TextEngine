@@ -2,12 +2,22 @@ Notes can be freely written outside of functions and the first line & other sett
 However, within blocks of code, comments must be denoted by writing // at the beginning of the line.
 
 function initialize()
-	transfer(~timer)
+	starting_location = random(1,5)
+	if(starting_location == 1)
+		entity(~player).transfer(town)
+	else if (starting_location == 2)
+		entity(~player).transfer(farm)
+	else if (starting_location == 3)
+		entity(~player).transfer(castle)
+	else if (starting_location == 4)
+		entity(~player).transfer(forest)
+	else
+		entity(~player).transfer(docks)
+	end
 end
 
 function describe()
-	say("You find yourself inside a cave")
-	say("It's cold and dark.")
+	say("You find yourself somewhere new...")
 end
 
 function on_enter_scene(char)

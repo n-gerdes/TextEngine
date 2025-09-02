@@ -6,8 +6,7 @@ function initialize()
 end
 
 function describe()
-	say("You find yourself inside a cave")
-	say("It's cold and dark.")
+	say("You find yourself at the farm")
 end
 
 function on_enter_scene(char)
@@ -16,6 +15,29 @@ end
 
 function before_turn(c)
 	
+end
+
+function go_to_forest(caller)
+	entity(caller).transfer(forest)
+end
+
+function go_to_town(caller)
+	entity(caller).transfer(town)
+end
+
+
+//					COMMANDS
+
+function command:go to forest(caller)
+	go_to_forest(caller)
+end
+
+function command:go to woods(caller)
+	go_to_forest(caller)
+end
+
+function command:go to town(caller)
+	go_to_town(caller)
 end
 
 //Functions with this name scheme are how custom commands are registered for scenes.

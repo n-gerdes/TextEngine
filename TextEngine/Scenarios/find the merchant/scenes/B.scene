@@ -1,0 +1,27 @@
+
+function initialize()
+
+end
+
+function describe()
+	say("You find yourself at the mouth of the cave")
+	say("It's bright and sunny.")
+end
+
+function on_enter_scene(c)
+	
+end
+
+function before_turn(c)
+	
+end
+
+
+//Functions with this name scheme are how custom commands are registered for scenes.
+function command:go south(char)
+	entity(char).transfer(start)
+end
+
+function command:eat $stuff(char, thing_eaten)
+	entity(char).tell("Ate " thing_eaten)
+end

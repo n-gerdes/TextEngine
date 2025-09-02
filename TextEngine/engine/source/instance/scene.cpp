@@ -388,8 +388,11 @@ bool scene::resolve_input(game* game_instance, entity* user, const std::string& 
 void scene::queue_transfer(entity* ent)
 {
 	queuetex.lock();
-	if(ent->get_scene_name() == "" || ent->get_scene_name() == "NULL") //It can only transfer entities that aren't currently in a scene
+	if ((ent->get_scene_name() == "" || ent->get_scene_name() == "NULL") && !ent->in_transfer_queue()) //It can only transfer entities that aren't currently in a scene
+	{
 		transfer_queue.push_back(ent);
+		ent->set_in_transfer_queue(true);
+	}
 	queuetex.unlock();
 }
 

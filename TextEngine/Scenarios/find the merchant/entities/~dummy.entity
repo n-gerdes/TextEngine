@@ -1,0 +1,46 @@
+#import base_item
+
+function initialize()
+	add_title("grandfather clock")
+	add_title("clock")
+	add_title("timepiece")
+	add_title("time piece")
+	add_title("big clock")
+end
+
+function clock_time()
+	total_seconds = get_value("time") * 5
+	seconds = (total_seconds % 60)
+	total_minutes = int(total_seconds / 60)
+	minutes = total_minutes % 60
+	total_hours = int(total_minutes / 60)
+	hours = total_hours % 12
+	return hours ":" minutes ":" seconds
+end
+
+function before_turn()
+	set_value("time", get_value("time") + 1)
+	say("A few seconds pass, and the grandfather clock now reads " clock_time())
+end
+
+function on_entity_approach(ent)
+	//describe()
+end
+
+function describe()
+	say("You see a grandfather clock, which currently reads " clock_time())
+end
+
+function command:reset $name(ent, addr)
+	if( ! entity(ent).knows_alias( addr, get_true_name() ) )
+		return NO MATCH
+	end
+	set_value("time", 0)
+	entity(ent).tell("You turned the hand back to 0")
+end
+
+function command:clone $name(ent, name)
+	clone(name)
+	//println: name
+	scene().transfer(name)
+end

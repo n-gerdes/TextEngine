@@ -1,5 +1,5 @@
 tell($message): Will tell an entity whatever is in the argument. Because NPCs don't have displays, this
-only writes to the screen for the perspective entity.
+only writes to the screen when used on the perspective entity.
 
 set_value($variable_name, $variable_value): Will set whatever the specified variable is to the specified
 value.
@@ -13,93 +13,94 @@ add_alias($alias): Add the specified alias to the entity
 add_title($alias): Add the specified title to the entity - which is very similar to an alias but may add "the" when displaying output names.
 
 learn_alias($other_entity, $alias_category, $alias): Allows this entity to refer to another specified
-entity by the alias given, which is also assigned an alias category. Alias categories are used to get
-display names related to that category (i.e., if you want to get a character's formal title, you can
-assign its formal names to an entity that other entities can see as formal names)
+	entity by the alias given, which is also assigned an alias category. Alias categories are used to get
+	display names related to that category (i.e., if you want to get a character's formal title, you can
+	assign its formal names to an entity that other entities can see as formal names)
 
 learn_title($other_title, $alias_category, $alias): The same as learn_alias, but for titles.
 
-say($message): An entity will cause the specified text to appear if it's in the same room as the
-perspective entity.
-
 damage($amount, [$source]): Causes an entity to take damage. If a source is given, then that name will
-be passed to the on_damage_taken function, where it can be used to handle the appropriate behavior. For
-example, attacking an NPC can make it turn hostile this way. If an entity is performing an action that
-requires multiple rounds to complete, taking damage interrupts it.
+	be passed to the on_damage_taken function, where it can be used to handle the appropriate behavior. For
+	example, attacking an NPC can make it turn hostile this way. If an entity is performing an action that
+	requires multiple rounds to complete, taking damage interrupts it.
 
 attach($other_entity): Attaches the specified entity to the caller. When an entity moves to a different
-scene, any attached entities come along for the ride. Entities can only be directly to attached to one
-other entity at a time.
+	scene, any attached entities come along for the ride. Entities can only be directly to attached to one
+	other entity at a time.
 
 attach_to($other_entity): Same as 'attach' but in the other direction; when the specified entity changes
-to a different scene, the caller of attach_to will come with. Entities can only be directly to attached to one
-other entity at a time.
+	to a different scene, the caller of attach_to will come with. Entities can only be directly to attached to one
+	other entity at a time.
 
 unattach([$entity]): Can be called with or without an argument. If an argument is provided, it will
-unattach the specified entity from the caller. If no argument is given, it unattaches the caller from
-any entity that it may be attached to. Entities can only be directly to attached to one
-other entity at a time.
+	unattach the specified entity from the caller. If no argument is given, it unattaches the caller from
+	any entity that it may be attached to. Entities can only be directly to attached to one
+	other entity at a time.
 
 clone($clone_name): Creates a clone of the current entity that shares the same script, hp, max hp, 
-and variables as the cloned entity. The name of the new entity is specified via the argument.
+	and variables as the cloned entity. The name of the new entity is specified via the argument.
+
+say($message): An entity will cause the specified text to appear if it's in the same room as the
+	perspective entity.
 
 set_global_value($variable_name, $variable_value): Set the value of the specified global variable to the
-given value. Global variables are visible everywhere to every entity and scene in the current save file,
-allowing them to share data when necessary.
-
-wipe_aliases(): Delete all of the caller's aliases and titles.
+	given value. Global variables are visible everywhere to every entity and scene in the current save file,
+	allowing them to share data when necessary.
 
 set_meta_value($variable_name, $variable_value): Set the value of the specified meta variable to the
-given value. Meta variables are visible everywhere to every entity and scene in the entire scenario, 
-including other save files. These can be used to create a "New Game+" option.
+	given value. Meta variables are visible everywhere to every entity and scene in the entire scenario, 
+	including other save files. These can be used to create a "New Game+" option.
 
 recover($amount, [$source]): Recover a specified number of hit points. The source can be given as well,
-which is passed as the second argument to on_recover.
+	which is passed as the second argument to on_recover.
 
 set_hp($amount): Set an entity's HP to the specified amount. You cannot specify a source for the change.
 
 get_hp(): Return's the entity's current HP
 
 set_max_hp($amount): Set the entity's Max HP to the specified amount. Any less than 1 causes an entity
-to become immune to damage.
+	to become immune to damage.
 
 get_max_hp(): Return the entity's current Max HP.
 
 get_last_command(): Return the command this entity last issued.
 get_command_repeats(): Return the number of times in a row the same command has been consecutively
-executed. Worth noting that manually repeating the same command doesn't cause this value to increment -
-only repeats caused by automatic looping.
+	executed. Worth noting that manually repeating the same command doesn't cause this value to increment -
+	only repeats caused by automatic looping.
 
 get_attachment(): Return the true name of the entity (if any) that the caller is linked to.
 get_attachcments(): Return an array of the entities attached to this entity
 
 interrupter(): When an entity takes damage, any ongoing actions are interrupted. If this happens, this
-function will return the true name of the entity or scene that caused the interruption (the specified
-source of the damage)
+	function will return the true name of the entity or scene that caused the interruption (the specified
+	source of the damage)
 
 interrupted(): Will tell you whether or not an entity was interrupted in an action by taking damage.
 
-entity_exists($entity): Checks whether or not the specified entity exists. Can check by aliases,
-including any only known to the entity calling this function.
+entity_exists($entity): Checks whether or not the specified entity exists anywhere in the scenario. Can check by aliases,
+	including any only known to the entity calling this function.
 
 entity_exists_here($entity): Similar to entity_exists, but only checks the scene the caller resides in.
 
 get_name(): Return's the entity's true name.
 
 get_display_name([$seeker]): Return's a random display name of the entity this is called on. If no
-seeker is specified it limits itself to public aliases, but specifying an entity for the seeker allows it
-to use any of the aliases the seeker knows for it. Titles are permitted.
+	seeker is specified it limits itself to public aliases, but specifying an entity for the seeker allows it
+	to use any of the aliases the seeker knows for it. Titles are permitted.
 
 get_global_value($name): Return the value of the specified global variable; these are shared across the whole save file.
 get_meta_value($name): Return the value of the specified meta variable; these are shared between all saves in the scenario.
 get_value($name): Return the specified variable value from this entity.
 
 knows_alias($alias, $other_entity): Returns whether or not this entity (the one the function is called
-from) knows the specified alias for the other entity given.
+	from) knows the specified alias for the other entity given.
 
-When referring to an entity in scripts, its true name should generally be used.
+	
+wipe_aliases(): Delete all of the caller's aliases and titles.
+
+When referring to an entity in scripts, its true name should generally be used to avoid ambiguity if multiple entities share an alias.
 When adding aliases, remember to consider that these aliases can be used both for players to refer to an
-entity, as well as chosen to act as display names. However, any name containing a '~' character will not
+entity, as well as chosen to act as display names. However, any name containing a '~' will not
 be chosen as a display name; moreover, the '~' character will always be deleted from any input the
 player gives, so they can't be entered by the player either. This means that any '~' symbols in an
 entity's name or alias essentially makes that name or alias 'secret' - which can be a way to add

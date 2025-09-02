@@ -417,6 +417,16 @@ void entity::attach_to(entity* entity_to_attach_to)
 	entity_to_attach_to->attach(this);
 }
 
+bool entity::in_transfer_queue()
+{
+	return is_in_transfer_queue;
+}
+
+void entity::set_in_transfer_queue(bool val)
+{
+	is_in_transfer_queue = val;
+}
+
 void entity::attach(entity* follower)
 {
 	attached_entity_names.push_back(follower->get_name());
@@ -951,7 +961,7 @@ scene* entity::set_to_scene(const std::string& scene_name)
 				call_function(get_game_instance(), "on_entity_approach", { sibling->get_name() }, dummy_return_value);
 			}
 		}
-
+		set_in_transfer_queue(false);
 		return new_scene;
 	}
 	else
@@ -999,14 +1009,14 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 	{
 		interrupted = false;
 		name_of_interrupter = "NULL";
-		if (game_instance->get_perspective_entity() == this)
+		if (game_instance->get_perspective_entity() == this) //If this entity is the perspective entity (player), then it gets its command from user input.
 		{
 			engine->println("");
 			engine->print("   > ");
 			input = engine->extra_text_processing(engine->get_input());
 			engine->println("");
 		}
-		else
+		else //If this *isn't* the player, then it autonomously executes its own commands. The command is controlled via the "get_ai_command" function. This isn't the only way to control automatic entity behavior, but it does allow for more dynamic and "open-world" interactions between them.
 		{
 			std::vector<std::string> empty_args;
 			waiting_for_pc_mutex.lock();

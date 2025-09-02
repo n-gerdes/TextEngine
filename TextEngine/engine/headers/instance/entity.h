@@ -23,6 +23,7 @@ private:
 	bool interrupted = false;
 	bool waiting_for_pc = false;
 	bool has_never_entered_scene = true;
+	bool is_in_transfer_queue = false;
 	std::string name_of_interrupter = "NULL";
 	std::string attached_to = "NULL";
 	int32_t hp = 10;
@@ -36,6 +37,8 @@ private:
 	mutable std::mutex hp_mutex;
 	mutable std::mutex max_hp_mutex;
 public:
+	bool							in_transfer_queue();
+	void							set_in_transfer_queue(bool val);
 	void							attach(entity* follower);
 	void							attach_to(entity* entity_to_attach_to);
 	virtual std::string				call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args) override;

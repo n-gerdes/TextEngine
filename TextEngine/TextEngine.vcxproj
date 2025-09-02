@@ -156,6 +156,11 @@
     <ClCompile Include="engine\source\savable.cpp" />
     <ClCompile Include="engine\source\util\string_utils.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Docs\doc.txt" />
+    <Text Include="Docs\entity functions.txt" />
+    <Text Include="Docs\scene functions.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

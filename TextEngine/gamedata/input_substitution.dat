@@ -52,6 +52,8 @@ what:wht
 2:two
 1:one
 0:zero
+go:walk
+go:run
 remove_raw),
 remove_raw).
 remove_raw)!

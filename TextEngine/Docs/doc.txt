@@ -5,6 +5,20 @@ It must also contain a file called 'settings.dat'
 Entity scripts are added to the 'entities' folder. They have '.entity' as their extension.
 Scene scripts are added to the 'scenes' folder. They have '.scene' as their extension.
 
+Scenes can contain "entities", but can also be scripted with their own unique behavior.
+Entities are interactable objects or characters that can exist within scenes, while scenes are basically areas or events.
+Entities are also all capable of executing commands of their own - and even interacting with other entities in the same scene.
+One entity at a time can be designated as the "perspective entity" - essentially the player character.
+The perspective entity only executes commands issued by the player, but non-perspective entities can be hardcoded with certain behavior, or even 
+interact dynamically with other entities by typing in their own commands controlled via script.
+Some entities can be attached to each other, which means that if one entity changes scene the others come along for the ride. Can be used to make parties of characters and inventories and such.
+
+The perspective entity will always start in the "start.scene" scene, but if desired that scene could transfer the player to a different scene.
+
+Scenes and entities effectively don't exist until something tries to access them, at which point they're loaded from the file.
+For example, a scene is initialized for the first time when an entity is transferred to it. An entity springs into existence when code tries to
+interact with it - either from a scene, or from a different entity.
+
 #include file_name
 Includes the contents of a specified file from the scenario's 'templates' folder. Basically a macro.
 
@@ -33,6 +47,7 @@ entity_by_alias(alias_or_name) - gets an entity using an alias OR true name only
 
 'scene()' can get a reference to the current scene; when called from a scene, it returns that scene - but when called from an entity, it returns
 	the scene that entity currently occupies.
+
 scene(name) - reference a scene by name
 
 'concat(str1,str2)' can join two strings and output the response, tho the original strings are left untouched.
@@ -41,6 +56,8 @@ to_lowercase(str) - outputs a string made lowercase
 substr(start_index, substring_length, full_string) - returns a substring of the final argument, starting at the index specified by the first
 argument, and as long as substring_length
 substr(length, full_string) - Gets the first 'length' characters from full_string
+
+random(min,max) - returns a random number in the interval [min,max]
 
 SETTINGS.DAT
 

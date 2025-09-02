@@ -90,4 +90,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Docs\scene functions.txt" />
+    <Text Include="Docs\entity functions.txt" />
+    <Text Include="Docs\doc.txt" />
+  </ItemGroup>
 </Project>

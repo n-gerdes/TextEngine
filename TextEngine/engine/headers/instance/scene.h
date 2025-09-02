@@ -14,22 +14,8 @@
 This class provides the framework for defining different types of scenes. The general gameplay loop works like this:
 1) Text is displayed
 2) Player enters text
-3) The scene processes that input in accordance with the type of scene it is (i.e., an exploration scene provides detailed
-descriptions about the environment and clues about where to go, combat resolves data for each fighter and narrates the output
-before allowing the player to choose their next action, etc).
-4) Depending on what happens in the scene, the state may change and new actions become possible, or old ones cease to be options.
-5) Text is displayed again regarding the current state of the scene, thus restarting the loop.
-This is resolved by the game by calling game_loop_iteration on the scene currently loaded. game_loop_iteration first displays
-text based on the current state of the scene. Then it gets input from the user and passes it to process_input, which is where the
-meat of the code is for each subclass.
-Each scene is essentially a state machine with the ability to switch to other state machines, while preserving some information
-about the current context (i.e., the player entity).
-
-Intended scene types:
-Room (exploration mode)
-Encounter (combat mode; definitely needs to know which room you were in when combat started so it can integrate that into combat
-descriptions).
-Scripted (story mode, can be used for dialog; may offer discrete choices or simply advance whenever the player hits 'enter').
+3) The scene processes that input in accordance with its script and modifies its state
+4) The loop repeats
 */
 
 namespace scene_friend_funcs
