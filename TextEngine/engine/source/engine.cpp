@@ -242,6 +242,11 @@ std::string engine::extra_text_processing(const std::string& original_text) cons
 	{
 		modified = string_utils.replace_all(modified, *i, "", true, false);
 	}
+
+	for (int i = 0; i < modified.size(); ++i)
+	{
+		swap_from_dummy_char(modified[i]);
+	}
 	return modified;
 }
 
@@ -263,6 +268,13 @@ std::string engine::get_saves_directory(const std::string& scenario_name) const
 
 void engine::get_input(std::string* raw, std::string* case_preserved, std::string* processed) const
 {
+	auto swap_away_dummy_chars = [&](std::string& str)
+		{
+			for (size_t i = 0; i < str.size(); ++i)
+			{
+				engine::swap_from_dummy_char(str[i]);
+			}
+		};
 	string_utils string_utils;
 	if (raw == nullptr && case_preserved == nullptr && processed == nullptr) //For some reason I ask for nothing.
 	{

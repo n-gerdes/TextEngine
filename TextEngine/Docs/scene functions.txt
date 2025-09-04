@@ -7,3 +7,11 @@ get_global_value($variable_name): Returns the value of the specified global vari
 get_meta_value($variable_name): Returns the value of the specified meta variable.
 set_value($variable_name, $value): Set the value of the specified variable
 get_value($variable_name): Return the value of the specified variable.
+
+
+EVENT FUNCTIONS
+
+initialize(): called when the scene is first loaded into the scenario.
+describe(): called when the perspective entity enters a scene, intended to be used for having it describe the scene.
+on_enter_scene(entity_name): called when an entity enters this scene
+before_turn(entity_name): called on within a scene before a given entity takes its turn.

@@ -1572,6 +1572,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	size_t comment_index = line.find("//");
 	if (comment_index != std::string::npos)
 		line.resize(comment_index);
+
 	string_utils.strip(line);
 	std::string prestring, poststring;
 	std::vector<std::string> wildcards;
@@ -1636,7 +1637,16 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 		if (second_quote_index != std::string::npos && second_quote_index != first_quote_index + 1)
 		{
 			std::string quote = string_utils.substring(line, first_quote_index + 1, second_quote_index - 1);
-			quote = string_utils.replace_all(quote, "=", dummy_equals_string, false);
+			
+			
+			for (int c_index = 0; c_index < quote.size(); ++c_index)
+			{
+				char& c = quote[c_index];
+				if(c=='=' || c == ':' || c=='!' || true)
+					engine::swap_to_dummy_char(c); //Originally only swapped '=', but now I'm giving more of them a go. Did this 9/4/2025, may need to revert if it created bugs.
+			}
+			
+			//quote = string_utils.replace_all(quote, "=", dummy_equals_string, false);
 			quoted_material.push_back(quote);
 			if (second_quote_index == line.size() - 1)
 				line = line.substr(0, first_quote_index) + dummy_command_string;
@@ -1777,6 +1787,18 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("lowercase", "to_lowercase");
 	substitute_alias_function("make_lowercase", "to_lowercase");
 
+	substitute_alias_function("get_first_entity", "first_entity");
+	substitute_alias_function("get_entity_here", "entity_here");
+	substitute_alias_function("get_any_entity_here", "any_entity_here");
+	substitute_alias_function("get_entity_by_alias", "get_entity_by_alias");
+	substitute_alias_function("get_entity", "entity");
+
+	substitute_alias_function("get_entities", "get_children");
+	substitute_alias_function("get_entities_here", "get_children");
+
+	substitute_alias_function("length", "size");
+	substitute_alias_function("len", "size");
+	substitute_alias_function("dim", "size");
 
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
@@ -1785,7 +1807,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 		quoted_material.pop_front();
 	}
 	string_utils.strip(line);
-	if (line[line.size() - 1] == ';')
+	if (line.size()>0 && line[line.size() - 1] == ';')
 	{
 		line.pop_back();
 	}
@@ -2387,6 +2409,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					c = dummy_dash;
 				else if (c == '%')
 					c = dummy_percent;
+				else if (c == ':')
+					c = dummy_colon;
+				
 			}
 			if (quote == " ")
 			{
@@ -4294,6 +4319,18 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	char_getter_handler entity_get_scene_name_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 0)
+			{
+				return "INVALID ARGS FOR 'get_scene_name_handler'; EXPECTED 0, GOT " + args.size();
+			}
+			else
+			{
+				std::string v = char_ptr->get_scene_name();
+				return v;
+			}
+		};
 
 	entity* this_entity = dynamic_cast<entity*>(const_cast<res_file*>(this));
 	register_entity_getter("get_value", get_val_handler, this_entity);
@@ -4308,6 +4345,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 	register_entity_getter("get_hp", get_hp_handler, this_entity);
 	register_entity_getter("get_max_hp", get_max_hp_handler, this_entity);
+
+	register_entity_getter("get_scene_name", entity_get_scene_name_handler, this_entity);
 
 	register_entity_getter("interrupted", get_interrupted_handler, this_entity);
 
@@ -5741,6 +5780,23 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
+		has_subbed = string_utils.complex_replacement(raw_value, "concat( $ )", prestring, poststring, wildcards, "(), ", false, true);
+		if (has_subbed)
+		{
+			std::string val = "";
+			std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
+			for (size_t i = 0; i < args.size(); ++i)
+			{
+				val += resolve_expression(args[i], variable_names, variable_values, game_instance);
+			}
+			raw_value = prestring + val + poststring;
+		}
+	}
+
+	/*
+	has_subbed = true;
+	while (has_subbed)
+	{
 		has_subbed = string_utils.complex_replacement(raw_value, "concat( $ , $ )", prestring, poststring, wildcards, "(), ", false, true);
 		if (has_subbed)
 		{
@@ -5749,6 +5805,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			raw_value = prestring + left + right + poststring;
 		}
 	}
+	
+	*/
 
 	has_subbed = true;
 	while (has_subbed)
@@ -6201,10 +6259,23 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
 			std::string equality;
-			if (left == right)
-				equality = "true";
+			if (left.size() == right.size())
+			{
+				for (int i = 0; i < right.size(); ++i)
+				{
+					engine::swap_from_dummy_char(left[i]);
+					engine::swap_from_dummy_char(right[i]);
+				}
+					if (left == right)
+						equality = "true";
+					else
+						equality = "false";
+			}
 			else
+			{
 				equality = "false";
+			}
+			
 			raw_value = prestring + equality + poststring;
 		}
 		else

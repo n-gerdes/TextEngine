@@ -19,7 +19,21 @@ void game::game_loop()
 	int* ptr = &threads_launched;
 	while (game_going)
 	{
+		const auto& entities = get(this, "entities")->get_children();
+		auto last_entity = entities.end();
+		--last_entity;
 
+		if ((*last_entity) != get_perspective_entity())
+		{
+			auto perspective = entities.begin();
+			for (perspective = entities.begin(); perspective != entities.end(); ++perspective)
+			{
+				if ((*perspective) == get_perspective_entity())
+					break;
+			}
+			std::swap(last_entity, perspective);
+		}
+		
 		const auto& scenes = get(this, "scenes")->get_children();
 		for (auto scene_iterator = scenes.begin(); scene_iterator != scenes.end(); ++scene_iterator)
 		{
@@ -131,7 +145,7 @@ entity* game::get_any_entity_in_scene(const std::string& entity_name, const std:
 		entity* c = dynamic_cast<entity*>(*i);
 		if (c)
 		{
-			if (  (c->get_name() == entity_name || c->has_alias(this, entity_name)  )  && (   c->get_scene_name() == scene_name)  )
+			if (  (c->get_name() == entity_name || c->has_alias(this, entity_name)  )  && (   c->get_scene_name() == scene_name) && !c->in_transfer_queue()  )
 				possible_entities.push_back(c);
 		}
 		else
@@ -227,7 +241,7 @@ entity* game::get_entity_in_scene(const std::string& entity_name, const std::str
 		entity* c = dynamic_cast<entity*>(*i);
 		if (c)
 		{
-			if ((c->get_name() == entity_name || (allow_alias && c->has_alias(this, entity_name))) && (c->get_scene_name() == scene_name))
+			if ((c->get_name() == entity_name || (allow_alias && c->has_alias(this, entity_name))) && (c->get_scene_name() == scene_name) && !c->in_transfer_queue())
 			{
 				possible_entities.push_back(c);
 				if (!allow_alias)
@@ -297,7 +311,7 @@ entity* game::get_first_entity_in_scene(const std::string& entity_name, const st
 		entity* c = dynamic_cast<entity*>(*i);
 		if (c)
 		{
-			if ((c->get_name() == entity_name || c->has_alias(this, entity_name)) && (c->get_scene_name() == scene_name))
+			if ((c->get_name() == entity_name || c->has_alias(this, entity_name)) && (c->get_scene_name() == scene_name) && !c->in_transfer_queue())
 				return c;
 		}
 		else
@@ -365,7 +379,7 @@ entity* game::get_any_entity_in_scene(const std::string& alias, const std::strin
 		entity* c = dynamic_cast<entity*>(*i);
 		if (c)
 		{
-			if ((seeker->knows_alias(alias, c)) && (c->get_scene_name() == scene_name))
+			if ((seeker->knows_alias(alias, c)) && (c->get_scene_name() == scene_name) && !c->in_transfer_queue())
 				possible_entities.push_back(c);
 		}
 		else
@@ -437,7 +451,7 @@ entity* game::get_entity_in_scene(const std::string& alias, const std::string& s
 		entity* c = dynamic_cast<entity*>(*i);
 		if (c)
 		{
-			if ((seeker->knows_alias(alias, c)) && (c->get_scene_name() == scene_name))
+			if ((seeker->knows_alias(alias, c)) && (c->get_scene_name() == scene_name) && !c->in_transfer_queue())
 				possible_entities.push_back(c);
 
 			if (possible_entities.size() == 2)
@@ -564,7 +578,7 @@ entity* game::get_first_entity_in_scene(const std::string& alias, const std::str
 		entity* c = dynamic_cast<entity*>(*i);
 		if (c)
 		{
-			if ((seeker->knows_alias(alias, c)) && (c->get_scene_name() == scene_name))
+			if ((seeker->knows_alias(alias, c)) && (c->get_scene_name() == scene_name) && !c->in_transfer_queue())
 				return c;
 		}
 		else

@@ -33,7 +33,7 @@ public:
 							~engine();
 							engine();
 
-	std::string				extra_text_processing(const std::string& original_text) const;
+	std::string				extra_text_processing(const std::string& original_text) const; //Handles some of the extra text processing of input text
 
 	std::string				get_scenario_directory(const std::string& scenario_name) const;
 	std::string				get_saves_directory(const std::string& scenario_name) const;
@@ -59,7 +59,8 @@ public:
 	inline void				print_lines() const{}
 
 private:
-	static void				swap_dummy_char(char& c)
+public:
+	static void				swap_from_dummy_char(char& c)
 	{
 		if (c == dummy_comma) { c = ','; }
 		else if (c == dummy_left_paran) { c = '('; }
@@ -71,19 +72,37 @@ private:
 		else if (c == dummy_dash) { c = '-'; }
 		else if (c == dummy_percent) { c = '%'; }
 		else if (c == dummy_space) { c = ' '; }
+		else if (c == dummy_colon) { c = ':'; }
+		else if (c == dummy_exclamation) { c = '!'; }
+	}
+
+	static void				swap_to_dummy_char(char& c)
+	{
+		if (c == ',') { c = dummy_comma; }
+		else if (c == '(') { c = dummy_left_paran; }
+		else if (c == ')') { c = dummy_right_paran; }
+		else if (c == '=') { c = dummy_equals; }
+		else if (c == '/') { c = dummy_slash; }
+		else if (c == '+') { c = dummy_plus; }
+		else if (c == '*') { c = dummy_star; }
+		else if (c == '-') { c = dummy_dash; }
+		else if (c == '%') { c = dummy_percent; }
+		else if (c == ' ') { c = dummy_space; }
+		else if (c == ':') { c = dummy_colon; }
+		else if (c == '!') { c = dummy_exclamation; }
 	}
 public:
 
-	inline void				print(char c) const { print_mutex.lock(); swap_dummy_char(c); std::cout << c; print_mutex.unlock(); }
+	inline void				print(char c) const { print_mutex.lock(); swap_from_dummy_char(c); std::cout << c; print_mutex.unlock(); }
 
-	inline void				println(char c) const { print_mutex.lock(); swap_dummy_char(c); std::cout << c << std::endl; print_mutex.unlock(); }
+	inline void				println(char c) const { print_mutex.lock(); swap_from_dummy_char(c); std::cout << c << std::endl; print_mutex.unlock(); }
 
-	inline void				print(std::string str) { print_mutex.lock(); for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout << str; print_mutex.unlock(); }
+	inline void				print(std::string str) { print_mutex.lock(); for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout << str; print_mutex.unlock(); }
 
-	inline void				println(std::string str) { print_mutex.lock(); for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout << str << std::endl; print_mutex.unlock(); }
+	inline void				println(std::string str) { print_mutex.lock(); for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout << str << std::endl; print_mutex.unlock(); }
 
-	inline void				print(const char str[]) { print_mutex.lock(); for (size_t i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_dummy_char(c); } std::cout << str; print_mutex.unlock(); }
-	inline void				println(const char str[]) { print_mutex.lock(); for (size_t i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_dummy_char(c); } std::cout << str << std::endl; print_mutex.unlock(); }
+	inline void				print(const char str[]) { print_mutex.lock(); for (size_t i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); } std::cout << str; print_mutex.unlock(); }
+	inline void				println(const char str[]) { print_mutex.lock(); for (size_t i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); } std::cout << str << std::endl; print_mutex.unlock(); }
 
 
 	template <typename T, typename... Args>

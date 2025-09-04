@@ -2,7 +2,8 @@
 
 //This is responsible for setting various variables as a part of this entity's setup
 function initialize()
-	set_value("rounds_spent_waiting",1)
+	set_value("time_since_saw_merchant",100);
+	set_value("merchant_destination",-1);
 end
 
 //Allows you to make something happen after an entity takes damage
@@ -17,18 +18,17 @@ end
 
 //This is called before this entity takes its turn
 function before_turn()
-	say(get_value("debug"));
-	say(entity(~merchant).get_scene_name());
+	//Called before this entity's turn
+end
+
+function on_entity_approach(ent)
+	if (ent == ~merchant) then
+		set_value("time_since_saw_merchant",0);
+	end
 end
 
 function before_leave(dest)
 
-end
-
-function on_entity_approach(ent)
-	if(ent == ~merchant)
-		say("You're just the man I wanted to see!");
-	end
 end
 
 function wait(time)
@@ -46,12 +46,7 @@ function wait(time)
 	end
 end
 
-/////////////////////   COMMANDS
-
-function command:debug(ent)
-	say(get_value("debug"));
-	say(entity(~merchant).get_scene_name());
-end
+/////////////////////
 
 function command:wait $time minutes(ent, time)
 	if(ent != get_true_name())

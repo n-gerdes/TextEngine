@@ -11,26 +11,7 @@ function describe()
 end
 
 function on_enter_scene(char)
-	entity(char).tell("How do you enter the area?");
-	entity(char).tell("1. Quietly");
-	entity(char).tell("2. Guns Ablazing");
-	entity(char).tell("3. Normally");
-	
-	in1 = entity(char).prompt_int(3);
-	
-	while ( or(in1 > 3, in1 < 1) ) do
-		in1 = entity(char).prompt_int(3, "1, 2, or 3 only: ");
-	end
-	
-	if(in1 == 1) then
-		entity(char).tell("Snuck in.");
-	else if (in1 == 2) then
-		entity(char).tell("Went in fighting.");
-	else if (in1 == 3) then
-		entity(char).tell("Entered normally.");
-	else
-		entity(char).tell("ERROR");
-	end
+
 end
 
 function before_turn(c)

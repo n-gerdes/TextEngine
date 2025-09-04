@@ -36,6 +36,7 @@ private:
 	bool						loaded_from_file = false;
 	bool						has_read_description_after_loading_from_file = false;
 	bool						transferred_perspective_character = false;
+	mutable uint32_t			entities_in_scene = 0;
 public:	
 	friend						void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* threads_launched);
 	virtual std::string			call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args) override;
@@ -43,6 +44,7 @@ public:
 	entity*						get_entity(game* game_instance, const std::string& name, bool allow_alias) const;
 	entity*						get_first_entity(game* game_instance, const std::string& name) const;
 	const std::vector<entity*>	get_entities_in_scene() const;
+	int							count_entities_in_scene() const;
 	void						launch(game* game_instance, int* threads_launched);
 	void						load_transfer_entities(game* game_instance);
 protected:
@@ -57,6 +59,7 @@ public:
 	virtual void				process_line_from_file(const std::string& line) override;
 	virtual bool				resolve_input(game* game_instance, entity* user, const std::string& input, std::string& return_val);
 	void						queue_transfer(entity* ent);
+	void						finalize_entity_removal(); //All this does is decrement the counter for the current number of entities in the scene.
 };
 
 #endif

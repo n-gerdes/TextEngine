@@ -64,6 +64,8 @@ and(...) - returns "true" if all of its arguments are true
 or(...) - returns "true" if any of its arguments are true
 xor(...) - returns "true" if exactly one of its arguments are true
 
+size(arr) - returns size of array
+
 
 Scripting supports "if" statements, lines ending with optional "then". Conditions must be inside parenthises.
 Semicolons at the end of lines are optional.

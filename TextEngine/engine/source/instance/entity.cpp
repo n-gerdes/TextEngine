@@ -169,7 +169,7 @@ void add_title_func(game* game_instance, entity* c, std::vector<std::string>& ar
 
 void say_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
 {
-	if (c->get_scene() == game_instance->get_perspective_entity()->get_scene())
+	if (c->get_scene_name()!="NULL" && (c->get_scene() == game_instance->get_perspective_entity()->get_scene()))
 	{
 		game_instance->get_perspective_entity()->println(game_instance, game_instance->get_engine()->correct_tokenizer_bug(args[0]));
 	}
@@ -199,19 +199,26 @@ void learn_title_func(game* game_instance, entity* c, std::vector<std::string>& 
 void transfer_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
 {
 	std::string& new_scene_name = args[0];
+	if (new_scene_name == c->get_scene_name())
+	{
+		return;
+	}
 	scene* new_scene = game_instance->get_scene(new_scene_name);
 	if (new_scene)
 	{
+		std::string dummy_return_value;
 		const auto& followers = c->get_attached_entity_names();
 		for (auto i = followers.begin(); i != followers.end(); ++i)
 		{
 			entity* follower = game_instance->get_entity_by_name(*i);
 			if (follower)
 			{
+				follower->call_function(game_instance, "before_leave", { new_scene_name }, dummy_return_value);
 				follower->remove_from_scene();
 				new_scene->queue_transfer(follower);
 			}
 		}
+		c->call_function(game_instance, "before_leave", {new_scene_name}, dummy_return_value);
 		c->remove_from_scene();
 		new_scene->queue_transfer(c);
 	}
@@ -449,12 +456,12 @@ void entity::damage(game* game_instance, game_obj* source, hp_t amount)
 		if (source != nullptr)
 		{
 			name_of_interrupter = source->get_name();
-			call_function(game_instance, "on_damage_taken", { source->get_name(), std::to_string(amount) }, dummy_return_value);
+			call_function(game_instance, "on_damage_taken", { std::to_string(amount), source->get_name()}, dummy_return_value);
 		}
 		else
 		{
 			name_of_interrupter = "NULL";
-			call_function(game_instance, "on_damage_taken", { "NULL", std::to_string(amount) }, dummy_return_value);
+			call_function(game_instance, "on_damage_taken", { std::to_string(amount), "NULL"}, dummy_return_value);
 		}
 	}
 	else
@@ -462,12 +469,12 @@ void entity::damage(game* game_instance, game_obj* source, hp_t amount)
 		if (source != nullptr)
 		{
 			name_of_interrupter = source->get_name();
-			call_function(game_instance, "on_damage_taken", { source->get_name(), "0" }, dummy_return_value);
+			call_function(game_instance, "on_damage_taken", { "0", source->get_name()}, dummy_return_value);
 		}
 		else
 		{
 			name_of_interrupter = "NULL";
-			call_function(game_instance, "on_damage_taken", { "NULL", "0" }, dummy_return_value);
+			call_function(game_instance, "on_damage_taken", { "0", "NULL" }, dummy_return_value);
 		}
 	}
 }
@@ -861,9 +868,11 @@ void entity::println(game* game_instance, const std::string& line)
 void entity::remove_from_scene()
 {
 	scene* current_scene = get_scene();
-
+	std::string dummy_return_value;
+	
 	if (current_scene) //It has to remove the reference to itself in the scene it currently exists in.
 	{
+		current_scene->finalize_entity_removal();
 		game_obj* current_reference_to_self = current_scene->get(get_game_instance(), "entities/" + get_name());
 		if (current_reference_to_self)
 			current_reference_to_self->destroy();
@@ -955,7 +964,7 @@ scene* entity::set_to_scene(const std::string& scene_name)
 		for (size_t i = 0; i < other_entities_in_scene.size(); ++i)
 		{
 			entity* sibling = other_entities_in_scene[i];
-			if (sibling != this)
+			if (sibling != this && !sibling->in_transfer_queue())
 			{
 				sibling->call_function(get_game_instance(), "on_entity_approach", { get_name() }, dummy_return_value);
 				call_function(get_game_instance(), "on_entity_approach", { sibling->get_name() }, dummy_return_value);
@@ -1029,6 +1038,10 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 			waiting_for_pc_mutex.unlock();
 			
 			call_function(game_instance, "get_ai_command", empty_args, input);
+			for (int i = 0; i < input.size(); ++i)
+			{
+				engine::swap_from_dummy_char(input[i]);
+			}
 			input = game_instance->get_engine()->extra_text_processing(input);
 		}
 	};

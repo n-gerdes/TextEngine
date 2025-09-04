@@ -18,6 +18,10 @@ function clock_time()
 	return hours ":" minutes ":" seconds
 end
 
+function before_leave(dest)
+
+end
+
 function before_turn()
 	set_value("time", get_value("time") + 1)
 	say("A few seconds pass, and the grandfather clock now reads " clock_time())

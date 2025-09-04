@@ -101,6 +101,7 @@ const std::vector<entity*> scene::get_entities_in_scene() const
 {
 	std::vector<entity*> list;
 	game* game_instance = dynamic_cast<game*>(get_parent()->get_parent());
+	entities_in_scene = 0;
 	if (game_instance != nullptr)
 	{
 		auto& children = (*(get_children().begin()))->get_children();
@@ -110,9 +111,20 @@ const std::vector<entity*> scene::get_entities_in_scene() const
 			std::string child_name = (*i)->get_name();
 			entity* found = game_instance->get_entity(child_name, false);
 			list.push_back(found);
+			++entities_in_scene;
 		}
 	}
 	return list;
+}
+
+void scene::finalize_entity_removal()
+{
+	--entities_in_scene;
+}
+
+int scene::count_entities_in_scene() const
+{
+	return entities_in_scene;
 }
 
 static std::mutex threads_launched_mutex;
@@ -219,6 +231,7 @@ void scene::load_transfer_entities(game* game_instance)
 					has_read_description_after_loading_from_file = true;
 			}
 			ent->set_to_scene(get_name());
+			++entities_in_scene;
 		}
 	}
 	transfer_queue.clear();
@@ -402,6 +415,7 @@ void scene::load_variables(std::ifstream& file, const std::string& scenario_name
 	adjudicator::load_variables(file, scenario_name, engine);
 	std::string loaded_file;
 	load_string(file, loaded_file);
+	load_uint32_t(file, entities_in_scene);
 	read(engine, scenario_name, loaded_file);
 	loaded_from_file = true;
 }
@@ -409,4 +423,5 @@ void scene::load_variables(std::ifstream& file, const std::string& scenario_name
 void scene::save_variables(std::ofstream& file, const std::string& scenario_name, engine* engine) const {
 	adjudicator::save_variables(file, scenario_name, engine);
 	save_string(file, get_filename());
+	save_uint32_t(file, entities_in_scene);
 }

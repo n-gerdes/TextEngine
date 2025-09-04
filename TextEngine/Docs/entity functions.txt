@@ -110,6 +110,19 @@ prompt_num(default_value, [prompt]): Prompt an entity for a number.
 prompt_bool(default_value, [prompt]): Prompt an entity for a true/false value.
 prompt_string(default_value, [prompt]): Prompt an entity for any string.
 
+
+
+EVENT FUNCTIONS: Functions built in to every entity that are called by the engine in response to certain events. You add functionality to these functions to make the entity behave correctly.
+
+initialize(): called when the entity is loaded.
+on_damage_taken(source, amount): called when the entity takes damage.
+get_ai_command(): called on entities that aren't perspective entities when it's their "turn". Can be used to automate their behavior.
+before_turn(): called before the engine gets a command from the entity. Called every turn.
+on_enter_scene(): called when an entity enters a scene
+before_leave(destination_name): called before the entity leaves a scene
+on_entity_approach(other_entity): called when two entities "see" each other after one enters a scene containing the other. It's called on both of them at the same time.
+describe(): called when the perspective entity enters the same scene as this entity, allowing for this entity to be narrated.
+
 When referring to an entity in scripts, its true name should generally be used to avoid ambiguity if multiple entities share an alias.
 When adding aliases, remember to consider that these aliases can be used both for players to refer to an
 entity, as well as chosen to act as display names. However, any name containing a '~' will not
