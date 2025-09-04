@@ -8,6 +8,7 @@
 #include <mutex>
 #include "engine/headers/MASTER.h"
 #include "engine/headers/util/string_utils.h"
+#include "engine/headers/procedure/substitution_wizard.h"
 
 class game;
 class game_obj_save_registry;
@@ -16,13 +17,11 @@ class engine
 {
 private:
 	game_obj_save_registry* save_registry;
-	std::vector<std::string> raw_input_removal;
-	std::vector<std::string> input_removal; //This is a list of possible inputs to remove from player inputs, reducing the number of permutations it has to be capable of processing.
-	std::map <std::string, std::string> input_substitution; //The key is a word that can be replaced, the value is what replaces it.
-	std::map<std::string, std::map<std::string, std::vector<std::string>>> output_substitution_map;
+	
 	//The first key is the substitution list (generic, casual, formal, old-fasioned, etc).
 	//The second key is the word to substitute
 	//The output is a vector containing words that it can possibly change it to
+	substitution_wizard subs;
 	static std::mutex print_mutex;
 protected:
 
@@ -33,7 +32,7 @@ public:
 							~engine();
 							engine();
 
-	std::string				extra_text_processing(const std::string& original_text) const; //Handles some of the extra text processing of input text
+	std::string				extra_text_processing(const std::string& original_text, game* game_instance) const; //Handles some of the extra text processing of input text
 
 	std::string				get_scenario_directory(const std::string& scenario_name) const;
 	std::string				get_saves_directory(const std::string& scenario_name) const;
@@ -116,7 +115,7 @@ public:
 
 	void					start_new_game(const std::string& scenario_name);
 
-	std::string				output_substitution(const std::string& thesuarus, std::string sentence, int replacement_percent_chance) const;
+	std::string				output_substitution(game* game_instance, const std::string& thesuarus, std::string sentence, int replacement_percent_chance);
 	
 private:
 	void					start_game_instance(game* game_instance);

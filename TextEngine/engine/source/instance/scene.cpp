@@ -122,6 +122,11 @@ void scene::finalize_entity_removal()
 	--entities_in_scene;
 }
 
+game* scene::get_game_instance()
+{
+	return static_cast<game*>(get_parent()->get_parent());
+}
+
 int scene::count_entities_in_scene() const
 {
 	return entities_in_scene;
@@ -174,6 +179,11 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 				}
 				else
 				{
+					std::string dummy_return_val;
+					this_scene->call_function(game_instance, "before_turn", { current_entity->get_name() }, dummy_return_val);
+
+					current_entity->call_function(game_instance, "before_turn");
+
 					std::string reason_for_failure;
 					bool success = current_entity->take_turn(game_instance, reason_for_failure);
 					while (!success && current_entity == game_instance->get_perspective_entity())
@@ -190,6 +200,7 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 						current_entity->interrupt();
 						success = current_entity->take_turn(game_instance, reason_for_failure);
 					}
+					current_entity->advance_turn_count();
 				}
 			}
 		}
@@ -416,7 +427,7 @@ void scene::load_variables(std::ifstream& file, const std::string& scenario_name
 	std::string loaded_file;
 	load_string(file, loaded_file);
 	load_uint32_t(file, entities_in_scene);
-	read(engine, scenario_name, loaded_file);
+	read(engine, scenario_name, loaded_file, get_game_instance());
 	loaded_from_file = true;
 }
 

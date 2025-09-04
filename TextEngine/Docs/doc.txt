@@ -66,6 +66,14 @@ xor(...) - returns "true" if exactly one of its arguments are true
 
 size(arr) - returns size of array
 
+casual_substitution(string, [strength]): applies casual word substitution to the given string with the specified (optional) strength.
+formal_substitution(string, [strength])
+generic_substitution(string, [strength])
+medieval_substitution(string, [strength])
+technical_substitution(string, [strength])
+
+substitution(thesaurus, string, [strength]): applies word substitution to the given string from the specified thesaurus using the (optional) specified strength.
+
 
 Scripting supports "if" statements, lines ending with optional "then". Conditions must be inside parenthises.
 Semicolons at the end of lines are optional.

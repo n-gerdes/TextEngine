@@ -1835,7 +1835,7 @@ void res_file::check_line_match(const std::string& line, line_num line_num)
 	line_commands.push_back(-1);
 }
 
-bool res_file::add_lines_from_file(const engine* engine, const std::string& scenario_name, const std::string& name)
+bool res_file::add_lines_from_file(const engine* engine, const std::string& scenario_name, const std::string& name, game* game_instance)
 {
 	std::ifstream file;
 	string_utils string_utils;
@@ -1872,7 +1872,7 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 			}
 			if (string_utils.matches_command("function command: $func ( $args )", line, dummy_wildcards, " ():"))
 			{
-				line = "function command: " + engine->extra_text_processing(dummy_wildcards[0]) + "(" + dummy_wildcards[1] + ")";
+				line = "function command: " + engine->extra_text_processing(dummy_wildcards[0], game_instance) + "(" + dummy_wildcards[1] + ")";
 				command_func_lines.push_back(line_data.size());
 			}
 
@@ -1912,7 +1912,7 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 		{
 			const std::string& original_func_name = command_funcs_to_alias_with_input_substitution[i];
 			const std::string& args = command_funcs_to_alias_with_input_substitution_args[i];
-			std::string alias_func_name = engine->extra_text_processing(original_func_name);
+			std::string alias_func_name = engine->extra_text_processing(original_func_name, game_instance);
 			//++current_line_number;
 			command_func_lines.push_back(line_data.size());
 			line_data.push_back("function command:" + alias_func_name + " (" + args + ")");
@@ -1923,14 +1923,14 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 		for (i = 0; i < included_files.size(); ++i)
 		{
 			std::string& other_file = included_files[i];
-			if (!add_lines_from_file(engine, scenario_name, other_file))
+			if (!add_lines_from_file(engine, scenario_name, other_file, game_instance))
 				return false;
 		}
 
 		for (i = 0; i < imported_files.size(); ++i)
 		{
 			std::string& other_file = imported_files[i];
-			if (!add_lines_from_file(engine, scenario_name, other_file))
+			if (!add_lines_from_file(engine, scenario_name, other_file, game_instance))
 				return false;
 		}
 		return true;
@@ -2287,7 +2287,7 @@ void res_file::process_line_from_file(const std::string& line)
 	//Meant to be overridden by subclasses
 }
 
-bool res_file::read(const engine* engine, const std::string& scenario_name, const std::string& filename)
+bool res_file::read(const engine* engine, const std::string& scenario_name, const std::string& filename, game* game_instance)
 {
 	string_utils string_utils;
 	line_data.clear();
@@ -2297,7 +2297,7 @@ bool res_file::read(const engine* engine, const std::string& scenario_name, cons
 	line_commands.clear();
 	line_commands.push_back(-1);
 	this->filename = filename;
-	bool added_lines = add_lines_from_file(engine, scenario_name, filename);
+	bool added_lines = add_lines_from_file(engine, scenario_name, filename, game_instance);
 	if (added_lines)
 		finished_loading = true;
 	else
@@ -6006,7 +6006,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				if(string_utils.is_integer(strength))
 				{
 					percent_chance = std::stoi(strength);
-					sentence = game_instance->get_engine()->output_substitution(name, sentence, percent_chance);
+					sentence = game_instance->get_engine()->output_substitution(game_instance, name, sentence, percent_chance);
 					raw_value = prestring + sentence + poststring;
 				}
 				else
@@ -6023,7 +6023,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			if (has_subbed)
 			{
 				std::string sentence = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				sentence = game_instance->get_engine()->output_substitution(name, sentence, 40);
+				sentence = game_instance->get_engine()->output_substitution(game_instance, name, sentence, 40);
 				raw_value = prestring + sentence + poststring;
 			}
 		}
@@ -6034,6 +6034,38 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_language_output_substitution_type("formal");
 	register_language_output_substitution_type("technical");
 	register_language_output_substitution_type("medieval");
+
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "substitution( $ , $ , $ )", prestring, poststring, wildcards, ".(), ", false, true);
+		if (has_subbed)
+		{
+			std::string thesaurus = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string sentence = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string chance = resolve_expression(wildcards[2], variable_names, variable_values, game_instance);
+			if (string_utils.is_numeric(chance))
+			{
+				int strength = std::stoi(chance);
+				sentence = game_instance->get_engine()->output_substitution(game_instance, thesaurus, sentence, strength);
+				raw_value = prestring + sentence + poststring;
+			}
+		}
+	}
+
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "substitution( $ , $ )", prestring, poststring, wildcards, ".(), ", false, true);
+		if (has_subbed)
+		{
+			std::string thesaurus = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string sentence = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			sentence = game_instance->get_engine()->output_substitution(game_instance, thesaurus, sentence, 40);
+			raw_value = prestring + sentence + poststring;
+		}
+	}
+
 
 	/////////////////////////////////////////////////////////////////////////////////
 

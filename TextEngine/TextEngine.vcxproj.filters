@@ -51,6 +51,9 @@
     <ClInclude Include="engine\headers\MASTER.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="engine\headers\procedure\substitution_wizard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="engine\source\engine.cpp">
@@ -87,6 +90,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="engine\source\procedure\adjudicator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\source\procedure\substitution_wizard.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

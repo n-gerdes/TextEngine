@@ -37,6 +37,7 @@ private:
 	mutable std::mutex hp_mutex;
 	mutable std::mutex max_hp_mutex;
 public:
+	void							advance_turn_count() { ++current_turn; };
 	bool							in_transfer_queue();
 	void							set_in_transfer_queue(bool val);
 	void							attach(entity* follower);

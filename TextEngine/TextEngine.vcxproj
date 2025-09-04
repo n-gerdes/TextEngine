@@ -139,6 +139,7 @@
     <ClInclude Include="engine\headers\instance\scene.h" />
     <ClInclude Include="engine\headers\MASTER.h" />
     <ClInclude Include="engine\headers\procedure\adjudicator.h" />
+    <ClInclude Include="engine\headers\procedure\substitution_wizard.h" />
     <ClInclude Include="engine\headers\savable.h" />
     <ClInclude Include="engine\headers\util\string_utils.h" />
   </ItemGroup>
@@ -153,6 +154,7 @@
     <ClCompile Include="engine\source\instance\scene.cpp" />
     <ClCompile Include="engine\source\procedure\adjudicator.cpp" />
     <ClCompile Include="engine\source\procedure\start.cpp" />
+    <ClCompile Include="engine\source\procedure\substitution_wizard.cpp" />
     <ClCompile Include="engine\source\savable.cpp" />
     <ClCompile Include="engine\source\util\string_utils.cpp" />
   </ItemGroup>

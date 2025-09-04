@@ -62,164 +62,17 @@ std::string engine::correct_tokenizer_bug(const std::string original) const
 engine::engine()
 {
 	save_registry = new game_obj_save_registry();
-	std::ifstream substitution_file;
-	substitution_file.open("gamedata/input_substitution.dat");
-	string_utils string_utils;
-	if (substitution_file.is_open())
-	{
-		std::string line;
-		while (substitution_file.good() && !substitution_file.eof())
-		{
-			std::getline(substitution_file, line);
-			string_utils.strip(line);
-			if (string_utils.starts_with(line, "remove)", true) && !string_utils.contains(line, ":"))
-			{
-				if (line == "remove)")
-				{
-					println("ERROR: input_substitution.dat incorrectly formatted: ", line, "; no string specified for removal.");
-					std::exit(1);
-				}
-				else
-					input_removal.push_back(line.substr(7));
-			}
-			else if (string_utils.starts_with(line, "remove_raw)", true) && !string_utils.contains(line, ":"))
-			{
-				if (line == "remove_raw)")
-				{
-					println("ERROR: input_substitution.dat incorrectly formatted: ", line, "; no string specified for removal.");
-					std::exit(1);
-				}
-				else
-					raw_input_removal.push_back(line.substr(11));
-			}
-			else
-			{
-				auto tokens = string_utils.extract_tokens(line, ":");
-				if (tokens.size() != 3)
-				{
-					println("ERROR: input_substitution.dat incorrectly formatted: ", line, "; found ", tokens.size(), " tokens, expected 3");
-					std::exit(1);
-				}
-				else
-				{
-					input_substitution.insert_or_assign(tokens[2], tokens[0]);
-				}
-			}
-		}
-		substitution_file.close();
-	}
-	else
-	{
-		println("ERROR: Could not open input_substitution.dat");
-		std::exit(1);
-	}
+	
+	subs.load_input_substitution("gamedata/input_substitution.dat");
 
-	auto load_output_substitution_file = [&](const std::string& modifier)
-	{
-
-		std::string filename = "gamedata/" + modifier + "_output_substitution.dat";
-		substitution_file.open(filename);
-		if (substitution_file.is_open())
-		{
-			output_substitution_map.insert_or_assign(modifier, std::map<std::string, std::vector<std::string>>());
-
-			auto add_word_substitution = [&](const std::string& replacable_word, const std::string& potential_replacement)
-			{
-				auto& map = output_substitution_map.at(modifier);
-				if (map.find(replacable_word) == map.end())
-				{
-					std::vector<std::string> initializer;
-					initializer.push_back(potential_replacement);
-					map.insert_or_assign(replacable_word, initializer);
-				}
-				else
-				{
-					map.at(replacable_word).push_back(potential_replacement);
-				}
-			};
-
-			std::string line;
-			uint32_t line_num = 0;
-			while (substitution_file.good() && !substitution_file.eof())
-			{
-				++line_num;
-				std::getline(substitution_file, line);
-				string_utils.strip(line);
-				auto tokens = string_utils.extract_tokens(line, ":,");
-				if (tokens.size() < 3)
-				{
-					println("ERROR: Line ", line_num, " in ", filename, " is malformed.");
-					std::exit(1);
-				}
-				else
-				{
-					std::string& first_word = tokens[0];
-					std::string& first_separator = tokens[1];
-
-					//Sanity check
-					for (size_t i = 0; i < tokens.size(); ++i)
-					{
-						std::string& token = tokens[i];
-						if (token == ":" && i != 1)
-						{
-							println("ERROR: Line ", line_num, " in ", filename, " is malformed.");
-							std::exit(1);
-						}
-					}
-
-					if (first_separator == ":") //If a thesaurus file is defining a bunch of words one word can turn into
-					{
-						for (size_t i = 2; i < tokens.size(); ++i)
-						{
-							std::string& token = tokens[i];
-							if (token != ",")
-							{
-								add_word_substitution(first_word, token);
-							}
-						}
-					}
-					else if (first_separator == ",") //If the line defines a bunch of words that can be mutually exchanged.
-					{
-						for (size_t i = 0; i < tokens.size(); ++i)
-						{
-							std::string& base_word = tokens[i];
-							if (base_word != ",")
-							{
-								for (size_t j = 0; j < tokens.size(); ++j)
-								{
-									std::string& sub_word = tokens[j];
-									if (sub_word != "," && base_word != sub_word)
-									{
-										add_word_substitution(base_word, sub_word);
-									}
-								}
-							}
-						}
-					}
-					else
-					{
-						println("ERROR: Line ", line_num, " in ", filename, " is malformed.");
-						std::exit(1);
-					}
-				}
-			}
-			substitution_file.close();
-		}
-		else
-		{
-			println("ERROR: Could not open ",filename);
-			std::exit(1);
-		}
-	};
-
-	load_output_substitution_file("generic");
-	load_output_substitution_file("casual");
-	load_output_substitution_file("formal");
-	load_output_substitution_file("technical");
-	load_output_substitution_file("medieval");
+	subs.load_output_substitution_file("gamedata/", "generic");
+	subs.load_output_substitution_file("gamedata/", "casual");
+	subs.load_output_substitution_file("gamedata/", "formal");
+	subs.load_output_substitution_file("gamedata/", "technical");
+	subs.load_output_substitution_file("gamedata/", "medieval");
 }
 
-std::string engine::extra_text_processing(const std::string& original_text) const
+std::string engine::extra_text_processing(const std::string& original_text, game* game_instance) const
 {
 	string_utils string_utils;
 	std::string modified = original_text;
@@ -228,19 +81,11 @@ std::string engine::extra_text_processing(const std::string& original_text) cons
 		modified = string_utils.replace_first(modified, "I ", "", false);
 
 	//This handles all the basic input thesaurus stuff
-	for (auto i = input_substitution.begin(); i != input_substitution.end(); ++i)
-	{
-		modified = string_utils.replace_all(modified, i->first, i->second, true, false);
-	}
+	subs.apply_input_substitution(modified);
 
-	for (auto i = raw_input_removal.begin(); i != raw_input_removal.end(); ++i)
+	if (game_instance != nullptr)
 	{
-		modified = string_utils.replace_all(modified, *i, "", false, false);
-	}
-
-	for (auto i = input_removal.begin(); i != input_removal.end(); ++i)
-	{
-		modified = string_utils.replace_all(modified, *i, "", true, false);
+		game_instance->get_substitution_wizard()->apply_input_substitution(modified);
 	}
 
 	for (int i = 0; i < modified.size(); ++i)
@@ -557,34 +402,20 @@ void engine::start_new_game(const std::string& scenario_name)
 	
 }
 
-std::string engine::output_substitution(const std::string& thesuarus, std::string sentence, int replacement_percent_chance) const
+std::string engine::output_substitution(game* game_instance, const std::string& thesuarus, std::string sentence, int replacement_percent_chance)
 {
-	if (replacement_percent_chance < 1)
-		return sentence;
-
-	string_utils string_utils;
-	std::string lowercase_sentence = string_utils.get_lowercase(sentence);
-	const std::map<std::string, std::vector<std::string>>& map = output_substitution_map.at(thesuarus);
-	for (auto source_word_iterator = map.begin(); source_word_iterator != map.end(); ++source_word_iterator)
+	if (game_instance->get_substitution_wizard()->has_thesaurus(thesuarus, game_instance->get_scenario_directory()))
 	{
-		std::string source_word = string_utils.get_lowercase(source_word_iterator->first);
-		size_t offset = 0;
-		size_t location = lowercase_sentence.find(source_word, offset);
-		const std::vector<std::string>& synonyms = source_word_iterator->second;
-		while (location != std::string::npos && offset < lowercase_sentence.size())
-		{
-			std::string new_word = source_word;
-			int replacement_roll = 1 + (rand() % 100);
-			if(replacement_roll <= replacement_percent_chance)
-				new_word = synonyms[rand() % synonyms.size()];
-			
-			sentence = string_utils.replace_from_offset(sentence, source_word, new_word, location, false);
-			offset = location + 1;
-			location = lowercase_sentence.find(source_word, offset);
-		}
+		return game_instance->get_substitution_wizard()->output_substitution(thesuarus, sentence, replacement_percent_chance);
 	}
-
-	return sentence;
+	else if (subs.has_thesaurus(thesuarus, "gamedata"))
+	{
+		return subs.output_substitution(thesuarus, sentence, replacement_percent_chance);
+	}
+	else
+	{
+		return sentence;
+	}
 }
 
 void engine::start_game_instance(game* game_instance)

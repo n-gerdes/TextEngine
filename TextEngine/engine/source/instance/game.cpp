@@ -670,7 +670,7 @@ entity* game::load_entity_from_file(const std::string& entity_name, const std::s
 		loaded_entity = new entity();
 		loaded_entity->set_name(entity_name);
 		loaded_entity->set_turn_number(get_current_turn());
-		bool did_get_data = loaded_entity->read(get_engine(), get_name(), filename);
+		bool did_get_data = loaded_entity->read(get_engine(), get_name(), filename, this);
 		if (get(this, "entities")->find_first_child(this, entity_name, true, false) != nullptr)
 		{
 			loaded_entity->destroy();
@@ -712,7 +712,7 @@ scene* game::load_scene_from_file(const std::string& scene_name)
 			return nullptr;
 		}
 		loaded_scene->set_name(scene_name);
-		bool did_get_data = loaded_scene->read(get_engine(), get_name(), filename);
+		bool did_get_data = loaded_scene->read(get_engine(), get_name(), filename, this);
 		get(this, "scenes")->add_child(loaded_scene);
 		loaded_scene->call_function(this, "initialize");
 		if (did_get_data)

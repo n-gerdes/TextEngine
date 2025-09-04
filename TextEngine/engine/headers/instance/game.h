@@ -2,6 +2,7 @@
 #define GAME_H
 #include "game_obj.h"
 #include "engine/headers/procedure/adjudicator.h"
+#include "engine/headers/procedure/substitution_wizard.h"
 #include <map>
 
 class entity;
@@ -24,7 +25,13 @@ private:
 	mutable std::mutex name_to_entity_mutex;
 	mutable std::map<std::string, entity*> name_to_entity;
 	std::mutex meta_variable_mutex;
+
+
+	substitution_wizard subs;
+
 public:
+	substitution_wizard* get_substitution_wizard() { return &subs; };
+
 							game(const std::string& scenario_name, engine* engine_instance) : game_engine(engine_instance) { set_name(scenario_name); initialize(); }
 	bool					game_is_active() const;
 	entity*					get_any_entity(const std::string& name);

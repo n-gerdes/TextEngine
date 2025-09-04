@@ -297,11 +297,11 @@ std::string game_obj::get_value(const std::string& variable_name) const
 bool game_obj::has_alias(game* game_instance, const std::string& potential_alias) const
 {
 	alias_mutex.lock();
-	std::string processed_alias = game_instance->get_engine()->extra_text_processing(potential_alias);
+	std::string processed_alias = game_instance->get_engine()->extra_text_processing(potential_alias, game_instance);
 	string_utils string_utils;
 	for (size_t i = 0; i < aliases.size(); ++i)
 	{
-		std::string alias = game_instance->get_engine()->extra_text_processing(aliases[i]);
+		std::string alias = game_instance->get_engine()->extra_text_processing(aliases[i], game_instance);
 		if (alias == processed_alias)
 		{
 			alias_mutex.unlock();

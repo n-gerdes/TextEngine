@@ -97,7 +97,7 @@ void entity::load_variables(std::ifstream& file, const std::string& scenario_nam
 	load_string(file, last_command_return_value);
 	std::string loaded_file_name;
 	load_string(file, loaded_file_name);
-	read(engine, scenario_name, loaded_file_name);
+	read(engine, scenario_name, loaded_file_name, get_game_instance());
 	attached_entity_names.clear();
 	uint64_t number_of_attached_entities = 0;
 	load_uint64_t(file, number_of_attached_entities);
@@ -693,7 +693,7 @@ bool entity::knows_alias(const std::string& potential_alias, const entity* other
 				for (size_t k = 0; k < aliases.size(); ++k)
 				{
 					std::string alias = string_utils.get_lowercase(aliases[k]);
-					if (engine->extra_text_processing(alias) == engine->extra_text_processing(string_utils.get_lowercase(potential_alias)))
+					if (engine->extra_text_processing(alias, get_game_instance()) == engine->extra_text_processing(string_utils.get_lowercase(potential_alias), get_game_instance()))
 						return true;
 				}
 			}
@@ -1022,7 +1022,7 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 		{
 			engine->println("");
 			engine->print("   > ");
-			input = engine->extra_text_processing(engine->get_input());
+			input = engine->extra_text_processing(engine->get_input(), get_game_instance());
 			engine->println("");
 		}
 		else //If this *isn't* the player, then it autonomously executes its own commands. The command is controlled via the "get_ai_command" function. This isn't the only way to control automatic entity behavior, but it does allow for more dynamic and "open-world" interactions between them.
@@ -1042,15 +1042,9 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 			{
 				engine::swap_from_dummy_char(input[i]);
 			}
-			input = game_instance->get_engine()->extra_text_processing(input);
+			input = game_instance->get_engine()->extra_text_processing(input, get_game_instance());
 		}
 	};
-
-	std::string dummy_return_val;
-	if(get_scene())
-		get_scene()->call_function(game_instance, "before_turn", { get_name() }, dummy_return_val);
-	
-	call_function(game_instance, "before_turn");
 
 	std::string lowercase_last_command_return_value = string_utils.get_lowercase(last_command_return_value);
 	string_utils.strip(lowercase_last_command_return_value);
@@ -1065,7 +1059,8 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 	{
 		++command_repeats;
 	}
-	++current_turn; //Advance the turn counter.
+
+	//++current_turn; //Advance the turn counter.
 	input = current_command;
 
 	narrative_queue = "";

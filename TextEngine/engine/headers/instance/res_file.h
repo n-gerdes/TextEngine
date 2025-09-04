@@ -39,7 +39,7 @@ private:
 	static std::vector<execution_registry_entry> execution_registry;
 
 private:
-	bool						add_lines_from_file(const engine* engine, const std::string& scenario_name, const std::string& name);
+	bool						add_lines_from_file(const engine* engine, const std::string& scenario_name, const std::string& name, game* game_instance);
 
 	void						check_line_match(const std::string& line, line_num line_num);
 public:
@@ -75,7 +75,7 @@ public:
 	const std::vector<line_num>& get_command_func_lines() const;
 	line_num					lines() const;
 	virtual void				process_line_from_file(const std::string& line);
-	bool						read(const engine* engine, const std::string& scenario_name, const std::string& filename);
+	bool						read(const engine* engine, const std::string& scenario_name, const std::string& filename, game* game_instance);
 	//bool						read(const std::string& scenario_name, const std::string& filename);
 	bool						read_raw(const std::string& filename);
 protected:

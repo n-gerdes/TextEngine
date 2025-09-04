@@ -47,6 +47,7 @@ public:
 	int							count_entities_in_scene() const;
 	void						launch(game* game_instance, int* threads_launched);
 	void						load_transfer_entities(game* game_instance);
+
 protected:
 	virtual void				on_destroyed();
 	
@@ -60,6 +61,7 @@ public:
 	virtual bool				resolve_input(game* game_instance, entity* user, const std::string& input, std::string& return_val);
 	void						queue_transfer(entity* ent);
 	void						finalize_entity_removal(); //All this does is decrement the counter for the current number of entities in the scene.
+	game*						get_game_instance();
 };
 
 #endif
