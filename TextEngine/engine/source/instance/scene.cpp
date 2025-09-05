@@ -106,12 +106,25 @@ const std::vector<entity*> scene::get_entities_in_scene() const
 	{
 		auto& children = (*(get_children().begin()))->get_children();
 		list.reserve(children.size());
-		for (auto i = children.begin(); i != children.end(); ++i)
+		if (children.size() == 0)
 		{
-			std::string child_name = (*i)->get_name();
-			entity* found = game_instance->get_entity(child_name, false);
-			list.push_back(found);
-			++entities_in_scene;
+			return list;
+		}
+		else if (children.size() == 1)
+		{
+			list.push_back(  game_instance->get_entity((*children.begin())->get_name(), false)  );
+			entities_in_scene = 1;
+			return list;
+		}
+		else
+		{
+			for (auto i = children.begin(); i != children.end(); ++i) //crashing error caused here. 'cannot increment value-initialized list iterator'. Only child was the mercant.
+			{
+				std::string child_name = (*i)->get_name();
+				entity* found = game_instance->get_entity(child_name, false);
+				list.push_back(found);
+				++entities_in_scene;
+			}
 		}
 	}
 	return list;
@@ -146,7 +159,7 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 			this_scene->has_read_description_after_loading_from_file = true;
 			this_scene->transferred_perspective_character = true;
 		}
-		const std::vector<entity*> children = this_scene->get_entities_in_scene();
+		const std::vector<entity*> children = this_scene->get_entities_in_scene(); //Crashing error comes from here
 
 		if (this_scene->transferred_perspective_character)
 		{

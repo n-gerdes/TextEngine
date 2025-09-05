@@ -73,6 +73,7 @@ public:
 		else if (c == dummy_space) { c = ' '; }
 		else if (c == dummy_colon) { c = ':'; }
 		else if (c == dummy_exclamation) { c = '!'; }
+		else if (c == dummy_period) { c = '.'; }
 	}
 
 	static void				swap_to_dummy_char(char& c)
@@ -89,26 +90,43 @@ public:
 		else if (c == ' ') { c = dummy_space; }
 		else if (c == ':') { c = dummy_colon; }
 		else if (c == '!') { c = dummy_exclamation; }
+		else if (c == '.') { c = dummy_period; }
 	}
+
+private:
+
+	static char last_character_printed;
+
+	/*
+	inline void				print_no_preamble(char c) const { print_mutex.lock(); swap_from_dummy_char(c); std::cout << c; print_mutex.unlock(); }
+	inline void				print_no_preamble(std::string str) { print_mutex.lock(); for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout <<  str; print_mutex.unlock(); }
+	inline void				print_no_preamble(const char str[]) { print_mutex.lock();  for (size_t i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); } std::cout << str; print_mutex.unlock(); }
+	
+	inline void				print_no_preamble() {};
+
+	template <typename T, typename... Args>
+	inline void				print_no_preamble(const T& output, Args... args) const { print_mutex.lock(); std::cout << output; print_mutex.unlock(); print_no_preamble(args...); }
+	*/
 public:
 
-	inline void				print(char c) const { print_mutex.lock(); swap_from_dummy_char(c); std::cout << c; print_mutex.unlock(); }
 
-	inline void				println(char c) const { print_mutex.lock(); swap_from_dummy_char(c); std::cout << c << std::endl; print_mutex.unlock(); }
+	inline void				print(char c) const { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } swap_from_dummy_char(c); std::cout << c; last_character_printed = c; print_mutex.unlock(); }
 
-	inline void				print(std::string str) { print_mutex.lock(); for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout << str; print_mutex.unlock(); }
+	inline void				println(char c) const { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } swap_from_dummy_char(c); std::cout << c << std::endl; last_character_printed = '\n'; print_mutex.unlock(); }
 
-	inline void				println(std::string str) { print_mutex.lock(); for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout << str << std::endl; print_mutex.unlock(); }
+	inline void				print(std::string str) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout << str; if (str.size() > 0) { last_character_printed = str[str.size() - 1]; } print_mutex.unlock(); }
 
-	inline void				print(const char str[]) { print_mutex.lock(); for (size_t i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); } std::cout << str; print_mutex.unlock(); }
-	inline void				println(const char str[]) { print_mutex.lock(); for (size_t i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); } std::cout << str << std::endl; print_mutex.unlock(); }
+	inline void				println(std::string str) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); } string_utils string_utils; string_utils.strip(str); std::cout << str << std::endl; last_character_printed = '\n'; print_mutex.unlock(); }
 
+	inline void				print(const char str[]) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } bool did_print = false; size_t i = 0;  for (i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); did_print = true; } std::cout << str; if (did_print) { --i; last_character_printed = str[i]; } print_mutex.unlock(); }
+	inline void				println(const char str[]) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } bool did_print = false; size_t i = 0; for (i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); did_print = true; } std::cout << str << std::endl; last_character_printed = '\n'; print_mutex.unlock(); }
 
-	template <typename T, typename... Args>
-	inline void				print(const T& output, Args... args) const { print_mutex.lock(); std::cout << output; print_mutex.unlock(); print(args...); }
 
 	template <typename T, typename... Args>
-	inline void				println(const T& output, Args... args) const { print(output); print(args...); print_mutex.lock(); std::cout << std::endl; print_mutex.unlock(); }
+	inline void				print(const T& output, Args... args) const { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } std::cout << output; last_character_printed = ' '; print_mutex.unlock(); print(args...); }
+
+	template <typename T, typename... Args>
+	inline void				println(const T& output, Args... args) const { print(output); print(args...); print_mutex.lock(); std::cout << std::endl; last_character_printed = '\n'; print_mutex.unlock(); }
 
 	template <typename T, typename... Args>
 	inline void				print_lines(const T& output, Args... args) const { println(output); print_lines(args...); }

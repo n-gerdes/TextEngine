@@ -1642,7 +1642,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 			for (int c_index = 0; c_index < quote.size(); ++c_index)
 			{
 				char& c = quote[c_index];
-				if(c=='=' || c == ':' || c=='!' || true)
+				if(c=='=' || c == ':' || c=='!' || c=='.' || true)
 					engine::swap_to_dummy_char(c); //Originally only swapped '=', but now I'm giving more of them a go. Did this 9/4/2025, may need to revert if it created bugs.
 			}
 			
@@ -2393,6 +2393,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			for (size_t i = 0; i < quote.size(); ++i)
 			{
 				char& c = quote[i];
+
+				/*
 				if (c == ',')
 					c = dummy_comma;
 				else if (c == '(')
@@ -2411,6 +2413,13 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					c = dummy_percent;
 				else if (c == ':')
 					c = dummy_colon;
+				else if (c == '!')
+					c = dummy_exclamation;
+				else if (c == '.')
+					c = dummy_period;
+					*/
+
+				engine::swap_to_dummy_char(c);
 				
 			}
 			if (quote == " ")

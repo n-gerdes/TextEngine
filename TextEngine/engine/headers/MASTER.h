@@ -1,6 +1,8 @@
 #ifndef MASTER_HEADER_FILE
 #define MASTER_HEADER_FILE
 
+#include <string>
+
 const static char dummy_command_character = 1; //Using the ASCII-reserved "Start of Header" character to replace content in quotes so it doesn't get processed, then gonna swap it back in later. I use this character because it's untypable, usually invisible in text, and not really used by modern systems for anything else, making it ideal as a control character.
 const static char pair_delimeter_character = 1; //Used by arrays to denote a pair between an index-value and its value - much like a hashmap.
 const static char func_pair_character = 1; //Used by the script loading code to pair user command functions with their input-substituted variations (which are automatically generated at load-time)
@@ -17,7 +19,10 @@ const static char dummy_percent = 131;
 const static char dummy_space = 132;
 const static char dummy_colon = 133;
 const static char dummy_exclamation = 134;
+const static char dummy_period = 135;
 
 const static bool FULL_CLEAR = false;
+
+const static std::string PRINT_PREAMBLE = "  ";
 
 #endif

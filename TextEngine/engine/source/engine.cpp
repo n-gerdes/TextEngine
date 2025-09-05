@@ -8,6 +8,7 @@
 #include <fstream>
 
 std::mutex engine::print_mutex;
+char engine::last_character_printed = '\n';
 
 entity* engine::AMBIGUOUS_CHARACTER() const
 {
@@ -16,6 +17,7 @@ entity* engine::AMBIGUOUS_CHARACTER() const
 
 void engine::clear_screen()
 {
+	last_character_printed = '\n';
 	for (int i = 0; i < 100; ++i)
 		std::cout << std::endl;
 #ifdef _WIN32
@@ -61,6 +63,7 @@ std::string engine::correct_tokenizer_bug(const std::string original) const
 
 engine::engine()
 {
+	last_character_printed = '\n';
 	save_registry = new game_obj_save_registry();
 	
 	subs.load_input_substitution("gamedata/input_substitution.dat");
@@ -127,37 +130,52 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 	}
 	else if (raw != nullptr && case_preserved == nullptr && processed == nullptr) //I want only the raw input
 	{
+		println();
+		print("     > ");
 		std::getline(std::cin, *raw);
+		last_character_printed = '\n';
 	}
 	else if (raw == nullptr && case_preserved != nullptr && processed == nullptr) //I want only the case preserved input
 	{
+		println();
+		print("     > ");
 		std::getline(std::cin, *case_preserved);
 		string_utils.strip(*case_preserved);
 		*case_preserved = string_utils.replace_all(*case_preserved, "~", "", false);
+		last_character_printed = '\n';
 	}
 	else if (raw == nullptr && case_preserved == nullptr && processed != nullptr) //I want only the fully processed input
 	{
+		println();
+		print("     > ");
 		std::getline(std::cin, *processed);
 		string_utils.strip(*processed);
 		string_utils.make_lowercase(*processed);
 		*processed = string_utils.replace_all(*processed, "~", "", false);
+		last_character_printed = '\n';
 	}
 	else if (raw != nullptr && case_preserved == nullptr && processed != nullptr) //I want the raw and fully processed input
 	{
+		println();
+		print("     > ");
 		std::getline(std::cin, *raw);
 		*processed = *raw;
 		string_utils.strip(*processed);
 		string_utils.make_lowercase(*processed);
 		*processed = string_utils.replace_all(*processed, "~", "", false);
+		last_character_printed = '\n';
 	}
 	else if (raw != nullptr && case_preserved != nullptr && processed != nullptr) //I want all three intermediary stages
 	{
+		println();
+		print("     > ");
 		std::getline(std::cin, *raw);
 		*case_preserved = *raw;
 		string_utils.strip(*case_preserved);
 		*case_preserved = string_utils.replace_all(*case_preserved, "~", "", false);
 		*processed = *case_preserved;
 		string_utils.make_lowercase(*processed);
+		last_character_printed = '\n';
 	}
 }
 

@@ -1020,8 +1020,8 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 		name_of_interrupter = "NULL";
 		if (game_instance->get_perspective_entity() == this) //If this entity is the perspective entity (player), then it gets its command from user input.
 		{
-			engine->println("");
-			engine->print("   > ");
+			//engine->println("");
+			//engine->print("     > ");
 			input = engine->extra_text_processing(engine->get_input(), get_game_instance());
 			engine->println("");
 		}

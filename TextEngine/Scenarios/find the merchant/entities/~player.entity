@@ -17,8 +17,7 @@ end
 
 //This is called before this entity takes its turn
 function before_turn()
-	say(get_value("debug"));
-	say(entity(~merchant).get_scene_name());
+	command:debug(get_name());
 end
 
 function before_leave(dest)
@@ -49,8 +48,7 @@ end
 /////////////////////   COMMANDS
 
 function command:debug(ent)
-	say(get_value("debug"));
-	say(entity(~merchant).get_scene_name());
+	say("Merchant Location: " entity(~merchant).get_scene_name());
 end
 
 function command:wait $time minutes(ent, time)

@@ -2,7 +2,7 @@ Notes can be freely written outside of functions and the first line & other sett
 However, within blocks of code, comments must be denoted by writing // at the beginning of the line.
 
 function initialize()
-	transfer(~timer)
+
 end
 
 function describe()
@@ -23,6 +23,10 @@ end
 
 
 //					COMMANDS
+
+function command:go to castle(caller)
+	return "Already here.";
+end
 
 function command:go to town(caller)
 	go_to_town(caller)

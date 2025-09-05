@@ -20,9 +20,10 @@ void game::game_loop()
 	while (game_going)
 	{
 		const auto& entities = get(this, "entities")->get_children();
+
+		/*
 		auto last_entity = entities.end();
 		--last_entity;
-
 		if ((*last_entity) != get_perspective_entity())
 		{
 			auto perspective = entities.begin();
@@ -33,7 +34,7 @@ void game::game_loop()
 			}
 			std::swap(last_entity, perspective);
 		}
-		
+		*/
 		const auto& scenes = get(this, "scenes")->get_children();
 		for (auto scene_iterator = scenes.begin(); scene_iterator != scenes.end(); ++scene_iterator)
 		{
