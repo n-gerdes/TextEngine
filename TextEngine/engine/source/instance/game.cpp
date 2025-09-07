@@ -839,7 +839,7 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 	return false;
 }
 
-void game::save_game_to_file() const
+void game::save_game_to_file()
 {
 	std::string scenario_directory = game_engine->get_scenario_directory(get_name());
 	std::string saves_directory = game_engine->get_saves_directory(get_name());
@@ -853,6 +853,17 @@ void game::save_game_to_file() const
 	std::string full_saves_list_directory = saves_directory + save_file_list_name;
 
 	bool successfully_read_save_files = list_of_current_saves.read_raw(full_saves_list_directory);
+	
+	auto ent_list = get_entities();
+	for (auto i = ent_list.begin(); i != ent_list.end(); ++i)
+	{
+		entity* c = *i;
+		while (!c->idle())
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+	}
+
 	if (successfully_read_save_files)
 	{
 		game_engine->print_lines("Choose save file:", "1. New File");

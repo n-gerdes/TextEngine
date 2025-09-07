@@ -81,7 +81,7 @@ public:
 	entity*					load_entity_from_file(const std::string& entity_name);
 	scene*					load_scene_from_file(const std::string& scene_name);
 	virtual bool			resolve_input(game* game_instance, entity* user, const std::string& input, std::string& return_val) override;
-	void					save_game_to_file() const; //This is what actually triggers a saving sequence.
+	void					save_game_to_file(); //This is what actually triggers a saving sequence.
 	void					set_meta_value(const std::string& var_name, const std::string& var_value);
 	void					set_perspective_entity(entity* pc);
 };

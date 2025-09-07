@@ -17,6 +17,7 @@ entity* engine::AMBIGUOUS_CHARACTER() const
 
 void engine::clear_screen()
 {
+	print_mutex.lock();
 	last_character_printed = '\n';
 	if (!FULL_CLEAR)
 	{
@@ -35,6 +36,7 @@ void engine::clear_screen()
 #endif
 
 	std::cout << std::endl;
+	print_mutex.unlock();
 }
 
 std::string engine::correct_tokenizer_bug(const std::string original) const
@@ -142,6 +144,7 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 		print("     > ");
 		std::getline(std::cin, *raw);
 		last_character_printed = '\n';
+		println();
 	}
 	else if (raw == nullptr && case_preserved != nullptr && processed == nullptr) //I want only the case preserved input
 	{
@@ -151,6 +154,7 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 		string_utils.strip(*case_preserved);
 		*case_preserved = string_utils.replace_all(*case_preserved, "~", "", false);
 		last_character_printed = '\n';
+		println();
 	}
 	else if (raw == nullptr && case_preserved == nullptr && processed != nullptr) //I want only the fully processed input
 	{
@@ -161,6 +165,7 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 		string_utils.make_lowercase(*processed);
 		*processed = string_utils.replace_all(*processed, "~", "", false);
 		last_character_printed = '\n';
+		println();
 	}
 	else if (raw != nullptr && case_preserved == nullptr && processed != nullptr) //I want the raw and fully processed input
 	{
@@ -172,6 +177,7 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 		string_utils.make_lowercase(*processed);
 		*processed = string_utils.replace_all(*processed, "~", "", false);
 		last_character_printed = '\n';
+		println();
 	}
 	else if (raw != nullptr && case_preserved != nullptr && processed != nullptr) //I want all three intermediary stages
 	{
@@ -184,6 +190,7 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 		*processed = *case_preserved;
 		string_utils.make_lowercase(*processed);
 		last_character_printed = '\n';
+		println();
 	}
 }
 
