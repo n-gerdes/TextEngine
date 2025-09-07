@@ -35,6 +35,12 @@ private:
 public:
 	substitution_wizard* get_substitution_wizard() { return &subs; };
 
+	inline void				set_save_any_time(bool can_save_on_command) { save_any_time = can_save_on_command; };
+	inline void				set_clear_on_scene_change(bool clears_when_scene_changes) { clear_on_scene_change = clears_when_scene_changes; };
+
+	inline bool				get_save_any_time() const { return save_any_time; };
+	inline bool				get_clear_on_scene_change() const {return clear_on_scene_change;};
+
 							game(const std::string& scenario_name, engine* engine_instance) : game_engine(engine_instance) { set_name(scenario_name); initialize(); }
 	bool					game_is_active() const;
 	entity*					get_any_entity(const std::string& name);

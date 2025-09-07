@@ -149,7 +149,7 @@ static std::mutex threads_launched_mutex;
 
 void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* threads_launched)
 {
-	srand(time(NULL));
+	srand(time(NULL)); //Every thread needs to randomize the RNG separately
 	while (game_instance->game_is_active())
 	{
 		this_scene->transferred_perspective_character = false;
@@ -181,42 +181,61 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 			}
 		}
 
+		entity* perspective_entity_found = nullptr;
+
+		auto act_on_entity = [&](entity* current_entity)
+			{
+				if (current_entity)
+				{
+					if (current_entity->idle() && this_scene != game_instance->get_perspective_entity()->get_scene())//current_entity->get_turn_number() >= game_instance->get_current_turn() - 1 && this_scene != game_instance->get_perspective_entity()->get_scene()
+					{
+						return;
+					}
+					else
+					{
+						std::string dummy_return_val;
+						this_scene->call_function(game_instance, "before_turn", { current_entity->get_name() }, dummy_return_val);
+
+						current_entity->call_function(game_instance, "before_turn");
+
+						std::string reason_for_failure;
+						bool success = current_entity->take_turn(game_instance, reason_for_failure);
+
+						while (!success && current_entity == game_instance->get_perspective_entity())
+						{
+							if (reason_for_failure == "")
+							{
+								//current_entity->println(game_instance, current_entity->get_last_command());
+								current_entity->println(game_instance, "That doesn't seem to be an option here.");
+							}
+							else
+							{
+								current_entity->println(game_instance, reason_for_failure);
+							}
+							current_entity->interrupt();
+							success = current_entity->take_turn(game_instance, reason_for_failure);
+						}
+						current_entity->advance_turn_count();
+					}
+				}
+			};
+
 		for (auto entity_iterator = children.begin(); entity_iterator != children.end(); ++entity_iterator)
 		{
 			entity* current_entity = dynamic_cast<entity*>(*entity_iterator);
-			if (current_entity)
+			if (current_entity == game_instance->get_perspective_entity())
 			{
-				if (current_entity->get_turn_number() >= game_instance->get_current_turn() - 1 && this_scene != game_instance->get_perspective_entity()->get_scene())
-				{
-					continue;
-				}
-				else
-				{
-					std::string dummy_return_val;
-					this_scene->call_function(game_instance, "before_turn", { current_entity->get_name() }, dummy_return_val);
-
-					current_entity->call_function(game_instance, "before_turn");
-
-					std::string reason_for_failure;
-					bool success = current_entity->take_turn(game_instance, reason_for_failure);
-					
-					while (!success && current_entity == game_instance->get_perspective_entity())
-					{
-						if (reason_for_failure == "")
-						{
-							//current_entity->println(game_instance, current_entity->get_last_command());
-							current_entity->println(game_instance, "That doesn't seem to be an option here.");
-						}
-						else
-						{
-							current_entity->println(game_instance, reason_for_failure);
-						}
-						current_entity->interrupt();
-						success = current_entity->take_turn(game_instance, reason_for_failure);
-					}
-					current_entity->advance_turn_count();
-				}
+				perspective_entity_found = current_entity;
 			}
+			else
+			{
+				act_on_entity(current_entity);
+			}
+		}
+
+		if (perspective_entity_found)
+		{
+			act_on_entity(perspective_entity_found);
 		}
 	}
 	
@@ -254,6 +273,8 @@ void scene::load_transfer_entities(game* game_instance)
 				transferred_perspective_character = true; //This is so when transferring the PC to a scene, it knows to read off a description to them.
 				if (!has_read_description_after_loading_from_file)
 					has_read_description_after_loading_from_file = true;
+				if (game_instance->get_clear_on_scene_change())
+					game_instance->get_engine()->clear_screen();
 			}
 			ent->set_to_scene(get_name());
 			++entities_in_scene;

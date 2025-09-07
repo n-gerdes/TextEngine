@@ -34,6 +34,7 @@ stop:cease
 stop:terminate
 strong:powerful
 strong:mighty
+on:upon
 the:this
 the:my
 unequip:doff
@@ -59,6 +60,9 @@ remove_raw).
 remove_raw)!
 remove_raw)?
 remove_raw)-
+remove)back to
+remove)return to
+remove)return back
 remove)try to
 remove)really
 remove)I'd like to
@@ -80,3 +84,6 @@ remove)to
 remove)for
 remove)the
 remove)i
+remove)lemme
+remove)let me
+remove)please

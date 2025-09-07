@@ -1348,11 +1348,9 @@ void call_generic_func_func(game* game_instance, res_file& script, std::vector<u
 {
 	std::string& func_name = wildcards[0];
 	std::string& complete_args_string = wildcards[1];
-	//err_msg = "";
 	std::string dummy_return_value;
 	std::vector<std::string> new_call_arg_values = script.extract_args_from_token(complete_args_string, variable_names, variable_values, game_instance);
 	script.call_function(game_instance, func_name, new_call_arg_values, dummy_return_value);
-	//matched_command_id = 48;
 }
 
 void call_generic_func_argless_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
@@ -1488,6 +1486,56 @@ void breakpoint_func(game* game_instance, res_file& script, std::vector<uint32_t
 	game_instance->get_engine()->println("BREAKPOINT REACHED");
 }
 
+void set_clear_on_scene_change_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
+	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
+	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
+{
+	std::string& complete_args_string = wildcards[0];
+	//err_msg = "";
+	std::string dummy_return_value;
+	std::vector<std::string> new_call_arg_values = script.extract_args_from_token(complete_args_string, variable_names, variable_values, game_instance);
+	bool val = game_instance->get_clear_on_scene_change();
+	if (new_call_arg_values.size() > 1)
+	{
+		err_msg = "ERROR: set_clear_on_scene_change expects 1 argument, got " + std::to_string(new_call_arg_values.size());
+	}
+	else
+	{
+		const std::string& arg = new_call_arg_values[0];
+		val = script.evaluate_condition(game_instance, arg, err_msg, variable_names, variable_values);
+		if(err_msg == "")
+			game_instance->set_clear_on_scene_change(val);
+	}
+}
+
+void save_from_script_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
+	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
+	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
+{
+	game_instance->save_game_to_file();
+}
+
+void set_save_any_time_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
+	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
+	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
+{
+	std::string& complete_args_string = wildcards[0];
+	//err_msg = "";
+	std::string dummy_return_value;
+	std::vector<std::string> new_call_arg_values = script.extract_args_from_token(complete_args_string, variable_names, variable_values, game_instance);
+	bool val = game_instance->get_clear_on_scene_change();
+	if (new_call_arg_values.size() > 1)
+	{
+		err_msg = "ERROR: set_save_any_time expects 1 argument, got " + std::to_string(new_call_arg_values.size());
+	}
+	else
+	{
+		const std::string& arg = new_call_arg_values[0];
+		val = script.evaluate_condition(game_instance, arg, err_msg, variable_names, variable_values);
+		if (err_msg == "")
+			game_instance->set_save_any_time(val);
+	}
+}
 
 std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 	res_file::execution_registry_entry("if ( $condition )", &if_then_func, true),
@@ -1555,6 +1603,11 @@ std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 
 	res_file::execution_registry_entry("$func_name ( $args )", &call_generic_func_func, false),
 	res_file::execution_registry_entry("$func_name ()", &call_generic_func_argless_func, false),
+
+	res_file::execution_registry_entry("set_clear_on_scene_change ( $arg )", set_clear_on_scene_change_func, false),
+	res_file::execution_registry_entry("set_save_any_time ( $arg )", set_save_any_time_func, false),
+
+	res_file::execution_registry_entry("save", save_from_script_func, false),
 
 	res_file::execution_registry_entry("BREAKPOINT", &breakpoint_func, false)
 };
@@ -1799,6 +1852,13 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("length", "size");
 	substitute_alias_function("len", "size");
 	substitute_alias_function("dim", "size");
+	substitute_alias_function("sizeof", "size");
+	substitute_alias_function("size_of", "size");
+
+	substitute_alias_function("set_save_anywhere", "set_save_any_time");
+	substitute_alias_function("set_save_anytime", "set_save_any_time");
+	substitute_alias_function("set_clear_on_enter", "set_clear_on_scene_change");
+	substitute_alias_function("set_clear_on_leave", "set_clear_on_scene_change");
 
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)

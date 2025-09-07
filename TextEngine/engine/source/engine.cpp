@@ -347,6 +347,8 @@ void engine::start_new_game(const std::string& scenario_name)
 	std::vector<std::string> allowed_starter_characters;
 	std::vector<std::string> starter_character_aliases;
 	bool allow_custom_character = false;
+	bool clear_on_scene_change = false;
+	bool save_any_time = true;
 	std::vector<std::string> wildcards;
 
 	bool read_settings = settings.read_raw(settings_directory);
@@ -362,7 +364,7 @@ void engine::start_new_game(const std::string& scenario_name)
 			{
 				println("Error on ", settings_directory, " line ", i + 1, ": invalid value for setting, defaulting to false.");
 			};
-
+			allow_custom_character = false;
 			if (string_utils.matches_command("allow_custom_character : $bool", line, wildcards, ": ") && false) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
@@ -370,6 +372,26 @@ void engine::start_new_game(const std::string& scenario_name)
 					allow_custom_character = true;
 				else if (val == "no" || val == "false")
 					allow_custom_character = false;
+				else
+					print_settings_bool_error();
+			}
+			else if (string_utils.matches_command("save_any_time : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
+			{
+				std::string& val = wildcards[0];
+				if (val == "yes" || val == "true")
+					save_any_time = true;
+				else if (val == "no" || val == "false")
+					save_any_time = false;
+				else
+					print_settings_bool_error();
+			}
+			else if (string_utils.matches_command("clear_on_scene_change : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
+			{
+				std::string& val = wildcards[0];
+				if (val == "yes" || val == "true")
+					clear_on_scene_change = true;
+				else if (val == "no" || val == "false")
+					clear_on_scene_change = false;
 				else
 					print_settings_bool_error();
 			}
@@ -390,7 +412,8 @@ void engine::start_new_game(const std::string& scenario_name)
 
 		//INITIALIZE GAME INSTANCE
 		game* game_instance = new game(scenario_name, this);
-
+		game_instance->set_clear_on_scene_change(clear_on_scene_change);
+		game_instance->set_save_any_time(save_any_time);
 		//HANDLE CHARACTER SELECTION / CREATION
 		entity* pc = nullptr;
 		if (!allow_custom_character && allowed_starter_characters.size() == 0)

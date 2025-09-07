@@ -80,6 +80,8 @@ void game::initialize()
 void game::save_variables(std::ofstream& file, const std::string& scenario_name, engine* engine) const
 {
 	save_uint32_t(file, game_version);
+	save_bool(file, save_any_time);
+	save_bool(file, clear_on_scene_change);
 	save_string(file, perspective_entity);
 }
 
@@ -87,6 +89,8 @@ void game::load_variables(std::ifstream& file, const std::string& scenario_name,
 {
 	uint32_t loaded_game_version = 0;
 	load_uint32_t(file, loaded_game_version);
+	load_bool(file, save_any_time);
+	load_bool(file, clear_on_scene_change);
 	load_string(file, perspective_entity);
 }
 
@@ -835,6 +839,19 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 			return_val = "DONE";
 			return true;
 		}
+		else if (string_utils.matches_command("describe", input) || string_utils.matches_command("help", input) || string_utils.matches_command("options", input))
+		{
+			scene* cur_scene = get_perspective_entity()->get_scene();
+			cur_scene->call_function(game_instance, "describe");
+			auto siblings = cur_scene->get_entities_in_scene();
+			for (auto i = siblings.begin(); i != siblings.end(); ++i)
+			{
+				entity* s = *i;
+				s->call_function(game_instance, "describe");
+			}
+			return_val = "DONE";
+			return true;
+		}
 	}
 	return false;
 }
@@ -858,7 +875,9 @@ void game::save_game_to_file()
 	for (auto i = ent_list.begin(); i != ent_list.end(); ++i)
 	{
 		entity* c = *i;
-		while (!c->idle())
+		if (c == get_perspective_entity())
+			continue;
+		while ((!c->idle()) && (c->get_scene()!=get_perspective_entity()->get_scene()))
 		{
 			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}

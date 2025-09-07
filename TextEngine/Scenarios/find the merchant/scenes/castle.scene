@@ -24,6 +24,12 @@ end
 
 //					COMMANDS
 
+function command:sit on throne(caller)
+	if(entity(caller).is_perspective_entity())
+		save;
+	end
+end
+
 function command:go to castle(caller)
 	return "Already here.";
 end
