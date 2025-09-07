@@ -163,7 +163,7 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 
 		if (this_scene->transferred_perspective_character)
 		{
-			this_scene->call_function(game_instance, "describe");
+			//this_scene->call_function(game_instance, "describe");
 			for (auto entity_iterator = children.begin(); entity_iterator != children.end(); ++entity_iterator)
 			{
 				entity* current_entity = dynamic_cast<entity*>(*entity_iterator);
@@ -199,6 +199,7 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 
 					std::string reason_for_failure;
 					bool success = current_entity->take_turn(game_instance, reason_for_failure);
+					
 					while (!success && current_entity == game_instance->get_perspective_entity())
 					{
 						if (reason_for_failure == "")

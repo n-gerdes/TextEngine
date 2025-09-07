@@ -824,11 +824,12 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 			return true;
 		}
 		else if (
-			string_utils.matches_command("save", input) ||
+			allow_save_any_time && 
+			(string_utils.matches_command("save", input) ||
 			string_utils.matches_command("save game", input) ||
 			string_utils.matches_command("save scenario", input) ||
 			string_utils.matches_command("save program", input)
-			)
+			))
 		{
 			save_game_to_file();
 			return_val = "DONE";

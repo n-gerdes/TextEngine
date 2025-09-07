@@ -18,8 +18,14 @@ entity* engine::AMBIGUOUS_CHARACTER() const
 void engine::clear_screen()
 {
 	last_character_printed = '\n';
-	for (int i = 0; i < 100; ++i)
-		std::cout << std::endl;
+	if (!FULL_CLEAR)
+	{
+		for (int i = 0; i < 100; ++i)
+		{
+			std::cout << std::endl;
+		}
+	}
+	
 #ifdef _WIN32
 	if (FULL_CLEAR)system("cls");
 #endif
@@ -27,6 +33,8 @@ void engine::clear_screen()
 #if defined(__linux__) || defined(__unix__) || defined(__unix) || defined(__APPLE__) || defined(__MACH__)
 	if (FULL_CLEAR)system("clear");
 #endif
+
+	std::cout << std::endl;
 }
 
 std::string engine::correct_tokenizer_bug(const std::string original) const
@@ -130,14 +138,14 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 	}
 	else if (raw != nullptr && case_preserved == nullptr && processed == nullptr) //I want only the raw input
 	{
-		println();
+		//println();
 		print("     > ");
 		std::getline(std::cin, *raw);
 		last_character_printed = '\n';
 	}
 	else if (raw == nullptr && case_preserved != nullptr && processed == nullptr) //I want only the case preserved input
 	{
-		println();
+		//println();
 		print("     > ");
 		std::getline(std::cin, *case_preserved);
 		string_utils.strip(*case_preserved);
@@ -146,7 +154,7 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 	}
 	else if (raw == nullptr && case_preserved == nullptr && processed != nullptr) //I want only the fully processed input
 	{
-		println();
+		//println();
 		print("     > ");
 		std::getline(std::cin, *processed);
 		string_utils.strip(*processed);
@@ -156,7 +164,7 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 	}
 	else if (raw != nullptr && case_preserved == nullptr && processed != nullptr) //I want the raw and fully processed input
 	{
-		println();
+		//println();
 		print("     > ");
 		std::getline(std::cin, *raw);
 		*processed = *raw;
@@ -167,7 +175,7 @@ void engine::get_input(std::string* raw, std::string* case_preserved, std::strin
 	}
 	else if (raw != nullptr && case_preserved != nullptr && processed != nullptr) //I want all three intermediary stages
 	{
-		println();
+		//println();
 		print("     > ");
 		std::getline(std::cin, *raw);
 		*case_preserved = *raw;
@@ -271,23 +279,28 @@ void engine::main_menu()
 	std::string raw;
 	while (game_going)
 	{
+		println();
 		print_lines(
 			"1. Open Scenario", 
 			"2. Exit"
 		);
-
+		string_utils string_utils;
 		input = get_input();
+		string_utils.make_lowercase(input);
+		string_utils.strip(input);
+		
 
-		if (input == "1")
+		if (input == "1" || input=="open" || input == "open scenario" || input == "scenario" || input == "o" || input == "s" || input == "os" || input == "one")
 		{
 			open_scenario(input);
 		}
-		else if (input == "2")
+		else if (input == "2" || input == "exit" || input == "e" || input == "close" || input == "terminate" || input == "two"|| input == "end" || input == "quit")
 		{
 			game_going = false;
 		}
 		else
 		{
+			clear_screen();
 			println("That's not an option");
 		}
 	}
@@ -320,7 +333,7 @@ void engine::start_new_game(const std::string& scenario_name)
 				println("Error on ", settings_directory, " line ", i + 1, ": invalid value for setting, defaulting to false.");
 			};
 
-			if (string_utils.matches_command("allow_custom_character : $bool", line, wildcards, ": "))
+			if (string_utils.matches_command("allow_custom_character : $bool", line, wildcards, ": ") && false) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
 				if (val == "yes" || val == "true")
@@ -357,16 +370,25 @@ void engine::start_new_game(const std::string& scenario_name)
 		}
 		else if (!allow_custom_character)
 		{
-			println("Choose character:");
-			for (int i = 0; i < allowed_starter_characters.size(); ++i)
-				println(i+1, ". ", starter_character_aliases[i]);
+			if (allowed_starter_characters.size() == 1)
+			{
+				std::string starter_character_name = allowed_starter_characters[0];
+				pc = game_instance->load_entity_from_file(starter_character_name);
+			}
+			else
+			{
+				println("Choose character:");
+				for (int i = 0; i < allowed_starter_characters.size(); ++i)
+					println(i + 1, ". ", starter_character_aliases[i]);
 
-			int choice = get_integer_input(1, allowed_starter_characters.size() + 1);
+				int choice = get_integer_input(1, allowed_starter_characters.size() + 1);
 
-			std::string starter_character_name = allowed_starter_characters[choice - 1];
+				std::string starter_character_name = allowed_starter_characters[choice - 1];
 
-			println("Chose ", starter_character_aliases[choice - 1]);
-			pc = game_instance->load_entity_from_file(starter_character_name);
+				println("Chose ", starter_character_aliases[choice - 1]);
+				pc = game_instance->load_entity_from_file(starter_character_name);
+			}
+			
 		}
 		else if (allow_custom_character && allowed_starter_characters.size() != 0)
 		{
@@ -452,7 +474,7 @@ void engine::open_scenario(std::string& input)
 	bool found_saves = save_files.read_raw(get_saves_directory(input) + "files.dat");
 	if (found_saves)
 	{
-		if (save_files.lines() == 0)
+		if (save_files.lines() == 0 || ((save_files.lines()==1 || save_files.lines()==2) && save_files.get_line(1)==""))
 		{
 			start_new_game(input);
 		}

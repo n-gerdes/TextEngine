@@ -21,7 +21,7 @@ const static char dummy_colon = 133;
 const static char dummy_exclamation = 134;
 const static char dummy_period = 135;
 
-const static bool FULL_CLEAR = false;
+const static bool FULL_CLEAR = true;
 
 const static std::string PRINT_PREAMBLE = "  ";
 

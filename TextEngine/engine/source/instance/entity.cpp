@@ -33,10 +33,14 @@ entity::entity()
 void entity::save_variables(std::ofstream& file, const std::string& scenario_name, engine* engine) const
 {
 	this;
-	while (!idle() && 
-		!( get_game_instance()->get_perspective_entity()->get_scene() == get_scene() )
+	while (
+		(!idle()) &&
+		(!(get_game_instance()->get_perspective_entity()->get_scene() == get_scene()))
 		)
+	{
+		//std::cout << get_name() << ": " << idle() << " / " << ((get_game_instance()->get_perspective_entity()->get_scene() == get_scene())) << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
 	
 	adjudicator::save_variables(file, scenario_name, engine);
 	save_uint64_t(file, current_turn);
@@ -424,6 +428,11 @@ void entity::attach_to(entity* entity_to_attach_to)
 	entity_to_attach_to->attach(this);
 }
 
+bool entity::is_perspective_entity() const
+{
+	return get_game_instance()->get_perspective_entity() == this;
+}
+
 bool entity::in_transfer_queue()
 {
 	return is_in_transfer_queue;
@@ -669,7 +678,7 @@ uint64_t entity::get_turn_number() const
 bool entity::idle() const
 {
 	waiting_for_pc_mutex.lock();
-	bool return_val = waiting_for_pc || has_never_entered_scene;
+	bool return_val = (waiting_for_pc || has_never_entered_scene || current_turn >= get_game_instance()->get_perspective_entity()->get_turn_number()) && (!is_in_transfer_queue);
 	waiting_for_pc_mutex.unlock();
 	return return_val;
 }
@@ -957,6 +966,10 @@ scene* entity::set_to_scene(const std::string& scene_name)
 		new_scene->get(get_game_instance(), "entities")->add_child(new dummy(get_name())); //Add a reference to myself to the new scene
 		scene_ptr = new_scene;
 		has_never_entered_scene = false;
+		set_in_transfer_queue(false);
+		if(get_game_instance()->get_perspective_entity() == this)
+			new_scene->call_function(get_game_instance(), "describe");
+
 		new_scene->call_function(get_game_instance(), "on_enter_scene", { get_name() }, dummy_return_value);
 		call_function(get_game_instance(), "on_enter_scene");
 
@@ -970,7 +983,6 @@ scene* entity::set_to_scene(const std::string& scene_name)
 				call_function(get_game_instance(), "on_entity_approach", { sibling->get_name() }, dummy_return_value);
 			}
 		}
-		set_in_transfer_queue(false);
 		return new_scene;
 	}
 	else
@@ -1127,7 +1139,8 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 		else//If it still failed to do anything it means it tried to pick an invalid choice.
 		{
 			waiting_for_pc_mutex.lock();
-			waiting_for_pc = true;
+			//if (!is_perspective_entity())
+				waiting_for_pc = true;
 			waiting_for_pc_mutex.unlock();
 			reason_for_failure = "";
 			return false;
@@ -1135,7 +1148,8 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 	}
 
 	waiting_for_pc_mutex.lock();
-	waiting_for_pc = true;
+	//if (!is_perspective_entity())
+		waiting_for_pc = true;
 	waiting_for_pc_mutex.unlock();
 	return true;
 }

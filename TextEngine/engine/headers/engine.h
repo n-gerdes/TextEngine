@@ -53,8 +53,8 @@ public:
 
 	void					open_scenario(std::string& input);
 
-	inline void				print() const{}
-	inline void				println() const{}
+	inline void				print() const{ }
+	inline void				println() const { print_mutex.lock(); std::cout << std::endl;  last_character_printed = '\n'; print_mutex.unlock(); }
 	inline void				print_lines() const{}
 
 private:
@@ -108,7 +108,6 @@ private:
 	inline void				print_no_preamble(const T& output, Args... args) const { print_mutex.lock(); std::cout << output; print_mutex.unlock(); print_no_preamble(args...); }
 	*/
 public:
-
 
 	inline void				print(char c) const { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } swap_from_dummy_char(c); std::cout << c; last_character_printed = c; print_mutex.unlock(); }
 
