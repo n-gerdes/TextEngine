@@ -318,9 +318,19 @@ void engine::main_menu()
 		input = get_input();
 		string_utils.make_lowercase(input);
 		string_utils.strip(input);
-		
+		input = extra_text_processing(input, nullptr);
+		string_utils.replace_all(input, "  ", " ", false);
+		input = string_utils.replace_all(input, ".", "", false);
+		string_utils.make_lowercase(input);
+		input = string_utils.replace_all(input, "i'd like you to", "", false);
+		input = string_utils.replace_all(input, "i'd love you to", "", false);
+		input = string_utils.replace_all(input, "i'd like for you to", "", false);
+		input = string_utils.replace_all(input, "i'd love for you to", "", false);
+		input = string_utils.replace_all(input, "if you will", "", false);
+		input = string_utils.replace_all(input, "can you", "", false);
+		string_utils.strip(input);
 
-		if (input == "1" || input=="open" || input == "open scenario" || input == "scenario" || input == "o" || input == "s" || input == "os" || input == "one")
+		if (input == "1" || input=="open" || input == "open scenario" || input == "scenario" || input == "o" || input == "s" || input == "os" || input == "one" || input == "open a scenario" || input == "open the scenario" || input == "1 1")
 		{
 			open_scenario(input);
 		}
