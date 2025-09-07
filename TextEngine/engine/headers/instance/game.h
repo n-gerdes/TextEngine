@@ -30,7 +30,8 @@ private:
 	substitution_wizard subs;
 	
 	bool clear_on_scene_change = false;
-	bool allow_save_any_time = true;
+	bool save_any_time = true;
+
 public:
 	substitution_wizard* get_substitution_wizard() { return &subs; };
 

@@ -17,6 +17,11 @@ entity* engine::AMBIGUOUS_CHARACTER() const
 
 void engine::clear_screen()
 {
+	clear_screen(true);
+}
+
+void engine::clear_screen(bool extra_line)
+{
 	print_mutex.lock();
 	last_character_printed = '\n';
 	if (!FULL_CLEAR)
@@ -26,7 +31,7 @@ void engine::clear_screen()
 			std::cout << std::endl;
 		}
 	}
-	
+
 #ifdef _WIN32
 	if (FULL_CLEAR)system("cls");
 #endif
@@ -34,8 +39,8 @@ void engine::clear_screen()
 #if defined(__linux__) || defined(__unix__) || defined(__unix) || defined(__APPLE__) || defined(__MACH__)
 	if (FULL_CLEAR)system("clear");
 #endif
-
-	std::cout << std::endl;
+	if(extra_line)
+		std::cout << std::endl;
 	print_mutex.unlock();
 }
 
@@ -260,7 +265,18 @@ game* engine::load_game(const std::string& scenario_name, const std::string& sav
 		{
 			try
 			{
+				clear_screen();
 				game_instance->load_from_file(input_file, *this, scenario_name, this);
+				game_instance->get_perspective_entity()->get_scene()->call_function(game_instance, "describe");
+				auto ents = game_instance->get_perspective_entity()->get_scene()->get_entities_in_scene();
+				for (auto i = ents.begin(); i != ents.end(); ++i)
+				{
+					entity* d = *i;
+					if (d != game_instance->get_perspective_entity())
+					{
+						d->call_function(game_instance, "describe");
+					}
+				}
 			}
 			catch (const std::exception& E)
 			{

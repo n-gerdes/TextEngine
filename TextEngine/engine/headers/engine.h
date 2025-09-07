@@ -27,7 +27,8 @@ protected:
 
 public:
 	entity*					AMBIGUOUS_CHARACTER() const;
-	void					clear_screen();
+	inline void				clear_screen();
+	inline void				clear_screen(bool print_extra_line);
 	std::string				correct_tokenizer_bug(const std::string original) const;
 							~engine();
 							engine();

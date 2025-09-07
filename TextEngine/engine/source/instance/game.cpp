@@ -820,11 +820,11 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 		{
 			return_val = "DONE";
 			game_going = false;
-			get_engine()->clear_screen();
+			get_engine()->clear_screen(false);
 			return true;
 		}
 		else if (
-			allow_save_any_time && 
+			save_any_time && 
 			(string_utils.matches_command("save", input) ||
 			string_utils.matches_command("save game", input) ||
 			string_utils.matches_command("save scenario", input) ||
