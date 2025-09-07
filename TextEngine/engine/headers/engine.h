@@ -22,7 +22,7 @@ private:
 	//The second key is the word to substitute
 	//The output is a vector containing words that it can possibly change it to
 	substitution_wizard subs;
-	bool fresh_start = true; //Tracks whether or not this is a "fresh" engine instance., i.e., one where a scenario has not yet been loaded. Used to fix a bug in which exiting to the menu after loading a scenario causes it to print an extra newline for some reason.
+	bool correct_menu_display_bug_flag = true; //Tracks whether or not this is a "fresh" engine instance., i.e., one where a scenario has not yet been loaded. Used to fix a bug in which exiting to the menu after loading a scenario causes it to print an extra newline for some reason.
 	static std::mutex print_mutex;
 protected:
 
