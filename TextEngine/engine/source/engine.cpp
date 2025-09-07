@@ -302,7 +302,8 @@ void engine::main_menu()
 	std::string raw;
 	while (game_going)
 	{
-		println();
+		if(fresh_start)
+			println();
 		print_lines(
 			"1. Open Scenario", 
 			"2. Exit"
@@ -441,7 +442,7 @@ void engine::start_new_game(const std::string& scenario_name)
 		}
 		
 		clear_screen();
-
+		fresh_start = false;
 		//Settings have been loaded. A character is chosen. It's time to begin.
 		scene* starting_scene = game_instance->get_scene("start");
 
@@ -483,6 +484,7 @@ std::string engine::output_substitution(game* game_instance, const std::string& 
 
 void engine::start_game_instance(game* game_instance)
 {
+	fresh_start = false;
 	game_instance->game_loop(); //Run the game
 	game_instance->destroy(); //After it finishes, clear the memory for it.
 	clear_screen();
