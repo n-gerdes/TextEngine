@@ -802,6 +802,8 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 	if (user == get_perspective_entity())
 	{
 		string_utils string_utils;
+		std::string input = input_;
+		/*
 		std::string input = string_utils.replace_all(input_, ", ", "", false);
 		input = string_utils.replace_all(input, ".", "",false);
 		string_utils.make_lowercase(input);
@@ -812,6 +814,7 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 		input = string_utils.replace_all(input, "if you will", "", false);
 		input = string_utils.replace_all(input, "can you", "", false);
 		string_utils.strip(input);
+		*/
 		std::vector<std::string> dummy;
 		if (
 			string_utils.matches_command("quit", input) || 

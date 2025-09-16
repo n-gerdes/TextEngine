@@ -1702,7 +1702,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	}
 
 	line = " " + line + " ";
-	const std::string delimeters = " ()+=[]";
+	const std::string delimeters = " ()+=[].";
 	auto substitute_alias_function = [&](const std::string& alias_func, const std::string& original_func)
 	{
 		for (size_t i = 0; i < delimeters.size(); ++i)
@@ -1857,6 +1857,102 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 
 	substitute_alias_function("process_input","process_as_input");
 	substitute_alias_function("input_substitution", "process_as_input");
+
+	substitute_alias_function("get_int", "prompt_int");
+	substitute_alias_function("type_int", "prompt_int");
+	substitute_alias_function("input_int", "prompt_int");
+	substitute_alias_function("int_input", "prompt_int");
+	substitute_alias_function("get_int_input", "prompt_int");
+	substitute_alias_function("get_input_int", "prompt_int");
+	substitute_alias_function("get_integer", "prompt_int");
+	substitute_alias_function("type_integer", "prompt_int");
+	substitute_alias_function("input_integer", "prompt_int");
+	substitute_alias_function("integer_input", "prompt_int");
+	substitute_alias_function("get_integer_input", "prompt_int");
+	substitute_alias_function("get_input_integer", "prompt_int");
+
+	substitute_alias_function("get_bool", "prompt_bool");
+	substitute_alias_function("type_bool", "prompt_bool");
+	substitute_alias_function("input_bool", "prompt_bool");
+	substitute_alias_function("bool_input", "prompt_bool");
+	substitute_alias_function("get_bool_input", "prompt_bool");
+	substitute_alias_function("get_input_bool", "prompt_bool");
+	substitute_alias_function("get_boolean", "prompt_bool");
+	substitute_alias_function("type_boolean", "prompt_bool");
+	substitute_alias_function("input_boolean", "prompt_bool");
+	substitute_alias_function("boolean_input", "prompt_bool");
+	substitute_alias_function("get_boolean_input", "prompt_bool");
+	substitute_alias_function("get_input_boolean", "prompt_bool");
+
+	substitute_alias_function("get_bool", "prompt_bool");
+	substitute_alias_function("type_bool", "prompt_bool");
+	substitute_alias_function("input_bool", "prompt_bool");
+	substitute_alias_function("bool_input", "prompt_bool");
+	substitute_alias_function("get_bool_input", "prompt_bool");
+	substitute_alias_function("get_input_bool", "prompt_bool");
+	substitute_alias_function("get_boolean", "prompt_bool");
+	substitute_alias_function("type_boolean", "prompt_bool");
+	substitute_alias_function("input_boolean", "prompt_bool");
+	substitute_alias_function("boolean_input", "prompt_bool");
+	substitute_alias_function("get_boolean_input", "prompt_bool");
+	substitute_alias_function("get_input_boolean", "prompt_bool");
+
+	substitute_alias_function("get_num", "prompt_num");
+	substitute_alias_function("type_num", "prompt_num");
+	substitute_alias_function("input_num", "prompt_num");
+	substitute_alias_function("num_input", "prompt_num");
+	substitute_alias_function("get_num_input", "prompt_num");
+	substitute_alias_function("get_input_num", "prompt_num");
+	substitute_alias_function("get_number", "prompt_num");
+	substitute_alias_function("type_number", "prompt_num");
+	substitute_alias_function("input_number", "prompt_num");
+	substitute_alias_function("number_input", "prompt_num");
+	substitute_alias_function("get_number_input", "prompt_num");
+	substitute_alias_function("get_input_number", "prompt_num");
+	substitute_alias_function("get_float", "prompt_num");
+	substitute_alias_function("type_float", "prompt_num");
+	substitute_alias_function("input_float", "prompt_num");
+	substitute_alias_function("float_input", "prompt_num");
+	substitute_alias_function("get_float_input", "prompt_num");
+	substitute_alias_function("get_input_float", "prompt_num");
+	substitute_alias_function("get_float", "prompt_num");
+
+	substitute_alias_function("get_str", "prompt_string");
+	substitute_alias_function("type_str", "prompt_string");
+	substitute_alias_function("input_str", "prompt_string");
+	substitute_alias_function("str_input", "prompt_string");
+	substitute_alias_function("get_str_input", "prompt_string");
+	substitute_alias_function("get_input_str", "prompt_string");
+	substitute_alias_function("get_string", "prompt_string");
+	substitute_alias_function("type_string", "prompt_string");
+	substitute_alias_function("input_string", "prompt_string");
+	substitute_alias_function("string_input", "prompt_string");
+	substitute_alias_function("get_string_input", "prompt_string");
+	substitute_alias_function("get_input_string", "prompt_string");
+
+	substitute_alias_function("get_raw_str", "prompt_string");
+	substitute_alias_function("type_raw_str", "prompt_string");
+	substitute_alias_function("input_raw_str", "prompt_string");
+	substitute_alias_function("raw_str_input", "prompt_string");
+	substitute_alias_function("get_raw_str_input", "prompt_string");
+	substitute_alias_function("get_input_raw_str", "prompt_string");
+	substitute_alias_function("get_raw_string", "prompt_string");
+	substitute_alias_function("type_raw_string", "prompt_string");
+	substitute_alias_function("input_raw_string", "prompt_string");
+	substitute_alias_function("raw_string_input", "prompt_string");
+	substitute_alias_function("get_raw_string_input", "prompt_string");
+	substitute_alias_function("get_input_raw_string", "prompt_string");
+
+	substitute_alias_function("get_input", "prompt_input");
+	substitute_alias_function("type_input", "prompt_input");
+
+	substitute_alias_function("string_matches_inputs", "string_matches_input");
+	substitute_alias_function("matches_inputs", "string_matches_input");
+	substitute_alias_function("matches_input", "string_matches_input");
+
+	substitute_alias_function("input_matches", "string_matches_input");
+	substitute_alias_function("inputs_match", "string_matches_input");
+	substitute_alias_function("input_match", "string_matches_input");
 
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
@@ -2644,6 +2740,78 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	bool has_subbed = true;
 	std::string prestring;
 	std::string poststring;
+
+	auto is_array_format = [&](const std::string& val) -> bool
+		{
+			if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		};
+
+	auto extract_vals_from_arr = [&](std::string whole_arr) -> std::vector<std::string>
+	{
+		std::vector<std::string> values;
+		std::string par_del = "0";
+
+		par_del[0] = pair_delimeter_character;
+		::string_utils string_utils;
+		string_utils.strip(whole_arr);
+
+		std::string arr_del = ",";
+		arr_del[0] = dummy_array_delimeter;
+
+		if (whole_arr == "{}" || whole_arr == "{ }") //Blank arrays return as such
+			return values;
+
+
+		std::string arr = whole_arr.substr(1);
+		arr.resize(arr.size() - 1);
+		string_utils.strip(arr);
+
+		const std::vector<std::string>& elements = string_utils.extract_tokens(arr, arr_del);
+		size_t delimeters_found = 0;
+		
+		for (size_t i = 0; i < elements.size(); ++i)
+		{
+			const std::string& element = elements[i];
+			const std::vector<std::string>& pair = string_utils.extract_tokens(element, par_del);
+			if (pair[0] != arr_del)
+			{
+				std::string current_index;
+				std::string current_value;
+				if (pair.size() == 1)
+				{
+					current_index = std::to_string(i - delimeters_found);
+					current_value = pair[0];
+				}
+				else if (pair.size() == 3)
+				{
+					current_index = pair[0];
+					current_value = pair[2];
+				}
+				else
+				{
+					std::cout << "A grave error has been encountered in res_file.cpp on line " << __LINE__ << std::endl;
+					for (size_t i = 0; i < pair.size(); ++i)
+					{
+						std::cout << pair[i] << std::endl;
+					}
+				}
+				values.push_back(current_value);
+			}
+			else
+			{
+				++delimeters_found;
+			}
+		}
+
+		return values;
+	};
 
 	
 	typedef std::string(*char_getter_handler)(game*, entity*, std::vector<std::string>&, const std::vector<std::string>&, const std::vector<std::string>&, res_file*);
@@ -4440,6 +4608,38 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	char_getter_handler entity_prompt_input = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1 && args.size() != 2)
+			{
+				return "INVALID ARGS FOR 'prompt_string'; EXPECTED 1 OR 2 ARGS, GOT " + args.size();
+			}
+			else
+			{
+				std::string prompt;
+				std::string default_value = self->resolve_expression(args[0], variable_names, variable_values, game_instance);
+				std::string value;
+				if (args.size() == 2)
+				{
+					prompt = self->resolve_expression(args[1], variable_names, variable_values, game_instance);
+				}
+				::string_utils util;
+				if (game_instance->get_perspective_entity() == char_ptr)
+				{
+					game_instance->get_engine()->print(prompt);
+					std::cout << " ";
+					value = game_instance->get_engine()->get_input();
+					value = game_instance->get_engine()->extra_text_processing(value, game_instance);
+					return value;
+				}
+				else
+				{
+					value = default_value;
+					return value;
+				}
+			}
+		};
+
 	char_getter_handler entity_prompt_bool = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 		{
 			if (args.size() != 1 && args.size() != 2)
@@ -4521,6 +4721,116 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	char_getter_handler entity_matches_input_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			::string_utils string_utils;
+			auto is_array_format = [&](const std::string& val) -> bool
+				{
+					if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				};
+
+			auto extract_vals_from_arr = [&](std::string whole_arr) -> std::vector<std::string>
+				{
+					std::vector<std::string> values;
+					std::string par_del = "0";
+
+					par_del[0] = pair_delimeter_character;
+					std::string arr_del = ",";
+					arr_del[0] = dummy_array_delimeter;
+
+					string_utils.strip(whole_arr);
+
+					if (whole_arr == "{}" || whole_arr == "{ }") //Blank arrays return as such
+						return values;
+
+
+					std::string arr = whole_arr.substr(1);
+					arr.resize(arr.size() - 1);
+					string_utils.strip(arr);
+
+					const std::vector<std::string>& elements = string_utils.extract_tokens(arr, arr_del);
+					size_t delimeters_found = 0;
+
+					for (size_t i = 0; i < elements.size(); ++i)
+					{
+						const std::string& element = elements[i];
+						const std::vector<std::string>& pair = string_utils.extract_tokens(element, par_del);
+						if (pair[0] != arr_del)
+						{
+							std::string current_index;
+							std::string current_value;
+							if (pair.size() == 1)
+							{
+								current_index = std::to_string(i - delimeters_found);
+								current_value = pair[0];
+							}
+							else if (pair.size() == 3)
+							{
+								current_index = pair[0];
+								current_value = pair[2];
+							}
+							else
+							{
+								std::cout << "A grave error has been encountered in res_file.cpp on line " << __LINE__ << std::endl;
+								for (size_t i = 0; i < pair.size(); ++i)
+								{
+									std::cout << pair[i] << std::endl;
+								}
+							}
+							values.push_back(current_value);
+						}
+						else
+						{
+							++delimeters_found;
+						}
+					}
+
+					return values;
+				};
+
+			if (args.size() == 1)
+			{
+				return "INVALID ARGS FOR 'string_matches_input'; EXPECTED >1, GOT 1";
+			}
+			else
+			{
+				engine* engine = game_instance->get_engine();
+				std::string input = engine->extra_text_processing(args[0], game_instance);
+				string_utils.make_lowercase(input);
+				for (int argn = 1; argn < args.size(); ++argn)
+				{
+					const std::string& arg = args[argn];
+					if (is_array_format(arg))
+					{
+						std::vector<std::string> values = extract_vals_from_arr(arg);
+						for (int i = 0; i < values.size(); ++i)
+						{
+							std::string value = game_instance->get_engine()->extra_text_processing(values[i], game_instance);
+							string_utils.make_lowercase(value);
+							if (string_utils.matches_command(value, input))
+								return "true";
+						}
+					}
+					else
+					{
+						std::string value = game_instance->get_engine()->extra_text_processing(arg, game_instance);
+						string_utils.make_lowercase(value);
+						if (string_utils.matches_command(value, input))
+							return "true";
+					}
+				}
+				std::string return_val = "false";
+				return "false";
+			}
+		};
+
 	entity* this_entity = dynamic_cast<entity*>(const_cast<res_file*>(this));
 	register_entity_getter("get_value", get_val_handler, this_entity);
 	register_entity_getter("get_global_value", get_global_val_handler, this_entity);
@@ -4554,8 +4864,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_entity_getter("prompt_num", entity_prompt_num, this_entity);
 	register_entity_getter("prompt_bool", entity_prompt_bool, this_entity);
 	register_entity_getter("prompt_string", entity_prompt_string, this_entity);
+	register_entity_getter("prompt_input", entity_prompt_input, this_entity);
 
 	register_entity_getter("process_as_input", entity_process_input_handler, this_entity);
+
+	register_entity_getter("string_matches_input", entity_matches_input_handler, this_entity);
 
 	//////////////////////////////////////////////////////////////////////////////////
 	/* HERE IS WHERE CODE GOES THAT CAN HANDLE GETTING RETURN VALUES FROM USER-FUNCTION CALLS TO ENTITIES */
@@ -5184,7 +5497,115 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
-	
+	scene_getter_handler scene_matches_input_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			::string_utils string_utils;
+			auto is_array_format = [&](const std::string& val) -> bool
+				{
+					if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				};
+
+			auto extract_vals_from_arr = [&](std::string whole_arr) -> std::vector<std::string>
+				{
+					std::vector<std::string> values;
+					std::string par_del = "0";
+					
+					par_del[0] = pair_delimeter_character;
+					std::string arr_del = ",";
+					arr_del[0] = dummy_array_delimeter;
+
+					string_utils.strip(whole_arr);
+
+					if (whole_arr == "{}" || whole_arr == "{ }") //Blank arrays return as such
+						return values;
+
+
+					std::string arr = whole_arr.substr(1);
+					arr.resize(arr.size() - 1);
+					string_utils.strip(arr);
+
+					const std::vector<std::string>& elements = string_utils.extract_tokens(arr, arr_del);
+					size_t delimeters_found = 0;
+					
+					for (size_t i = 0; i < elements.size(); ++i)
+					{
+						const std::string& element = elements[i];
+						const std::vector<std::string>& pair = string_utils.extract_tokens(element, par_del);
+						if (pair[0] != arr_del)
+						{
+							std::string current_index;
+							std::string current_value;
+							if (pair.size() == 1)
+							{
+								current_index = std::to_string(i - delimeters_found);
+								current_value = pair[0];
+							}
+							else if (pair.size() == 3)
+							{
+								current_index = pair[0];
+								current_value = pair[2];
+							}
+							else
+							{
+								std::cout << "A grave error has been encountered in res_file.cpp on line " << __LINE__ << std::endl;
+								for (size_t i = 0; i < pair.size(); ++i)
+								{
+									std::cout << pair[i] << std::endl;
+								}
+							}
+							values.push_back(current_value);
+						}
+						else
+						{
+							++delimeters_found;
+						}
+					}
+
+					return values;
+				};
+
+			if (args.size() == 1)
+			{
+				return "INVALID ARGS FOR 'string_matches_input'; EXPECTED >1, GOT 1";
+			}
+			else
+			{
+				engine* engine = game_instance->get_engine();
+				std::string input = engine->extra_text_processing(args[0], game_instance);
+				string_utils.make_lowercase(input);
+				for (int argn = 1; argn < args.size(); ++argn)
+				{
+					const std::string& arg = args[argn];
+					if (is_array_format(arg))
+					{
+						std::vector<std::string> values = extract_vals_from_arr(arg);
+						for (int i = 0; i < values.size(); ++i)
+						{
+							std::string value = game_instance->get_engine()->extra_text_processing(values[i], game_instance);
+							string_utils.make_lowercase(value);
+							if (string_utils.matches_command(value, input))
+								return "true";
+						}
+					}
+					else
+					{
+						std::string value = game_instance->get_engine()->extra_text_processing(arg, game_instance);
+						string_utils.make_lowercase(value);
+						if (string_utils.matches_command(value, input))
+							return "true";
+					}
+				}
+				std::string return_val = "false";
+				return "false";
+			}
+		};
 
 	register_scene_getter("get_name", scene_get_name_handler, this_scene, this_entity);
 	register_scene_getter("get_children", scene_get_children_handler, this_scene, this_entity);
@@ -5199,6 +5620,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_scene_getter("xor", scene_xor_handler, this_scene, this_entity);
 
 	register_scene_getter("process_as_input", scene_process_as_input_handler, this_scene, this_entity);
+
+	register_scene_getter("string_matches_input", scene_matches_input_handler, this_scene, this_entity);
 
 	{
 		has_subbed = true;
@@ -5892,26 +6315,12 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 	//							THIS HANDLES SIZE() FUNCTION THAT GETS THE SIZE OF AN ARRAY
 	//DEBUG_BREAKPOINT(6);
-	auto is_array_format = [&](const std::string& val) -> bool
-	{
-		if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	};
+	
 
 	has_subbed = true;
 	while (has_subbed)
 	{
-		//DEBUG_BREAKPOINT(4);
-		//std::cout << "RAW = " << raw_value << std::endl;
 		has_subbed = string_utils.complex_replacement(raw_value, "size($)", prestring, poststring, wildcards, "() ", false, true);
-		//std::cout << raw_value << " SUBBED = " << has_subbed << std::endl;
-		//DEBUG_BREAKPOINT(5);
 		std::string arr_del = ",";
 		arr_del = dummy_array_delimeter;
 		if (has_subbed)
@@ -6550,6 +6959,79 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
+		has_subbed = string_utils.complex_replacement(raw_value, "$ ^ $", prestring, poststring, wildcards, " ^", false);
+		if (has_subbed)
+		{
+			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+
+			bool left_is_int = false;
+			bool left_is_decimal = false;
+			bool right_is_int = false;
+			bool right_is_decimal = false;
+			long long int left_int, right_int;
+			long double left_decimal, right_decimal;
+
+			if (string_utils.is_integer(left))
+			{
+				left_int = std::stoi(left);
+				left_decimal = std::stod(left);
+				left_is_int = true;
+			}
+			else if (string_utils.is_decimal(left))
+			{
+				left_int = std::stoi(left);
+				left_decimal = std::stod(left);
+				left_is_decimal = true;
+			}
+			else
+			{
+				break;
+			}
+
+			if (string_utils.is_integer(right))
+			{
+				right_int = std::stoi(right);
+				right_decimal = std::stod(right);
+				right_is_int = true;
+			}
+			else if (string_utils.is_decimal(right))
+			{
+				right_int = std::stoi(right);
+				right_decimal = std::stod(right);
+				right_is_decimal = true;
+			}
+			else
+			{
+				break;
+			}
+
+			std::string sum;
+
+			if (left_is_int && right_is_int)
+			{
+				sum = std::to_string(std::pow(left_int, right_int));
+			}
+			else if (left_is_decimal && right_is_decimal)
+			{
+				sum = string_utils.shorten_decimal(std::to_string(std::pow(left_decimal, right_decimal)));
+			}
+			else if (left_is_int && right_is_decimal)
+			{
+				sum = string_utils.shorten_decimal(std::to_string(std::pow(left_decimal, right_decimal)));
+			}
+			else if (left_is_decimal && right_is_int)
+			{
+				sum = string_utils.shorten_decimal(std::to_string(std::pow(left_decimal, right_decimal)));
+			}
+
+			raw_value = prestring + sum + poststring;
+		}
+	}
+
+	has_subbed = true;
+	while (has_subbed)
+	{
 		has_subbed = string_utils.complex_replacement(raw_value, "$ % $", prestring, poststring, wildcards, " %", false);
 		if (has_subbed)
 		{
@@ -6676,6 +7158,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			raw_value = prestring + sum + poststring;
 		}
 	}
+
 
 	has_subbed = true;
 	while (has_subbed)

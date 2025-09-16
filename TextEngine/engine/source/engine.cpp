@@ -117,6 +117,24 @@ std::string engine::extra_text_processing(const std::string& original_text, game
 	string_utils string_utils;
 	std::string modified = original_text;
 
+	for (int i = 0; i < modified.size(); ++i)
+	{
+		swap_from_dummy_char(modified[i]);
+	}
+
+	modified = string_utils.replace_all(modified, "  ", " ", false);
+	modified = string_utils.replace_all(modified, ".", "", false);
+	modified = string_utils.replace_all(modified, ", ", "", false);
+	//string_utils.make_lowercase(input);
+	modified = string_utils.replace_all(modified, "i'd like you to", "", false);
+	modified = string_utils.replace_all(modified, "i'd love you to", "", false);
+	modified = string_utils.replace_all(modified, "i'd like for you to", "", false);
+	modified = string_utils.replace_all(modified, "i'd love for you to", "", false);
+	modified = string_utils.replace_all(modified, "if you will", "", false);
+	modified = string_utils.replace_all(modified, "can you", "", false);
+	string_utils.strip(modified);
+
+
 	if (string_utils.starts_with(modified, "I ", false))
 		modified = string_utils.replace_first(modified, "I ", "", false);
 
@@ -133,11 +151,6 @@ std::string engine::extra_text_processing(const std::string& original_text, game
 	if (game_instance != nullptr)
 	{
 		game_instance->get_substitution_wizard()->apply_input_substitution(modified);
-	}
-
-	for (int i = 0; i < modified.size(); ++i)
-	{
-		swap_from_dummy_char(modified[i]);
 	}
 	string_utils.strip(modified);
 	string_utils.replace_all(modified, "  ", " ", false);
@@ -380,6 +393,8 @@ void engine::main_menu()
 		string_utils.make_lowercase(input);
 		string_utils.strip(input);
 		input = extra_text_processing(input, nullptr);
+		
+		/*
 		string_utils.replace_all(input, "  ", " ", false);
 		input = string_utils.replace_all(input, ".", "", false);
 		string_utils.make_lowercase(input);
@@ -390,6 +405,7 @@ void engine::main_menu()
 		input = string_utils.replace_all(input, "if you will", "", false);
 		input = string_utils.replace_all(input, "can you", "", false);
 		string_utils.strip(input);
+		*/
 
 		if (DEV_MODE)
 		{

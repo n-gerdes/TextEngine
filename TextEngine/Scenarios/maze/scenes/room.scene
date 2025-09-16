@@ -73,6 +73,28 @@ end
 
 //COMMANDS
 
+function command:test(caller)
+	opt1 = {1, "First", "First Option", "First One", "1. First", "1 First", "I wanna pick the first one", "I pick the first"};
+	opt2 = {2, "Second", "Second Option", "Second One", "2. Second", "2 Second", "I wanna pick the second one", "I pick the second"};
+	opt3 = {3, "Third", "Third Option", "Third One", "3. Third", "3 Third", "I wanna pick the third one", "I pick the third"};
+
+	entity(caller).tell("Which menu option?");
+	entity(caller).tell("1. First");
+	entity(caller).tell("2. Second");
+	entity(caller).tell("3. Third");
+	ans = entity(caller).get_input(1);
+
+	if(matches_input(ans,opt1)) then
+		entity(caller).tell("Picked #1.");
+	else if (matches_input(ans,opt2)) then
+		entity(caller).tell("Picked #2.");
+	else if (matched_input(ans,opt3)) then
+		entity(caller).tell("Picked #3.");
+	else
+		entity(caller).tell("No Match.");
+	end
+end
+
 function command:go $num door(caller, num)
 	return thru_door(caller, num);
 end
