@@ -74,9 +74,17 @@ end
 //COMMANDS
 
 function command:test(caller)
-	opt1 = {1, "First", "First Option", "First One", "1. First", "1 First", "I wanna pick the first one", "I pick the first"};
-	opt2 = {2, "Second", "Second Option", "Second One", "2. Second", "2 Second", "I wanna pick the second one", "I pick the second"};
-	opt3 = {3, "Third", "Third Option", "Third One", "3. Third", "3 Third", "I wanna pick the third one", "I pick the third"};
+	ents = entity(caller).get_all_entities();
+
+	i = 0;
+	while(i < size(ents)) do
+		entity(caller).tell(ents[i]);
+		i = i + 1;
+	end
+
+	opt1 = {1, "First", "First Option", "First One", "1. First", "1 First", "I wanna pick the first one", "I pick the first", "#1"};
+	opt2 = {2, "Second", "Second Option", "Second One", "2. Second", "2 Second", "I wanna pick the second one", "I pick the second", "#2"};
+	opt3 = {3, "Third", "Third Option", "Third One", "3. Third", "3 Third", "I wanna pick the third one", "I pick the third", "#3"};
 
 	entity(caller).tell("Which menu option?");
 	entity(caller).tell("1. First");

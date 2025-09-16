@@ -47,6 +47,8 @@ entity_here(true_name) - gets the entity with the corresponding true name but on
 entity_by_alias(alias_or_name) - gets an entity using an alias OR true name only. When called from a scene, it's limited to the scene it's 
 	called from.
 
+get_all_entities() - returns an array containing the true name of every loaded entity
+
 'scene()' can get a reference to the current scene; when called from a scene, it returns that scene - but when called from an entity, it returns
 	the scene that entity currently occupies.
 

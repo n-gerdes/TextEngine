@@ -1937,6 +1937,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("get_raw_str_input", "prompt_string");
 	substitute_alias_function("get_input_raw_str", "prompt_string");
 	substitute_alias_function("get_raw_string", "prompt_string");
+	substitute_alias_function("get_raw_input", "prompt_string");
 	substitute_alias_function("type_raw_string", "prompt_string");
 	substitute_alias_function("input_raw_string", "prompt_string");
 	substitute_alias_function("raw_string_input", "prompt_string");
@@ -1950,9 +1951,15 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("matches_inputs", "string_matches_input");
 	substitute_alias_function("matches_input", "string_matches_input");
 
+	substitute_alias_function("matched_inputs", "string_matches_input");
+	substitute_alias_function("matched_input", "string_matches_input");
+
 	substitute_alias_function("input_matches", "string_matches_input");
+	substitute_alias_function("input_matched", "string_matches_input");
 	substitute_alias_function("inputs_match", "string_matches_input");
 	substitute_alias_function("input_match", "string_matches_input");
+
+	substitute_alias_function("all_entities", "get_all_entities");
 
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
@@ -4831,6 +4838,46 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	char_getter_handler entity_get_all_entities_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 0)
+			{
+				std::string all_args;
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					if (i != 0)
+						all_args += ", ";
+					all_args += args[i];
+				}
+				return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
+			}
+			else
+			{
+				std::string arr = "{";
+				std::string del = ",";
+				std::string pair_delimeter = "0";
+				pair_delimeter[0] = pair_delimeter_character;
+				del[0] = dummy_array_delimeter;
+				size_t index = 0;
+
+				const auto& entities = char_ptr->get_parent()->get_children();
+				for (auto e = entities.begin(); e != entities.end(); ++e)
+				{
+					entity* child = (entity*)(*e);
+					const std::string& name = child->get_name();
+					if (index != 0)
+						arr += del;
+					arr += std::to_string(index) + pair_delimeter;
+					arr += name;
+					++index;
+				}
+
+				arr += "}";
+				return arr;
+
+			}
+		};
+
 	entity* this_entity = dynamic_cast<entity*>(const_cast<res_file*>(this));
 	register_entity_getter("get_value", get_val_handler, this_entity);
 	register_entity_getter("get_global_value", get_global_val_handler, this_entity);
@@ -4869,6 +4916,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_entity_getter("process_as_input", entity_process_input_handler, this_entity);
 
 	register_entity_getter("string_matches_input", entity_matches_input_handler, this_entity);
+
+	register_entity_getter("get_all_entities", entity_get_all_entities_handler, this_entity);
 
 	//////////////////////////////////////////////////////////////////////////////////
 	/* HERE IS WHERE CODE GOES THAT CAN HANDLE GETTING RETURN VALUES FROM USER-FUNCTION CALLS TO ENTITIES */
@@ -5270,6 +5319,46 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
+	scene_getter_handler scene_get_all_entities_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 0)
+			{
+				std::string all_args;
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					if (i != 0)
+						all_args += ", ";
+					all_args += args[i];
+				}
+				return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
+			}
+			else
+			{
+				std::string arr = "{";
+				std::string del = ",";
+				std::string pair_delimeter = "0";
+				pair_delimeter[0] = pair_delimeter_character;
+				del[0] = dummy_array_delimeter;
+				size_t index = 0;
+	
+				const auto& entities = scene_ptr->get_parent()->get_parent()->find_first_child(game_instance, "entities")->get_children();
+				for (auto e = entities.begin(); e != entities.end(); ++e)
+				{
+					entity* child = (entity*)(*e);
+					const std::string& name = child->get_name();
+					if (index != 0)
+						arr += del;
+					arr += std::to_string(index) + pair_delimeter;
+					arr += name;
+					++index;
+				}
+
+				arr += "}";
+				return arr;
+				
+			}
+		};
+
 	scene_getter_handler scene_get_children_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
@@ -5579,6 +5668,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				engine* engine = game_instance->get_engine();
 				std::string input = engine->extra_text_processing(args[0], game_instance);
+				//std::cout << "Input: " << input << std::endl;
 				string_utils.make_lowercase(input);
 				for (int argn = 1; argn < args.size(); ++argn)
 				{
@@ -5589,6 +5679,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						for (int i = 0; i < values.size(); ++i)
 						{
 							std::string value = game_instance->get_engine()->extra_text_processing(values[i], game_instance);
+							//std::cout << "Matching against: " << value << std::endl;
 							string_utils.make_lowercase(value);
 							if (string_utils.matches_command(value, input))
 								return "true";
@@ -5622,6 +5713,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_scene_getter("process_as_input", scene_process_as_input_handler, this_scene, this_entity);
 
 	register_scene_getter("string_matches_input", scene_matches_input_handler, this_scene, this_entity);
+
+	register_scene_getter("get_all_entities", scene_get_all_entities_handler, this_scene, this_entity);
 
 	{
 		has_subbed = true;
