@@ -19,6 +19,7 @@ like:really like
 minute:minutes
 minute:mins
 minute:min
+through:thru
 please:pretty please
 please:pls
 please:plz
@@ -63,6 +64,19 @@ what:wht
 1:one
 1:first
 0:zero
+0:0th
+0:zeroth
+0:zeroeth
+1:1st
+2:2nd
+3:3rd
+4:4th
+5:5th
+6:6th
+7:7th
+8:8th
+9:9th
+10:10th
 go:walk
 go:run
 remove_raw),
@@ -70,6 +84,7 @@ remove_raw).
 remove_raw)!
 remove_raw)?
 remove_raw)-
+remove_raw)#
 remove)back to
 remove)return to
 remove)return back
@@ -90,6 +105,8 @@ remove)want
 remove)a
 remove)an
 remove)wanna
+remove)decide to
+remove)I decide to
 remove)to
 remove)for
 remove)the
@@ -97,3 +114,5 @@ remove)i
 remove)lemme
 remove)let me
 remove)please
+remove)in
+remove)into

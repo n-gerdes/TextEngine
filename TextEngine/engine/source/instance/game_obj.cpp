@@ -64,6 +64,15 @@ void game_obj::copy_values_and_aliases_from(game_obj* o)
 	o->alias_mutex.unlock();
 }
 
+void game_obj::copy_values_from(game_obj* o)
+{
+	o->var_mutex.lock();
+	var_mutex.lock();
+	variables = o->variables;
+	var_mutex.unlock();
+	o->var_mutex.unlock();
+}
+
 void game_obj::delete_aliases()
 {
 	aliases.clear();
@@ -289,6 +298,7 @@ std::string game_obj::get_value(const std::string& variable_name) const
 	{
 		std::string val = found->second;
 		var_mutex.unlock();
+		//std::cout << "DEBUG: " << val << std::endl;
 		return val;
 	}
 	

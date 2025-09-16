@@ -20,10 +20,12 @@ For example, a scene is initialized for the first time when an entity is transfe
 interact with it - either from a scene, or from a different entity.
 
 #include file_name
-Includes the contents of a specified file from the scenario's 'templates' folder. Basically a macro.
+Includes the contents of a specified file from the scenario's 'templates' folder. Basically a macro, and can be used for things like inheritence.
+If functions within the file itself have the same name/arguments as one from the base file, it essentially overrides the included function.
 
 #import file_name
-Includes the contents of a specified file from the game's 'packages' folder. Basically a macro.
+Includes the contents of a specified file from the game's 'packages' folder. Basically a macro, and can be used for things like inheritence.
+If functions within the file itself have the same name/arguments as one from the base file, it essentially overrides the imported function.
 
 Can initialize variables just by assigning their value. Using curly braces can create arrays.
 Arrays can also work like maps, pairing values with arbitrary strings as keys.
@@ -74,6 +76,14 @@ technical_substitution(string, [strength])
 
 substitution(thesaurus, string, [strength]): applies word substitution to the given string from the specified thesaurus using the (optional) specified strength.
 
+
+finish: Ends the game. A hard-coded command and not a function, so it doesn't take any arguments.
+save: Opens up the save menu for the player. A hard-coded command and not a function, so it doesn't take any arguments.
+clear: Hardcoded command to clear the screen. Will work from anywhere.
+describe_scene: Hardcoded command to prompt the scene of the perspective entity and everything in that scene to describe().
+
+clear(): A function that clears the screen if called from the scene containing the perspective entity, or any entity in that scene
+describe_scene(): A function that describes the whole scene and its entities if called from the scene containing the perspective entity, or any entity in that scene.
 
 Scripting supports "if" statements, lines ending with optional "then". Conditions must be inside parenthises.
 Semicolons at the end of lines are optional.

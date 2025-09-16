@@ -54,6 +54,12 @@
     <ClInclude Include="engine\headers\procedure\substitution_wizard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="engine\headers\procedure\file_reader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="engine\headers\procedure\internal_file_builder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="engine\source\engine.cpp">
@@ -93,6 +99,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="engine\source\procedure\substitution_wizard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\source\procedure\file_reader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="engine\source\procedure\internal_file_builder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -13,6 +13,14 @@ scene::scene()
 	register_innate_function("set_global_value");
 	register_innate_function("set_meta_value");
 	register_innate_function("set_value");
+
+	register_innate_function("set_clear_on_scene_change");
+	register_innate_function("set_save_any_time");
+
+	register_innate_function("describe_scene");
+	register_innate_function("clear");
+
+	register_innate_function("clone");
 }
 
 void transfer_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
@@ -65,7 +73,46 @@ void set_value_func(game* game_instance, scene* s, std::vector<std::string>& arg
 {
 	const std::string& var_name = args[0];
 	const std::string& var_val = args[1];
+	//std::cout << "DEBUG: " << var_name << std::endl;
 	s->set_value(var_name, var_val);
+}
+
+void set_clear_on_scene_change_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err)
+{
+	const std::string& arg = args[0];
+	std::vector<std::string> variable_names;
+	std::vector<std::string> variable_values;
+	bool val = c->evaluate_condition(game_instance, arg, err, variable_names, variable_values);
+	if (err == "")
+		game_instance->set_clear_on_scene_change(val);
+}
+
+void set_save_any_time_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err)
+{
+	const std::string& arg = args[0];
+	std::vector<std::string> variable_names;
+	std::vector<std::string> variable_values;
+	bool val = c->evaluate_condition(game_instance, arg, err, variable_names, variable_values);
+	if (err == "")
+		game_instance->set_save_any_time(val);
+}
+
+void describe_scene_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err)
+{
+	if(c == game_instance->get_perspective_entity()->get_scene())
+		game_instance->describe_scene(c);
+}
+
+void clear_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err)
+{
+	if (game_instance->get_perspective_entity()->get_scene() == c)
+		game_instance->get_engine()->clear_screen();
+}
+
+void clone_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
+{
+	scene* new_scene = game_instance->load_scene_from_file(args[0], s->get_filename());
+	new_scene->copy_data_from(s);
 }
 
 std::string scene::call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args)
@@ -78,6 +125,13 @@ std::string scene::call_innate_function(game* game_instance, const std::string& 
 	pair_innate_function(&set_meta_value_func, function_name, "set_meta_value", args, game_instance, err, 2);
 	pair_innate_function(&set_value_func, function_name, "set_value", args, game_instance, err, 2);
 
+	pair_innate_function(&set_clear_on_scene_change_func, function_name, "set_clear_on_scene_change", args, game_instance, err, 1);
+	pair_innate_function(&set_save_any_time_func, function_name, "set_save_any_time", args, game_instance, err, 1);
+
+	pair_innate_function(&describe_scene_func, function_name, "describe_scene", args, game_instance, err, 0);
+	pair_innate_function(&clear_func, function_name, "clear", args, game_instance, err, 0);
+
+	pair_innate_function(&clone_func, function_name, "clone", args, game_instance, err, 1);
 	return err;
 }
 
@@ -175,7 +229,8 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 					}
 					else
 					{
-						current_entity->call_function(game_instance, "describe");
+						if(current_entity != game_instance->get_perspective_entity())
+							current_entity->call_function(game_instance, "describe");
 					}
 				}
 			}
@@ -282,6 +337,11 @@ void scene::load_transfer_entities(game* game_instance)
 	}
 	transfer_queue.clear();
 	queuetex.unlock();
+}
+
+void scene::copy_data_from(scene* other_scene)
+{
+	copy_values_from(other_scene);
 }
 
 void scene::on_destroyed()
@@ -405,7 +465,7 @@ void scene::process_line_from_file(const std::string& line)
 
 bool scene::resolve_input(game* game_instance, entity* user, const std::string& input, std::string& return_val)
 {
-	//std::cout << "SCENE PROCESSING " << input << std::endl;
+	//std::cout << "INPUT: " << input << std::endl;
 	line_num custom_func_line = 0;
 	string_utils string_utils;
 	std::vector<std::string> dummy_var_names;
@@ -421,24 +481,28 @@ bool scene::resolve_input(game* game_instance, entity* user, const std::string& 
 			{
 				//std::cout << "MATCHED " << line << " AGAINST " << "function command: $func ( $args )" << std::endl;
 				std::string actual_func_name = wildcards[0];
+				//std::cout << "FUNC: " << actual_func_name << std::endl;
 				std::string expected_args = wildcards[1];
 
 				std::string check = "function command:" + input + "( " + expected_args + " )";
-
+				//std::cout << "Checking '" << check << "' vs '" << line << "'" << std::endl;
 				if (string_utils.matches_command(line, check, wildcards, " ():"))
 				{
+					//std::cout << input << " Matches with " << check << std::endl;
 					std::vector<std::string> args;
 					args.push_back(user->get_name());
 					for (size_t i = 0; i < wildcards.size(); ++i)
 						args.push_back(wildcards[i]);
 
 					std::string err = call_function(game_instance, "command:" + actual_func_name, args, return_val);
+					if (return_val == "NO_MATCH" || return_val == "NO MATCH")
+						continue;
 					if (err == "")
 						return true;
 				}
 				else
 				{
-					//std::cout << "HERE (  " << input << " / " << line << "  /  " << check << "  )" << std::endl;
+					//std::cout << "HERE (  \'" << input << "\' / '" << line << "'  /  '" << check << "'  )" << std::endl;
 				}
 			}
 		}

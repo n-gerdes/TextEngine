@@ -4,6 +4,7 @@
 #include "engine/headers/instance/entity.h"
 #include "engine/headers/instance/scene.h"
 #include "engine/headers/MASTER.h"
+#include "engine/headers/procedure/file_reader.h"
 #include <deque>
 
 //This class is for reading/loading/executing resource/script files. It forms the basis for both entities and scenes
@@ -275,13 +276,15 @@ void set_arr_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 					}
 					current_value = current_value.substr(1);
 					current_value.resize(current_value.size() - 1);
-					const std::vector<std::string>& current_pairs = string_utils.extract_tokens(current_value, ",");
+					std::string del = "0";
+					del[0] = dummy_array_delimeter;
+					const std::vector<std::string>& current_pairs = string_utils.extract_tokens(current_value, del); //string_utils.extract_tokens(current_value, ",");
 					size_t delimeters_found = 0;
 					size_t i;
 					bool did_add_var = false;
 					for (i = 0; i < current_pairs.size(); ++i)
 					{
-						if (current_pairs[i] == ",")
+						if (current_pairs[i] == del) //if (current_pairs[i] == ",")
 						{
 							++delimeters_found;
 						}
@@ -310,7 +313,7 @@ void set_arr_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 								did_add_var = true;
 							}
 
-							new_total_value += current_index + pair_delimeter_string + current_value + ",";
+							new_total_value += current_index + pair_delimeter_string + current_value + del;
 						}
 					}
 
@@ -1349,6 +1352,7 @@ void call_generic_func_func(game* game_instance, res_file& script, std::vector<u
 	std::string& func_name = wildcards[0];
 	std::string& complete_args_string = wildcards[1];
 	std::string dummy_return_value;
+	//std::cout << "DEBUG: " << complete_args_string << std::endl;
 	std::vector<std::string> new_call_arg_values = script.extract_args_from_token(complete_args_string, variable_names, variable_values, game_instance);
 	script.call_function(game_instance, func_name, new_call_arg_values, dummy_return_value);
 }
@@ -1486,27 +1490,7 @@ void breakpoint_func(game* game_instance, res_file& script, std::vector<uint32_t
 	game_instance->get_engine()->println("BREAKPOINT REACHED");
 }
 
-void set_clear_on_scene_change_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
-	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
-	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
-{
-	std::string& complete_args_string = wildcards[0];
-	//err_msg = "";
-	std::string dummy_return_value;
-	std::vector<std::string> new_call_arg_values = script.extract_args_from_token(complete_args_string, variable_names, variable_values, game_instance);
-	bool val = game_instance->get_clear_on_scene_change();
-	if (new_call_arg_values.size() > 1)
-	{
-		err_msg = "ERROR: set_clear_on_scene_change expects 1 argument, got " + std::to_string(new_call_arg_values.size());
-	}
-	else
-	{
-		const std::string& arg = new_call_arg_values[0];
-		val = script.evaluate_condition(game_instance, arg, err_msg, variable_names, variable_values);
-		if(err_msg == "")
-			game_instance->set_clear_on_scene_change(val);
-	}
-}
+
 
 void save_from_script_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
@@ -1515,26 +1499,27 @@ void save_from_script_func(game* game_instance, res_file& script, std::vector<ui
 	game_instance->save_game_to_file();
 }
 
-void set_save_any_time_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
+void finish_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string& complete_args_string = wildcards[0];
-	//err_msg = "";
-	std::string dummy_return_value;
-	std::vector<std::string> new_call_arg_values = script.extract_args_from_token(complete_args_string, variable_names, variable_values, game_instance);
-	bool val = game_instance->get_clear_on_scene_change();
-	if (new_call_arg_values.size() > 1)
-	{
-		err_msg = "ERROR: set_save_any_time expects 1 argument, got " + std::to_string(new_call_arg_values.size());
-	}
-	else
-	{
-		const std::string& arg = new_call_arg_values[0];
-		val = script.evaluate_condition(game_instance, arg, err_msg, variable_names, variable_values);
-		if (err_msg == "")
-			game_instance->set_save_any_time(val);
-	}
+	game_instance->end_game();
+}
+
+void clear_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
+	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
+	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
+{
+	game_instance->get_engine()->clear_screen();
+}
+
+void describe_scene_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
+	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
+	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
+{
+	entity* p = game_instance->get_perspective_entity();
+	scene* s = p->get_scene();
+	game_instance->describe_scene(s);
 }
 
 std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
@@ -1596,7 +1581,7 @@ std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 	res_file::execution_registry_entry("scene( $scene_name ).any_entity( $entity_name ) . $func_name ()", &call_any_entity_in_scene_func_argless_func, false),
 	res_file::execution_registry_entry("scene( $scene_name ).any_entity( $entity_name ) . $func_name ( $args )", &call_any_entity_in_scene_func_func, false),
 
-	res_file::execution_registry_entry("scene( $scene_name ) . $func_name ( $args )", &call_scene_func_argless_func, false),
+	res_file::execution_registry_entry("scene( $scene_name ) . $func_name ()", &call_scene_func_argless_func, false),
 	res_file::execution_registry_entry("scene( $scene_name ) . $func_name ( $args )", &call_scene_func_func, false),
 	res_file::execution_registry_entry("scene() . $func_name ()", &call_this_scene_func_argless_func, false),
 	res_file::execution_registry_entry("scene() . $func_name ( $args )", &call_this_scene_func_func, false),
@@ -1604,10 +1589,12 @@ std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 	res_file::execution_registry_entry("$func_name ( $args )", &call_generic_func_func, false),
 	res_file::execution_registry_entry("$func_name ()", &call_generic_func_argless_func, false),
 
-	res_file::execution_registry_entry("set_clear_on_scene_change ( $arg )", set_clear_on_scene_change_func, false),
-	res_file::execution_registry_entry("set_save_any_time ( $arg )", set_save_any_time_func, false),
-
 	res_file::execution_registry_entry("save", save_from_script_func, false),
+
+	res_file::execution_registry_entry("clear", clear_func, false),
+	res_file::execution_registry_entry("describe_scene", describe_scene_func, false),
+
+	res_file::execution_registry_entry("finish", finish_func, false),
 
 	res_file::execution_registry_entry("BREAKPOINT", &breakpoint_func, false)
 };
@@ -1860,12 +1847,59 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("set_clear_on_enter", "set_clear_on_scene_change");
 	substitute_alias_function("set_clear_on_leave", "set_clear_on_scene_change");
 
+	substitute_alias_function("end_game", "finish");
+	substitute_alias_function("exit", "finish");
+	substitute_alias_function("exit_game", "finish");
+	substitute_alias_function("finish_game", "finish");
+
+	substitute_alias_function("describe_everything", "describe_scene");
+	substitute_alias_function("describe_area", "describe_scene");
+
+	substitute_alias_function("process_input","process_as_input");
+	substitute_alias_function("input_substitution", "process_as_input");
+
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
 	{
 		line = string_utils.replace_first(line, dummy_command_string, "\"" + quoted_material[0] + "\"");
 		quoted_material.pop_front();
 	}
+
+	int quotes_count = 0;
+	int braces_level = 0;
+	for (int i = 0; i < line.size(); ++i)
+	{
+		char& c = line[i];
+		if (c == '"')
+		{
+			++quotes_count;
+		}
+		else if (c == '{')
+		{
+			if (!(quotes_count & 1)) //If quote count is even, then it's outside quotes.
+			{
+				++braces_level;
+			}
+		}
+		else if (c == '}')
+		{
+			if (!(quotes_count & 1)) //If quote count is even, then it's outside quotes.
+			{
+				--braces_level;
+			}
+		}
+		else if (c == ',')
+		{
+			if (!(quotes_count & 1)) //If outside quotes
+			{
+				if (braces_level > 0) //And inside an array
+				{
+					c = dummy_array_delimeter;
+				}
+			}
+		}
+	}
+
 	string_utils.strip(line);
 	if (line.size()>0 && line[line.size() - 1] == ';')
 	{
@@ -1897,7 +1931,8 @@ void res_file::check_line_match(const std::string& line, line_num line_num)
 
 bool res_file::add_lines_from_file(const engine* engine, const std::string& scenario_name, const std::string& name, game* game_instance)
 {
-	std::ifstream file;
+	//std::ifstream file;
+	file_reader file;
 	string_utils string_utils;
 
 	file.open(name);
@@ -1911,7 +1946,7 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 		std::vector<std::string> command_funcs_to_alias_with_input_substitution_args;
 		while (file.good() && file.is_open() && !file.eof())
 		{
-			std::getline(file, line);
+			file.getline(line);
 			//++current_line_number;
 			preprocess_line(line, string_utils, name);
 			if (string_utils.matches_command("function $func_name ( $args )", line, dummy_wildcards, " ()"))
@@ -2211,8 +2246,13 @@ void res_file::execute_line_from_class(game* game_instance, line_num& line, std:
 
 std::vector<std::string> res_file::extract_args_from_token(std::string complete_args_token, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, game* game_instance)
 {
-	complete_args_token = resolve_expression(complete_args_token, variable_names, variable_values, game_instance);
 	string_utils string_utils;
+
+		string_utils.strip(complete_args_token); //New. Just for testing purposes.
+	complete_args_token = resolve_expression(complete_args_token, variable_names, variable_values, game_instance, true);
+	// 
+	//std::cout << "ARGS: " << complete_args_token << std::endl;
+	
 	std::vector<std::string> new_call_arg_values;
 	std::vector<std::string> arg_tokens = string_utils.extract_tokens(complete_args_token, ",");
 	new_call_arg_values.reserve(arg_tokens.size());
@@ -2220,11 +2260,21 @@ std::vector<std::string> res_file::extract_args_from_token(std::string complete_
 	{
 		if (arg_tokens[i] != ",")
 		{
-			if (arg_tokens[i][0] == ' ')
+			std::string& arg = arg_tokens[i];
+			string_utils.strip(arg); //New, just for testing purposes. Also removed the thing below as a part of the same test.
+
+			/*
+			if (arg[0] == ' ')
 			{
-				arg_tokens[i] = arg_tokens[i].substr(1);
+				arg[i] = arg[i].substr(1);
 			}
-			new_call_arg_values.push_back(resolve_expression(arg_tokens[i], variable_names, variable_values, game_instance));
+			*/
+			
+			new_call_arg_values.push_back(resolve_expression(arg, variable_names, variable_values, game_instance));
+			//SOLVING HERE
+				//
+				//new_call_arg_values.push_back(arg_tokens[i]);
+			//std::cout << "DEBUG:" << complete_args_token << ", " << arg_tokens[i] << std::endl;
 		}
 	}
 
@@ -2365,6 +2415,46 @@ bool res_file::read(const engine* engine, const std::string& scenario_name, cons
 	return added_lines;
 }
 
+bool res_file::read_raw_external(const std::string& filename)
+{
+	string_utils string_utils;
+	line_data.clear();
+	line_data.emplace_back();
+	command_func_lines.clear();
+	function_line_nums.clear();
+	line_commands.clear();
+	line_commands.push_back(-1);
+	this->filename = filename;
+
+	auto add_raw_lines = [&]() -> bool
+		{
+			//std::ifstream file;
+			file_reader file;
+			file.force_external_open(filename);
+			if (file.is_open())
+			{
+				std::string line;
+				while (file.good() && !file.eof())
+				{
+					//std::getline(file, line);
+					file.getline(line);
+					line_data.push_back(line);
+				}
+			}
+			else
+			{
+				return false;
+			}
+		};
+
+	bool added_lines = add_raw_lines();
+	if (added_lines)
+		finished_loading = true;
+	else
+		this->filename = "";
+	return added_lines;
+}
+
 bool res_file::read_raw(const std::string& filename)
 {
 	string_utils string_utils;
@@ -2378,14 +2468,16 @@ bool res_file::read_raw(const std::string& filename)
 
 	auto add_raw_lines = [&]() -> bool
 	{
-		std::ifstream file;
+		//std::ifstream file;
+		file_reader file;
 		file.open(filename);
 		if (file.is_open())
 		{
 			std::string line;
 			while (file.good() && !file.eof())
 			{
-				std::getline(file, line);
+				//std::getline(file, line);
+				file.getline(line);
 				line_data.push_back(line);
 			}
 		}
@@ -2410,6 +2502,11 @@ void res_file::register_innate_function(const std::string& innate_function_name)
 
 std::string res_file::resolve_expression(std::string raw_value, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, game* game_instance)
 {
+	return resolve_expression(raw_value, variable_names, variable_values, game_instance, false);
+}
+
+std::string res_file::resolve_expression(std::string raw_value, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, game* game_instance, bool re_place_quotes)
+{
 	if (!game_instance->game_is_active())
 		return raw_value;
 	string_utils string_utils;
@@ -2425,7 +2522,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	string_utils.strip(raw_value);
 
 	bool quote_sub = true;
-				//DEBUG_BREAKPOINT(1);
+				//It first swaps out quoted content so that if variable names are in quotes they won't be resolved to their values
 	while (quote_sub)
 	{
 		//std::cout << raw_value << std::endl;
@@ -2501,12 +2598,20 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	}
 					//DEBUG_BREAKPOINT(2);
 	std::vector<std::string> wildcards;
-	raw_value = substitute_variables(raw_value, variable_names, variable_values, game_instance);
+	raw_value = substitute_variables(raw_value, variable_names, variable_values, game_instance); //Now it resolves variables
 					//DEBUG_BREAKPOINT(3);
 	//					RETURNING QUOTE LITERALS
-	while (quoted_material.size() > 0)
+	while (quoted_material.size() > 0) //Then finally puts all the quoted stuff back.
 	{
-		raw_value = string_utils.replace_first(raw_value, dummy_command_string, quoted_material[0]);
+		if (re_place_quotes)
+		{
+			raw_value = string_utils.replace_first(raw_value, dummy_command_string, "\"" + quoted_material[0] + "\"");
+		}
+		else
+		{
+			raw_value = string_utils.replace_first(raw_value, dummy_command_string, quoted_material[0]);
+		}
+		
 		quoted_material.pop_front();
 	}
 					//DEBUG_BREAKPOINT(4);
@@ -4085,13 +4190,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		else
 		{
 			std::string var = "{";
+			std::string del = ",";
+			del[0] = dummy_array_delimeter;
 			const auto& attachments = char_ptr->get_attached_entity_names();
 			bool first = true;
 			for (auto i = attachments.begin(); i != attachments.end(); ++i)
 			{
 				const std::string& attachment = *i;
 				if (!first)
-					var += ",";
+					var += del;
 				else
 					first = false;
 				
@@ -4401,6 +4508,19 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	char_getter_handler entity_process_input_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1)
+			{
+				return "INVALID ARGS FOR 'process_as_input'; EXPECTED 1, GOT " + args.size();
+			}
+			else
+			{
+				engine* engine = game_instance->get_engine();
+				return engine->extra_text_processing(args[0], game_instance);
+			}
+		};
+
 	entity* this_entity = dynamic_cast<entity*>(const_cast<res_file*>(this));
 	register_entity_getter("get_value", get_val_handler, this_entity);
 	register_entity_getter("get_global_value", get_global_val_handler, this_entity);
@@ -4434,6 +4554,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_entity_getter("prompt_num", entity_prompt_num, this_entity);
 	register_entity_getter("prompt_bool", entity_prompt_bool, this_entity);
 	register_entity_getter("prompt_string", entity_prompt_string, this_entity);
+
+	register_entity_getter("process_as_input", entity_process_input_handler, this_entity);
 
 	//////////////////////////////////////////////////////////////////////////////////
 	/* HERE IS WHERE CODE GOES THAT CAN HANDLE GETTING RETURN VALUES FROM USER-FUNCTION CALLS TO ENTITIES */
@@ -4851,13 +4973,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		else
 		{
 			std::string arr = "{";
+			std::string del = ",";
+			del[0] = dummy_array_delimeter;
 			const std::vector<entity*>& children = scene_ptr->get_entities_in_scene();
 			for (size_t i = 0; i < children.size(); ++i)
 			{
 				entity* child = children[i];
 				const std::string& name = child->get_name();
 				if (i != 0)
-					arr += ",";
+					arr += del;
 				arr += name;
 			}
 			arr += "}";
@@ -4907,7 +5031,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	scene_getter_handler scene_get_global_val_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+	scene_getter_handler scene_get_global_value_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -4975,7 +5099,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		{
 			if (args.size() == 0)
 			{
-				return "INVALID ARGS FOR 'and'; EXPECTED >0, GOT " + args.size();
+				return "INVALID ARGS FOR 'or'; EXPECTED >0, GOT " + args.size();
 			}
 			else
 			{
@@ -5024,7 +5148,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		{
 			if (args.size() == 0)
 			{
-				return "INVALID ARGS FOR 'and'; EXPECTED >0, GOT " + args.size();
+				return "INVALID ARGS FOR 'xor'; EXPECTED >0, GOT " + args.size();
 			}
 			else
 			{
@@ -5047,18 +5171,35 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	scene_getter_handler scene_process_as_input_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1)
+			{
+				return "INVALID ARGS FOR 'process_as_input'; EXPECTED 1, GOT " + args.size();
+			}
+			else
+			{
+				engine* engine = game_instance->get_engine();
+				return engine->extra_text_processing(args[0], game_instance);
+			}
+		};
+
+	
 
 	register_scene_getter("get_name", scene_get_name_handler, this_scene, this_entity);
 	register_scene_getter("get_children", scene_get_children_handler, this_scene, this_entity);
 	register_scene_getter("entity_exists_here", scene_entity_exists_here_handler, this_scene, this_entity);
 	register_scene_getter("entity_exists", scene_entity_exists_handler, this_scene, this_entity);
-	register_scene_getter("get_global_value", scene_entity_exists_handler, this_scene, this_entity);
-	register_scene_getter("get_meta_value", scene_entity_exists_handler, this_scene, this_entity);
+	register_scene_getter("get_global_value", scene_get_global_value_handler, this_scene, this_entity);
+	//register_scene_getter("get_meta_value", scene_entity_exists_handler, this_scene, this_entity);
 	register_scene_getter("get_value", scene_get_value_handler, this_scene, this_entity);
 	register_scene_getter("and", scene_and_handler, this_scene, this_entity);
 	register_scene_getter("or", scene_or_handler, this_scene, this_entity);
 	register_scene_getter("not", scene_not_handler, this_scene, this_entity);
 	register_scene_getter("xor", scene_xor_handler, this_scene, this_entity);
+
+	register_scene_getter("process_as_input", scene_process_as_input_handler, this_scene, this_entity);
+
 	{
 		has_subbed = true;
 		while (has_subbed)
@@ -5771,6 +5912,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "size($)", prestring, poststring, wildcards, "() ", false, true);
 		//std::cout << raw_value << " SUBBED = " << has_subbed << std::endl;
 		//DEBUG_BREAKPOINT(5);
+		std::string arr_del = ",";
+		arr_del = dummy_array_delimeter;
 		if (has_subbed)
 		{
 			std::string arr = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
@@ -5792,10 +5935,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					{
 						whole_arr = whole_arr.substr(1);
 						whole_arr.resize(whole_arr.size() - 1);
-						const std::vector<std::string>& elements = string_utils.extract_tokens(whole_arr, ",");
+						const std::vector<std::string>& elements = string_utils.extract_tokens(whole_arr, arr_del);
 						for (size_t i = 0; i < elements.size(); ++i)
 						{
-							if (elements[i] != ",")
+							if (elements[i] != arr_del)
 								++size;
 						}
 						raw_value = prestring + std::to_string(size) + poststring;
@@ -5814,7 +5957,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					raw_value = prestring + "0" + poststring;
 				}
 				else
-					raw_value = prestring + "NO_SUCH_VAR" + poststring;
+					raw_value = prestring + "NO_SUCH_ARR [" + wildcards[0] + "]" + poststring;
 			}
 			else
 			{
@@ -5824,10 +5967,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					whole_arr = whole_arr.substr(1);
 					whole_arr.resize(whole_arr.size() - 1);
-					const std::vector<std::string>& elements = string_utils.extract_tokens(whole_arr, ",");
+					const std::vector<std::string>& elements = string_utils.extract_tokens(whole_arr, arr_del);
 					for (size_t i = 0; i < elements.size(); ++i)
 					{
-						if (elements[i] != ",")
+						if (elements[i] != arr_del)
 							++size;
 					}
 					raw_value = prestring + std::to_string(size) + poststring;
@@ -6780,8 +6923,7 @@ std::string res_file::substitute_variables(const std::string& original, const st
 {
 	string_utils string_utils;
 	 //Untypable character used by array variables to pair keys with values hash-map style.
-	const static char element_delimeter = ',';
-
+	const static char element_delimeter = dummy_array_delimeter;
 
 	std::string delimeter = "0";
 	std::string pair_delimeter = "0";
@@ -6808,11 +6950,13 @@ std::string res_file::substitute_variables(const std::string& original, const st
 
 		const std::vector<std::string>& elements = string_utils.extract_tokens(arr, delimeter);
 		size_t delimeters_found = 0;
+		std::string arr_del = ",";
+		arr_del[0] = dummy_array_delimeter;
 		for (size_t i = 0; i < elements.size(); ++i)
 		{
 			const std::string& element = elements[i];
 			const std::vector<std::string>& pair = string_utils.extract_tokens(element, pair_delimeter);
-			if (pair[0] != ",")
+			if (pair[0] != arr_del)
 			{
 				std::string current_index;
 				std::string current_value;

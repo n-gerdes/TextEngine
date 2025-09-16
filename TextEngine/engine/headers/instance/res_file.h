@@ -78,9 +78,11 @@ public:
 	bool						read(const engine* engine, const std::string& scenario_name, const std::string& filename, game* game_instance);
 	//bool						read(const std::string& scenario_name, const std::string& filename);
 	bool						read_raw(const std::string& filename);
+	bool						read_raw_external(const std::string& filename);
 protected:
 	void						register_innate_function(const std::string& innate_function_name);
 public:
+	std::string					resolve_expression(std::string raw_value, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, game* game_instance, bool re_place_quotes);
 	std::string					resolve_expression(std::string raw_value, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, game* game_instance);
 	virtual std::string			resolve_expression_custom(std::string raw_value, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, game* game_instance) const;
 public:

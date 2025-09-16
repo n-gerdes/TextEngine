@@ -4,6 +4,7 @@
 #include "engine/headers/instance/res_file.h"
 #include "engine/headers/instance/entity.h"
 #include "engine/headers/instance/scene.h"
+#include "engine/headers/procedure/file_reader.h"
 #include <thread>
 
 game::game()
@@ -63,12 +64,18 @@ void game::game_loop()
 		}
 		*/
 	}
+	get_engine()->println("Game has ended.");
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	while (threads_launched > 0)
 	{
 		//std::cout << "Threads: " << threads_launched << std::endl;
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
+}
+
+void game::end_game()
+{
+	game_going = false;
 }
 
 void game::initialize()
@@ -82,6 +89,7 @@ void game::save_variables(std::ofstream& file, const std::string& scenario_name,
 	save_uint32_t(file, game_version);
 	save_bool(file, save_any_time);
 	save_bool(file, clear_on_scene_change);
+	save_bool(file, custom_input_substitution_overrides_engine);
 	save_string(file, perspective_entity);
 }
 
@@ -91,6 +99,7 @@ void game::load_variables(std::ifstream& file, const std::string& scenario_name,
 	load_uint32_t(file, loaded_game_version);
 	load_bool(file, save_any_time);
 	load_bool(file, clear_on_scene_change);
+	load_bool(file, custom_input_substitution_overrides_engine);
 	load_string(file, perspective_entity);
 }
 
@@ -606,6 +615,19 @@ engine* game::get_engine() const
 	return game_engine;
 }
 
+void game::describe_scene(scene* s)
+{
+	game* game_instance = s->get_game_instance();
+	s->call_function(game_instance, "describe");
+	auto siblings = s->get_entities_in_scene();
+	for (auto i = siblings.begin(); i != siblings.end(); ++i)
+	{
+		entity* s = *i;
+		if (s != game_instance->get_perspective_entity())
+			s->call_function(game_instance, "describe");
+	}
+}
+
 std::string game::get_meta_directory(const std::string& variable_name)
 {
 	return get_engine()->get_scenario_directory(get_name()) + "meta/" + variable_name + ".meta";
@@ -663,12 +685,13 @@ entity* game::load_entity_from_file(const std::string& entity_name)
 entity* game::load_entity_from_file(const std::string& entity_name, const std::string& file)
 {
 	const std::string& filename = file;
-	std::ifstream peek;
+	//std::ifstream peek;
+	file_reader peek;
 	peek.open(filename);
 	if (peek.is_open())
 	{
 		std::string first_line;
-		std::getline(peek, first_line);
+		peek.getline(first_line);
 		peek.close();
 
 		entity* loaded_entity;
@@ -701,6 +724,7 @@ entity* game::load_entity_from_file(const std::string& entity_name, const std::s
 
 scene* game::load_scene_from_file(const std::string& scene_name)
 {
+	/*
 	std::string filename = game_engine->get_scenario_directory(get_name()) + "scenes/" + scene_name + ".scene";
 	std::ifstream peek;
 	peek.open(filename);
@@ -708,6 +732,45 @@ scene* game::load_scene_from_file(const std::string& scene_name)
 	{
 		std::string first_line;
 		std::getline(peek, first_line);
+		peek.close();
+		scene* loaded_scene = new scene();
+		if (get(this, "scenes")->find_first_child(this, scene_name) != nullptr)
+		{
+			get_engine()->println("Error: already loaded ", scene_name, " from file.");
+			loaded_scene->destroy();
+			return nullptr;
+		}
+		loaded_scene->set_name(scene_name);
+		bool did_get_data = loaded_scene->read(get_engine(), get_name(), filename, this);
+		get(this, "scenes")->add_child(loaded_scene);
+		loaded_scene->call_function(this, "initialize");
+		if (did_get_data)
+			return loaded_scene;
+		else
+		{
+			loaded_scene->destroy();
+			return nullptr;
+		}
+	}
+	else
+	{
+		return nullptr;
+	}
+	*/
+	std::string filename = game_engine->get_scenario_directory(get_name()) + "scenes/" + scene_name + ".scene";
+	return load_scene_from_file(scene_name, filename);
+}
+
+scene* game::load_scene_from_file(const std::string& scene_name, const std::string& file)
+{
+	std::string filename = file;
+	//std::ifstream peek;
+	file_reader peek;
+	peek.open(filename);
+	if (peek.is_open())
+	{
+		std::string first_line;
+		peek.getline(first_line);
 		peek.close();
 		scene* loaded_scene = new scene();
 		if (get(this, "scenes")->find_first_child(this, scene_name) != nullptr)
@@ -836,19 +899,131 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 			))
 		{
 			save_game_to_file();
+			describe_scene(get_perspective_entity()->get_scene());
 			return_val = "DONE";
 			return true;
 		}
-		else if (string_utils.matches_command("describe", input) || string_utils.matches_command("help", input) || string_utils.matches_command("options", input))
+		else if (
+			string_utils.matches_command("describe", input) 
+			|| string_utils.matches_command("help", input) 
+			|| string_utils.matches_command("options", input)
+			|| string_utils.matches_command("describe the surroundings", input)
+			|| string_utils.matches_command("describe my surroundings", input)
+			|| string_utils.matches_command("describe surroundings", input)
+			|| string_utils.matches_command("describe area", input)
+			|| string_utils.matches_command("describe the area", input)
+			|| string_utils.matches_command("describe my area", input)
+			|| string_utils.matches_command("describe my surrounding area", input)
+			|| string_utils.matches_command("describe the surrounding area", input)
+
+			|| string_utils.matches_command("review", input)
+			|| string_utils.matches_command("review the surroundings", input)
+			|| string_utils.matches_command("review my surroundings", input)
+			|| string_utils.matches_command("review surroundings", input)
+			|| string_utils.matches_command("review area", input)
+			|| string_utils.matches_command("review the area", input)
+			|| string_utils.matches_command("review my area", input)
+			|| string_utils.matches_command("review my surrounding area", input)
+			|| string_utils.matches_command("review the surrounding area", input)
+
+			|| string_utils.matches_command("display", input)
+			|| string_utils.matches_command("display the surroundings", input)
+			|| string_utils.matches_command("display my surroundings", input)
+			|| string_utils.matches_command("display surroundings", input)
+			|| string_utils.matches_command("display area", input)
+			|| string_utils.matches_command("display the area", input)
+			|| string_utils.matches_command("display my area", input)
+			|| string_utils.matches_command("display my surrounding area", input)
+			|| string_utils.matches_command("display the surrounding area", input)
+
+			|| string_utils.matches_command("look", input)
+			|| string_utils.matches_command("look around", input)
+			|| string_utils.matches_command("look all around", input)
+			|| string_utils.matches_command("look at the surroundings", input)
+			|| string_utils.matches_command("look at my surroundings", input)
+			|| string_utils.matches_command("look at surroundings", input)
+			|| string_utils.matches_command("look at area", input)
+			|| string_utils.matches_command("look at the area", input)
+			|| string_utils.matches_command("look at my area", input)
+			|| string_utils.matches_command("look at my surrounding area", input)
+			|| string_utils.matches_command("look at the surrounding area", input)
+
+			|| string_utils.matches_command("look around the surroundings", input)
+			|| string_utils.matches_command("look around my surroundings", input)
+			|| string_utils.matches_command("look around surroundings", input)
+			|| string_utils.matches_command("look around area", input)
+			|| string_utils.matches_command("look around the area", input)
+			|| string_utils.matches_command("look around my area", input)
+			|| string_utils.matches_command("look around my surrounding area", input)
+			|| string_utils.matches_command("look around the surrounding area", input)
+			|| string_utils.matches_command("look around surrounding area", input)
+
+			|| string_utils.matches_command("look all around the surroundings", input)
+			|| string_utils.matches_command("look all around my surroundings", input)
+			|| string_utils.matches_command("look all around surroundings", input)
+			|| string_utils.matches_command("look all around area", input)
+			|| string_utils.matches_command("look all around the area", input)
+			|| string_utils.matches_command("look all around my area", input)
+			|| string_utils.matches_command("look all around my surrounding area", input)
+			|| string_utils.matches_command("look all around the surrounding area", input)
+			|| string_utils.matches_command("look all around surrounding area", input)
+
+			|| string_utils.matches_command("look around at all the surroundings", input)
+			|| string_utils.matches_command("look around at all my surroundings", input)
+			|| string_utils.matches_command("look around at all surroundings", input)
+			|| string_utils.matches_command("look around at all area", input)
+			|| string_utils.matches_command("look around at all the area", input)
+			|| string_utils.matches_command("look around at all my area", input)
+			|| string_utils.matches_command("look around at all my surrounding area", input)
+			|| string_utils.matches_command("look around at all the surrounding area", input)
+			|| string_utils.matches_command("look around at all surrounding area", input)
+			)
 		{
 			scene* cur_scene = get_perspective_entity()->get_scene();
-			cur_scene->call_function(game_instance, "describe");
-			auto siblings = cur_scene->get_entities_in_scene();
-			for (auto i = siblings.begin(); i != siblings.end(); ++i)
-			{
-				entity* s = *i;
-				s->call_function(game_instance, "describe");
-			}
+			describe_scene(cur_scene);
+			return_val = "DONE";
+			return true;
+		}
+		else if (
+			string_utils.matches_command("clear", input) ||
+			string_utils.matches_command("cls", input) ||
+			string_utils.matches_command("clr", input) ||
+			string_utils.matches_command("clear screen", input) ||
+			string_utils.matches_command("clr screen", input) ||
+			string_utils.matches_command("clear display", input) ||
+			string_utils.matches_command("clr screen", input) ||
+
+			string_utils.matches_command("clear the screen", input) ||
+			string_utils.matches_command("clr the screen", input) ||
+			string_utils.matches_command("clear the display", input) ||
+			string_utils.matches_command("clr the screen", input) ||
+
+			string_utils.matches_command("clear output", input) ||
+			string_utils.matches_command("clr output", input) ||
+			string_utils.matches_command("clear output", input) ||
+			string_utils.matches_command("clr output", input) ||
+
+			string_utils.matches_command("clear the output", input) ||
+			string_utils.matches_command("clr the output", input) ||
+			string_utils.matches_command("clear the output", input) ||
+			string_utils.matches_command("clr the outpu", input) ||
+
+			string_utils.matches_command("clear the console", input) ||
+			string_utils.matches_command("clr the console", input) ||
+			string_utils.matches_command("clear the console", input) ||
+			string_utils.matches_command("clr the console", input) ||
+			string_utils.matches_command("clear console", input) ||
+			string_utils.matches_command("clr console", input) ||
+			string_utils.matches_command("clear console", input) ||
+			string_utils.matches_command("clr console", input)
+			)
+		{
+			get_engine()->clear_screen();
+
+			scene* cur_scene = get_perspective_entity()->get_scene();
+
+			describe_scene(cur_scene);
+
 			return_val = "DONE";
 			return true;
 		}

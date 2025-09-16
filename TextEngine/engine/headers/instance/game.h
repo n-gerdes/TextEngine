@@ -31,9 +31,12 @@ private:
 	
 	bool clear_on_scene_change = false;
 	bool save_any_time = true;
+	bool custom_input_substitution_overrides_engine = false; //Determines whether input substitution from the scenario is cumulative with the engine's base substitution or mutually exclusive with it
 
 public:
-	substitution_wizard* get_substitution_wizard() { return &subs; };
+	void					set_input_substitution_override(bool val) { custom_input_substitution_overrides_engine = val; };
+	bool					has_input_substitution_override() const { return custom_input_substitution_overrides_engine; };
+	substitution_wizard*	get_substitution_wizard() { return &subs; };
 
 	inline void				set_save_any_time(bool can_save_on_command) { save_any_time = can_save_on_command; };
 	inline void				set_clear_on_scene_change(bool clears_when_scene_changes) { clear_on_scene_change = clears_when_scene_changes; };
@@ -71,11 +74,14 @@ public:
 	
 
 	void					game_loop();
+	void					end_game();
 	//std::vector<entity*> get_entities(const std::string& name) const;
 	//std::vector<entity*> get_entities_in_current_scene(const std::string& name) const;
 	//entity*				get_entity(const std::string& entity_true_name);
 	scene*					get_current_scene();
 	engine*					get_engine() const;
+
+	void					describe_scene(scene* s);
 private:
 	std::string				get_meta_directory(const std::string& variable_name);
 public:
@@ -87,6 +93,7 @@ public:
 	entity*					load_entity_from_file(const std::string& entity_name, const std::string& filename);
 	entity*					load_entity_from_file(const std::string& entity_name);
 	scene*					load_scene_from_file(const std::string& scene_name);
+	scene*					load_scene_from_file(const std::string& scene_name, const std::string& filename);
 	virtual bool			resolve_input(game* game_instance, entity* user, const std::string& input, std::string& return_val) override;
 	void					save_game_to_file(); //This is what actually triggers a saving sequence.
 	void					set_meta_value(const std::string& var_name, const std::string& var_value);

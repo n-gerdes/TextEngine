@@ -428,6 +428,13 @@ std::vector<std::string> string_utils::extract_tokens(const std::string& input, 
 	return tokens;
 }
 
+std::vector<std::string> string_utils::extract_tokens(const std::string& input, char delimeter) const
+{
+	std::string del = "0";
+	del[0] = delimeter;
+	return extract_tokens(input, del);
+}
+
 std::vector<std::string> string_utils::extract_tokens(const std::string& input) const
 {
 	return extract_tokens(input, " ");
@@ -570,6 +577,21 @@ bool string_utils::matches_command(const std::string& command, const std::string
 	string_utils string_utils;
 	auto command_tokens = string_utils.extract_tokens(command, delimeters);
 	auto input_tokens = string_utils.extract_tokens(input, delimeters);
+
+	/*
+	std::cout << "INPUT TOKENS: ";
+	for (int i = 0; i < input_tokens.size(); ++i)
+	{
+		std::cout << input_tokens[i] << "|";
+	}
+	std::cout << std::endl;
+	std::cout << "COMMAND TOKENS: ";
+	for (int i = 0; i < command_tokens.size(); ++i)
+	{
+		std::cout << command_tokens[i] << "|";
+	}
+	std::cout << std::endl;
+	*/
 	size_t num_of_command_tokens = command_tokens.size();
 	size_t num_of_input_tokens = input_tokens.size();
 
@@ -592,8 +614,12 @@ bool string_utils::matches_command(const std::string& command, const std::string
 			return false;
 		std::string command_token = string_utils.get_lowercase(command_tokens[command_tokens_iterator]);
 		std::string input_token = string_utils.get_lowercase(input_tokens[input_tokens_iterator]);
+		//std::cout << "COMP: '" << input_token << "' / '" << command_token << "'" << std::endl;
 		if (command_token != input_token && command_token[0] != '$') //If the tokens ever don't match and the command token isn't a wildcard, they don't match.
+		{
+			//std::cout << "\tMISMATCH: '" << input_token << "' / '" << command_token << "'" << std::endl;
 			return false;
+		}
 
 		//At this point it's assumed they do match
 		if (command_token[0] == '$') //If a command token is a wild card, it has to process that.
@@ -618,65 +644,76 @@ bool string_utils::matches_command(const std::string& command, const std::string
 				bool includes_parenthises_in_delimeters = delimeters.find("(") != std::string::npos && delimeters.find(")") != std::string::npos;
 				bool includes_brackets_in_delimeters = delimeters.find("[") != std::string::npos && delimeters.find("]") != std::string::npos;
 				auto input_token_does_not_match_next_command_token = [&](const std::string& input_token) -> bool
-				{
-					if (includes_parenthises_in_delimeters)
 					{
-						if (input_token == "(")
+						if (includes_parenthises_in_delimeters)
 						{
-							++input_parenthises_level;
-							return input_token != next_command_token;
-						}
-						else if (input_token == ")")
-						{
-							if (input_parenthises_level == 0)
+							if (input_token == "(")
 							{
+								++input_parenthises_level;
 								return input_token != next_command_token;
 							}
-							else
+							else if (input_token == ")")
 							{
-								--input_parenthises_level;
-								return true;
+								if (input_parenthises_level == 0)
+								{
+									return input_token != next_command_token;
+								}
+								else
+								{
+									--input_parenthises_level;
+									return true;
+								}
 							}
 						}
-					}
 
-					if (includes_brackets_in_delimeters)
-					{
-						if (input_token == "[")
+						if (includes_brackets_in_delimeters)
 						{
-							++input_brackets_level;
-							return input_token != next_command_token;
-						}
-						else if (input_token == "]")
-						{
-							if (input_brackets_level == 0)
+							if (input_token == "[")
 							{
+								++input_brackets_level;
 								return input_token != next_command_token;
 							}
-							else
+							else if (input_token == "]")
 							{
-								--input_brackets_level;
-								return true;
+								if (input_brackets_level == 0)
+								{
+									return input_token != next_command_token;
+								}
+								else
+								{
+									--input_brackets_level;
+									return true;
+								}
 							}
 						}
-					}
 
-					return input_token != next_command_token;
-					
-				};
+						return input_token != next_command_token;
 
-				/*So if it finds a wildcard and there's a clearly defined "next" command token (because this isn't the last 
+					};
+
+				/*So if it finds a wildcard and there's a clearly defined "next" command token (because this isn't the last
 				token so there has to be), just keep adding tokens from the input to the potential wildcard until it reaches
 				a matching command token or the end of the input tokens (if the end of the input tokens are reached then it
 				means this didn't include every token from the command pattern, is incomplete, and should return false).
 				*/
-				while (input_tokens_iterator < num_of_input_tokens && input_token_does_not_match_next_command_token(input_tokens[input_tokens_iterator]))
+
+				if (!input_token_does_not_match_next_command_token(input_tokens[input_tokens_iterator])) //If the input wildcard is actually the same as the next command token it gets confused, so this special check was added 9/15/2025 to fix that.
 				{
-					if (potential_wildcard.size() > 0)
-						potential_wildcard += " ";
-					potential_wildcard += input_tokens[input_tokens_iterator];
 					++input_tokens_iterator;
+					potential_wildcard = input_tokens[input_tokens_iterator];
 				}
+				else
+				{
+					while (input_tokens_iterator < num_of_input_tokens && input_token_does_not_match_next_command_token(input_tokens[input_tokens_iterator]))
+					{
+						if (potential_wildcard.size() > 0)
+							potential_wildcard += " ";
+						potential_wildcard += input_tokens[input_tokens_iterator];
+						++input_tokens_iterator;
+					}
+				}
+
+				
 
 				if (input_tokens_iterator == num_of_input_tokens) //If it got all the way to the end without finding a match for the next command token, they don't match.
 				{
@@ -954,4 +991,21 @@ std::string string_utils::substring(const std::string& str, size_t first_index, 
 	if (first_index > second_index)
 		std::swap(first_index, second_index);
 	return str.substr(first_index, (second_index - first_index) + 1);
+}
+
+bool string_utils::ends_with(const std::string& str, const std::string& tail) const
+{
+	if (tail.size() > str.size())
+		return false;
+
+	int str_iterator = str.size() - 1;
+	for (int tail_iterator = tail.size() - 1; tail_iterator != -1; --tail_iterator)
+	{
+		char str_c = str[str_iterator];
+		char tail_c = tail[tail_iterator];
+		if (str_c != tail_c)
+			return false;
+		--str_iterator;
+	}
+	return true;
 }

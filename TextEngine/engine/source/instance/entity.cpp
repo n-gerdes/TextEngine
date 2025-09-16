@@ -10,7 +10,6 @@ entity::entity()
 {
 	register_innate_function("tell");
 	register_innate_function("set_value");
-	//register_innate_function("set_scene");
 	register_innate_function("add_alias");
 	register_innate_function("add_title");
 	register_innate_function("learn_alias");
@@ -28,6 +27,12 @@ entity::entity()
 	register_innate_function("recover");
 	register_innate_function("set_max_hp");
 	register_innate_function("set_hp");
+
+	register_innate_function("set_clear_on_scene_change");
+	register_innate_function("set_save_any_time");
+
+	register_innate_function("describe_scene");
+	register_innate_function("clear");
 }
 
 void entity::save_variables(std::ofstream& file, const std::string& scenario_name, engine* engine) const
@@ -395,13 +400,44 @@ void set_hp_func(game* game_instance, entity* c, std::vector<std::string>& args,
 	}
 }
 
+void set_clear_on_scene_change_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+{
+	const std::string& arg = args[0];
+	std::vector<std::string> variable_names;
+	std::vector<std::string> variable_values;
+	bool val = c->evaluate_condition(game_instance, arg, err, variable_names, variable_values);
+	if (err == "")
+		game_instance->set_clear_on_scene_change(val);
+}
+
+void set_save_any_time_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+{
+	const std::string& arg = args[0];
+	std::vector<std::string> variable_names;
+	std::vector<std::string> variable_values;
+	bool val = c->evaluate_condition(game_instance, arg, err, variable_names, variable_values);
+	if (err == "")
+		game_instance->set_save_any_time(val);
+}
+
+void describe_scene_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+{
+	if(c == game_instance->get_perspective_entity())
+		game_instance->describe_scene(c->get_scene());
+}
+
+void clear_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+{
+	if (game_instance->get_perspective_entity()->get_scene() == c->get_scene())
+		game_instance->get_engine()->clear_screen();
+}
+
 std::string entity::call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args)
 {
 	std::string err;
 	
 	pair_innate_function(&tell_func, function_name, "tell", args, game_instance, err, 1);
 	pair_innate_function(&set_value_func, function_name, "set_value", args, game_instance, err, 2);
-	//pair_innate_function(&set_scene_func, function_name, "set_scene", args, game_instance, err, 1);
 	pair_innate_function(&add_alias_func, function_name, "add_alias", args, game_instance, err, 1);
 	pair_innate_function(&add_title_func, function_name, "add_title", args, game_instance, err, 1);
 	pair_innate_function(&learn_alias_func, function_name, "learn_alias", args, game_instance, err, 3);
@@ -420,6 +456,11 @@ std::string entity::call_innate_function(game* game_instance, const std::string&
 	pair_innate_function(&set_max_hp_func, function_name, "set_max_hp", args, game_instance, err, 1);
 	pair_innate_function(&set_hp_func, function_name, "set_hp", args, game_instance, err, 1);
 
+	pair_innate_function(&set_clear_on_scene_change_func, function_name, "set_clear_on_scene_change", args, game_instance, err, 1);
+	pair_innate_function(&set_save_any_time_func, function_name, "set_save_any_time", args, game_instance, err, 1);
+
+	pair_innate_function(&describe_scene_func, function_name, "describe_scene", args, game_instance, err, 0);
+	pair_innate_function(&clear_func, function_name, "clear", args, game_instance, err, 0);
 	return err;
 }
 
@@ -920,6 +961,8 @@ bool entity::resolve_input(game* game_instance, entity* user, const std::string&
 						args.push_back(wildcards[i]);
 
 					std::string err = call_function(game_instance, "command:" + actual_func_name, args, reason_for_failure);
+					if (reason_for_failure == "NO_MATCH" || reason_for_failure == "NO MACH")
+						continue;
 					//std::string lowercase_last_command_return_value = string_utils.get_lowercase(reason_for_failure);
 					
 					/*
@@ -1034,8 +1077,19 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 		{
 			//engine->println("");
 			//engine->print("     > ");
-			input = engine->extra_text_processing(engine->get_input(), get_game_instance());
-			engine->println("");
+			
+			if (!game_instance->game_is_active())
+			{
+				engine->println("Enter anything to return to the main menu");
+				std::cout << PRINT_PREAMBLE;
+				std::getline(std::cin, input);
+				input = "quit";
+			}
+			else
+			{
+				input = engine->extra_text_processing(engine->get_input(), get_game_instance());
+				engine->println("");
+			}
 		}
 		else //If this *isn't* the player, then it autonomously executes its own commands. The command is controlled via the "get_ai_command" function. This isn't the only way to control automatic entity behavior, but it does allow for more dynamic and "open-world" interactions between them.
 		{
@@ -1054,7 +1108,10 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 			{
 				engine::swap_from_dummy_char(input[i]);
 			}
-			input = game_instance->get_engine()->extra_text_processing(input, get_game_instance());
+			if (game_instance->game_is_active())
+				input = game_instance->get_engine()->extra_text_processing(input, get_game_instance());
+			else
+				input = "quit";
 		}
 	};
 

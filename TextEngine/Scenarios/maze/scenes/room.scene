@@ -1,0 +1,146 @@
+
+function initialize()
+	
+end
+
+function gen_data()
+	num_doors = rand(2,6);
+	doors = {};
+	i = 0;
+	while(i < num_doors) do
+		doors[i] = 0;
+		i = i + 1;
+	end
+	set_value("origin",0);
+	set_value("doors",doors);
+end
+
+function gen_room(origin)
+	room_number = get_global_value("rooms_generated") + 1;
+	set_global_value("rooms_generated", room_number);
+	id = concat("room_", room_number);
+	scene(room).clone(id);
+	scene(id).gen_data();
+	scene(id).set_value("id", id);
+	scene(id).set_value("origin",origin);
+	return id;
+end
+
+function describe()
+	say(concat("You find yourself in a room with ",size(get_value("doors"))," doors."));
+end
+
+function on_enter_scene(c)
+	
+end
+
+function before_turn(c)
+	
+end
+
+function get_door_from_index(num)
+	ds = get_value("doors");
+	if(ds[num] == 0)
+		ds[num] = scene(room).gen_room(get_value("id"));
+		set_value("doors", ds);
+		return ds[num];
+	else
+		return ds[num];
+	end
+end
+
+function thru_door(caller, num)
+	if(not(is_integer(num))) then
+		return NO_MATCH;
+	end
+	index = num - 1;
+	doors = get_value("doors");
+	if(or(index < 0, index >=size(doors))) then
+		return NO_MATCH;
+	end
+	
+	id = get_door_from_index(index);
+	entity(caller).transfer(id);
+	return SUCCESS;
+end
+
+function go_back(caller)
+	entity(caller).tell("You head back the way you came.");
+	entity(caller).transfer(get_value("origin"));
+end
+
+
+
+//COMMANDS
+
+function command:go $num door(caller, num)
+	return thru_door(caller, num);
+end
+
+function command:go through door $num(caller,num)
+	return thru_door(caller,num);
+end
+
+function command:go through $num door(caller,num)
+	return thru_door(caller, num);
+end
+
+function command:door $num(caller, num)
+	return thru_door(caller, num);
+end
+
+function command:$num door(caller, num)
+	return thru_door(caller, num);
+end
+
+function command:$num one(caller, num)
+	return thru_door(caller,num);
+end
+
+function command:go $num one(caller, num)
+	return thru_door(caller, num);
+end
+
+function command:go through $num one(caller,num)
+	return thru_door(caller, num);
+end
+
+function command:go into the $num one(caller, num)
+	return thru_door(caller, num);
+end
+
+function command:go into the $num door(caller, num)
+	return thru_door(caller, num);
+end
+
+function command:I go into the $num(caller, num)
+	return thru_door(caller, num);
+end
+
+function command:go back(caller)
+	if(get_value("origin")==0) then
+		return NO_MATCH;
+	end
+	go_back(caller);
+end
+
+function command:return(caller)
+	if(get_value("origin")==0) then
+		return NO_MATCH;
+	end
+	go_back(caller);
+end
+
+function command:leave(caller)
+	if(get_value("origin")==0) then
+		return NO_MATCH;
+	end
+	go_back(caller);
+end
+
+function command:back(caller)
+	if(get_value("origin")==0) then
+		return NO_MATCH;
+	end
+	go_back(caller);
+end

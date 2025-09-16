@@ -12,8 +12,9 @@ class substitution_wizard
 	std::map <std::string, std::string> input_substitution; //The key is a word that can be replaced, the value is what replaces it.
 	std::map<std::string, std::map<std::string, std::vector<std::string>>> output_substitution_map;
 	std::map<std::string, bool> known_thes;
+	bool has_loaded_input_substitution = false;
 public:
-
+	bool		has_input_substitution() const { return has_loaded_input_substitution; };
 	void		load_input_substitution(const std::string& filename);
 	void		apply_input_substitution(std::string& modifiable_string_ref) const;
 	bool		load_output_substitution_file(const std::string& directory, const std::string& modifier); //Loads an output substitution file from the given directory, 

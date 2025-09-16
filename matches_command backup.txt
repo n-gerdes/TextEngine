@@ -1,0 +1,152 @@
+bool string_utils::matches_command(const std::string& command, const std::string& input, std::vector<std::string>& variable_tokens, const std::string& delimeters) const
+{
+	variable_tokens.clear();
+	string_utils string_utils;
+	auto command_tokens = string_utils.extract_tokens(command, delimeters);
+	auto input_tokens = string_utils.extract_tokens(input, delimeters);
+
+	/*
+	std::cout << "INPUT TOKENS: ";
+	for (int i = 0; i < input_tokens.size(); ++i)
+	{
+		std::cout << input_tokens[i] << "|";
+	}
+	std::cout << std::endl;
+	std::cout << "COMMAND TOKENS: ";
+	for (int i = 0; i < command_tokens.size(); ++i)
+	{
+		std::cout << command_tokens[i] << "|";
+	}
+	std::cout << std::endl;
+	*/
+	size_t num_of_command_tokens = command_tokens.size();
+	size_t num_of_input_tokens = input_tokens.size();
+
+	if (num_of_input_tokens < num_of_command_tokens) //There must be at LEAST as many input tokens as command tokens
+		return false; //Potentially more to account for wildcards
+
+	size_t max_tokens = num_of_command_tokens;
+	size_t min_tokens = num_of_input_tokens;
+
+	int input_parenthises_level = 0;
+	int input_brackets_level = 0;
+
+	if (min_tokens > max_tokens)
+		std::swap(max_tokens, min_tokens);
+
+	int input_tokens_iterator = 0; //It iterates through the command tokens rather than the input tokens for the checks
+	for (int command_tokens_iterator = 0; command_tokens_iterator < num_of_command_tokens; ++command_tokens_iterator)
+	{
+		if (input_tokens_iterator >= input_tokens.size())
+			return false;
+		std::string command_token = string_utils.get_lowercase(command_tokens[command_tokens_iterator]);
+		std::string input_token = string_utils.get_lowercase(input_tokens[input_tokens_iterator]);
+		//std::cout << "COMP: '" << input_token << "' / '" << command_token << "'" << std::endl;
+		if (command_token != input_token && command_token[0] != '$') //If the tokens ever don't match and the command token isn't a wildcard, they don't match.
+		{
+			//std::cout << "\tMISMATCH: '" << input_token << "' / '" << command_token << "'" << std::endl;
+			return false;
+		}
+
+		//At this point it's assumed they do match
+		if (command_token[0] == '$') //If a command token is a wild card, it has to process that.
+		{
+			std::string potential_wildcard = "";
+			int next_command_token_index = command_tokens_iterator + 1;
+			if (next_command_token_index == num_of_command_tokens) //If the wildcard is the final token, it just has to add out the rest of the input tokens to the final wildcard.
+			{
+				while (input_tokens_iterator < num_of_input_tokens)
+				{
+					potential_wildcard += input_tokens[input_tokens_iterator];
+					++input_tokens_iterator;
+					if (input_tokens_iterator != num_of_input_tokens)
+						potential_wildcard += " ";
+				}
+			}
+			else
+			{
+				std::string& next_command_token = command_tokens[next_command_token_index];
+				if (next_command_token[0] == '$')
+					throw; //If I accidentally include two wildcards in a row, it must throw an error.
+				bool includes_parenthises_in_delimeters = delimeters.find("(") != std::string::npos && delimeters.find(")") != std::string::npos;
+				bool includes_brackets_in_delimeters = delimeters.find("[") != std::string::npos && delimeters.find("]") != std::string::npos;
+				auto input_token_does_not_match_next_command_token = [&](const std::string& input_token) -> bool
+				{
+					if (includes_parenthises_in_delimeters)
+					{
+						if (input_token == "(")
+						{
+							++input_parenthises_level;
+							return input_token != next_command_token;
+						}
+						else if (input_token == ")")
+						{
+							if (input_parenthises_level == 0)
+							{
+								return input_token != next_command_token;
+							}
+							else
+							{
+								--input_parenthises_level;
+								return true;
+							}
+						}
+					}
+
+					if (includes_brackets_in_delimeters)
+					{
+						if (input_token == "[")
+						{
+							++input_brackets_level;
+							return input_token != next_command_token;
+						}
+						else if (input_token == "]")
+						{
+							if (input_brackets_level == 0)
+							{
+								return input_token != next_command_token;
+							}
+							else
+							{
+								--input_brackets_level;
+								return true;
+							}
+						}
+					}
+
+					return input_token != next_command_token;
+					
+				};
+
+				/*So if it finds a wildcard and there's a clearly defined "next" command token (because this isn't the last 
+				token so there has to be), just keep adding tokens from the input to the potential wildcard until it reaches
+				a matching command token or the end of the input tokens (if the end of the input tokens are reached then it
+				means this didn't include every token from the command pattern, is incomplete, and should return false).
+				*/
+				while (input_tokens_iterator < num_of_input_tokens && input_token_does_not_match_next_command_token(input_tokens[input_tokens_iterator]))
+				{
+					if (potential_wildcard.size() > 0)
+						potential_wildcard += " ";
+					potential_wildcard += input_tokens[input_tokens_iterator];
+					++input_tokens_iterator;
+				}
+
+				if (input_tokens_iterator == num_of_input_tokens) //If it got all the way to the end without finding a match for the next command token, they don't match.
+				{
+					return false;
+				}
+				else
+				{
+					--input_tokens_iterator; //It will be set forward again at the end, so it needs to be rewound to prevent it from going too far
+				}
+			}
+
+			variable_tokens.push_back(potential_wildcard);
+			input_parenthises_level = 0;
+			input_brackets_level = 0;
+		}
+		++input_tokens_iterator;
+	}
+
+	return true; //If it passed all checks, it means the command is a match.
+}

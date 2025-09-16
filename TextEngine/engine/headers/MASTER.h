@@ -21,8 +21,22 @@ const static char dummy_colon = 133;
 const static char dummy_exclamation = 134;
 const static char dummy_period = 135;
 
+const static char dummy_array_delimeter = 136;
+
 const static bool FULL_CLEAR = true;
 
 const static std::string PRINT_PREAMBLE = "  ";
 
+const static int MILLISECONDS_BETWEEN_CHARACTERS = 1;
+
+//Dev mode requires C++17 or newer.
+#define DEV_MODE false
+//Dev mode allows for scenarios in folders to be "pre-baked", which means it writes a C++ code file with a function in it that hard-codes the scenario files into
+//the executable, thus allowing for a self-contained text adventure to be written with this engine.
+//Dev mode also allows for scenarios to be loaded from folders even if it would ordinarily force scenarios to be chosen from the list of pre-baked scenarios.
+
+//Whether or not to compile with hard-coded scenario code, which is generated in dev mode using normal scenario folders
+#define INCLUDE_BAKED_SCENARIOS true
+
+const static bool FORCE_BAKED_SCENARIOS = true; //Whether or not it limits the user to pre-baked scenarios. If no baked scenarios are available then it falls back to allowing loaded scenarios too.
 #endif

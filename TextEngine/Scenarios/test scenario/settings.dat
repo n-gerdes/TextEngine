@@ -1,2 +1,3 @@
 allow_custom_character : no
+input_substitution_override : false
 allow_character: ~main : Default Main Character

@@ -1,25 +1,29 @@
 #include "engine/headers/procedure/substitution_wizard.h"
 #include "engine/headers/MASTER.h"
 #include "engine/headers/util/string_utils.h"
+#include "engine/headers/procedure/file_reader.h"
 #include <fstream>
 #include <iostream>
 
 void substitution_wizard::apply_input_substitution(std::string& modified) const
 {
-	string_utils string_utils;
-	for (auto i = input_substitution.begin(); i != input_substitution.end(); ++i)
+	if (has_loaded_input_substitution)
 	{
-		modified = string_utils.replace_all(modified, i->first, i->second, true, false);
-	}
+		string_utils string_utils;
+		for (auto i = input_substitution.begin(); i != input_substitution.end(); ++i)
+		{
+			modified = string_utils.replace_all(modified, i->first, i->second, true, false);
+		}
 
-	for (auto i = raw_input_removal.begin(); i != raw_input_removal.end(); ++i)
-	{
-		modified = string_utils.replace_all(modified, *i, "", false, false);
-	}
+		for (auto i = raw_input_removal.begin(); i != raw_input_removal.end(); ++i)
+		{
+			modified = string_utils.replace_all(modified, *i, "", false, false);
+		}
 
-	for (auto i = input_removal.begin(); i != input_removal.end(); ++i)
-	{
-		modified = string_utils.replace_all(modified, *i, "", true, false);
+		for (auto i = input_removal.begin(); i != input_removal.end(); ++i)
+		{
+			modified = string_utils.replace_all(modified, *i, "", true, false);
+		}
 	}
 }
 
@@ -34,7 +38,8 @@ bool substitution_wizard::load_output_substitution_file(const std::string& direc
 	else
 		filename = directory + "/" + modifier + "_output_substitution.dat";
 
-	std::ifstream substitution_file;
+	//std::ifstream substitution_file;
+	file_reader substitution_file;
 	substitution_file.open(filename);
 	if (substitution_file.is_open())
 	{
@@ -60,7 +65,8 @@ bool substitution_wizard::load_output_substitution_file(const std::string& direc
 		while (substitution_file.good() && !substitution_file.eof())
 		{
 			++line_num;
-			std::getline(substitution_file, line);
+			//std::getline(substitution_file, line);
+			substitution_file.getline(line);
 			string_utils.strip(line);
 			auto tokens = string_utils.extract_tokens(line, ":,");
 			if (tokens.size() < 3)
@@ -137,7 +143,8 @@ bool substitution_wizard::load_output_substitution_file(const std::string& direc
 
 void substitution_wizard::load_input_substitution(const std::string& filename)
 {
-	std::ifstream substitution_file;
+	//std::ifstream substitution_file;
+	file_reader substitution_file;
 	substitution_file.open(filename);
 	string_utils string_utils;
 	if (substitution_file.is_open())
@@ -145,7 +152,8 @@ void substitution_wizard::load_input_substitution(const std::string& filename)
 		std::string line;
 		while (substitution_file.good() && !substitution_file.eof())
 		{
-			std::getline(substitution_file, line);
+			//std::getline(substitution_file, line);
+			substitution_file.getline(line);
 			string_utils.strip(line);
 			if (string_utils.starts_with(line, "remove)", true) && !string_utils.contains(line, ":"))
 			{
@@ -164,6 +172,7 @@ void substitution_wizard::load_input_substitution(const std::string& filename)
 					std::cout << "ERROR: " << filename << " incorrectly formatted : " << line << "; no string specified for removal." << std::endl;
 					throw;
 				}
+				
 				else
 					raw_input_removal.push_back(line.substr(11));
 			}
@@ -182,6 +191,7 @@ void substitution_wizard::load_input_substitution(const std::string& filename)
 			}
 		}
 		substitution_file.close();
+		has_loaded_input_substitution = true;
 	}
 	else
 	{

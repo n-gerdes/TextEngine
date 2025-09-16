@@ -35,6 +35,7 @@ public:
 	void						add_alias(const std::string& new_alias);
 	void						add_title(const std::string& new_title);
 	void						copy_values_and_aliases_from(game_obj* o);
+	void						copy_values_from(game_obj* o);
 	virtual void				child_added(child_t* new_child) {}
 	virtual void				child_removed(child_t* removed_child) {}
 	void						delete_aliases();

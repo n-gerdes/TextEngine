@@ -16,6 +16,7 @@ public:
 	bool						complex_replacement(const std::string& original, const std::string& search_pattern, std::string& extracted_prestring, std::string& extracted_poststring, std::vector<std::string>& wildcards, const std::string& delimeters, bool case_sensitive) const; //Same as the first but instead of entity-by-entity comparisons, it does token-by-token comparisons.
 	bool						complex_replacement(const std::string& original, const std::string& search_pattern, std::string& extracted_prestring, std::string& extracted_poststring, std::vector<std::string>& wildcards, const std::string& delimeters, bool case_sensitive, bool allow_multi_token_wildcards) const;
 	std::vector<std::string>	extract_tokens(const std::string& input, const std::string& delimeters) const;
+	std::vector<std::string>	extract_tokens(const std::string& input, char delimeter) const;
 	std::vector<std::string>	extract_tokens(const std::string& input) const;
 	std::string					format_as_name(const std::string& input) const;
 	std::string					get_lowercase(const std::string& str) const;
@@ -38,7 +39,7 @@ public:
 	bool						starts_with(const std::string& text, const std::string& potential_beginning, bool case_sensitive) const;
 	void						strip(std::string& str) const;
 	std::string					substring(const std::string& str, size_t first_index, size_t second_index) const; //Alternate substring function to get a substring via two indicies [inclusive]
-
+	bool						ends_with(const std::string& str, const std::string& tail) const;
 protected:
 
 private:

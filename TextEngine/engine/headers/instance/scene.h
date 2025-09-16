@@ -48,6 +48,8 @@ public:
 	void						launch(game* game_instance, int* threads_launched);
 	void						load_transfer_entities(game* game_instance);
 
+	void						copy_data_from(scene* other_scene);
+
 protected:
 	virtual void				on_destroyed();
 	

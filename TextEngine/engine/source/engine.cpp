@@ -3,12 +3,23 @@
 #include "engine/headers/instance/game.h"
 #include "engine/headers/instance/scene.h"
 #include "engine/headers/instance/entity.h"
+#include "engine/headers/procedure/file_reader.h"
 #include <mutex>
 #include <iostream>
 #include <fstream>
 
+#if DEV_MODE
+#include <filesystem>
+#endif
+
 std::mutex engine::print_mutex;
 char engine::last_character_printed = '\n';
+std::vector<std::string> engine::baked_scenarios_registry;
+
+void engine::register_baked_scenario(const std::string& scenario_name)
+{
+	baked_scenarios_registry.push_back(scenario_name);
+}
 
 entity* engine::AMBIGUOUS_CHARACTER() const
 {
@@ -78,6 +89,10 @@ std::string engine::correct_tokenizer_bug(const std::string original) const
 
 engine::engine()
 {
+	std::cout << "Initializing..." << std::endl;
+	baked_scenarios_registry.clear();
+	file_reader::clear_internal_files();
+	file_reader::bake();
 	last_character_printed = '\n';
 	save_registry = new game_obj_save_registry();
 	
@@ -88,6 +103,13 @@ engine::engine()
 	subs.load_output_substitution_file("gamedata/", "formal");
 	subs.load_output_substitution_file("gamedata/", "technical");
 	subs.load_output_substitution_file("gamedata/", "medieval");
+	clear_screen(false);
+}
+
+engine::~engine()
+{
+	save_registry->cleanup_registry();
+	delete save_registry;
 }
 
 std::string engine::extra_text_processing(const std::string& original_text, game* game_instance) const
@@ -99,7 +121,14 @@ std::string engine::extra_text_processing(const std::string& original_text, game
 		modified = string_utils.replace_first(modified, "I ", "", false);
 
 	//This handles all the basic input thesaurus stuff
-	subs.apply_input_substitution(modified);
+	bool substitution_override = false;
+	if (game_instance != nullptr)
+	{
+		if (game_instance->has_input_substitution_override() && game_instance->get_substitution_wizard()->has_input_substitution())
+			substitution_override = true;
+	}
+	if(!substitution_override)
+		subs.apply_input_substitution(modified);
 
 	if (game_instance != nullptr)
 	{
@@ -110,13 +139,9 @@ std::string engine::extra_text_processing(const std::string& original_text, game
 	{
 		swap_from_dummy_char(modified[i]);
 	}
+	string_utils.strip(modified);
+	string_utils.replace_all(modified, "  ", " ", false);
 	return modified;
-}
-
-engine::~engine()
-{
-	save_registry->cleanup_registry();
-	delete save_registry;
 }
 
 std::string engine::get_scenario_directory(const std::string& scenario_name) const
@@ -267,6 +292,9 @@ game* engine::load_game(const std::string& scenario_name, const std::string& sav
 			{
 				clear_screen();
 				game_instance->load_from_file(input_file, *this, scenario_name, this);
+				game_instance->describe_scene(game_instance->get_perspective_entity()->get_scene());
+				/*
+				
 				game_instance->get_perspective_entity()->get_scene()->call_function(game_instance, "describe");
 				auto ents = game_instance->get_perspective_entity()->get_scene()->get_entities_in_scene();
 				for (auto i = ents.begin(); i != ents.end(); ++i)
@@ -277,6 +305,7 @@ game* engine::load_game(const std::string& scenario_name, const std::string& sav
 						d->call_function(game_instance, "describe");
 					}
 				}
+				*/
 			}
 			catch (const std::exception& E)
 			{
@@ -310,10 +339,42 @@ void engine::main_menu()
 		{
 			correct_menu_display_bug_flag = !correct_menu_display_bug_flag;
 		}
-		print_lines(
-			"1. Open Scenario", 
-			"2. Exit"
-		);
+		if (DEV_MODE)
+		{
+			print_lines(
+				"1. Open Scenario",
+				"2. Bake Scenario",
+				"3. Exit"
+			);
+		}
+		else
+		{
+			if (INCLUDE_BAKED_SCENARIOS && baked_scenarios_registry.size() >=1)
+			{
+				if (baked_scenarios_registry.size() == 1 && FORCE_BAKED_SCENARIOS)
+				{
+					print_lines(
+						"1. Begin",
+						"2. Exit"
+					);
+				}
+				else
+				{
+					print_lines(
+						"1. Open Scenario",
+						"2. Exit"
+					);
+				}
+			}
+			else
+			{
+				print_lines(
+					"1. Open Scenario",
+					"2. Exit"
+				);
+			}
+		}
+		
 		string_utils string_utils;
 		input = get_input();
 		string_utils.make_lowercase(input);
@@ -330,18 +391,41 @@ void engine::main_menu()
 		input = string_utils.replace_all(input, "can you", "", false);
 		string_utils.strip(input);
 
-		if (input == "1" || input=="open" || input == "open scenario" || input == "scenario" || input == "o" || input == "s" || input == "os" || input == "one" || input == "open a scenario" || input == "open the scenario" || input == "1 1")
+		if (DEV_MODE)
 		{
-			open_scenario(input);
-		}
-		else if (input == "2" || input == "exit" || input == "e" || input == "close" || input == "terminate" || input == "two"|| input == "end" || input == "quit")
-		{
-			game_going = false;
+			if (input == "1" || input == "open" || input == "open scenario" || input == "scenario" || input == "o" || input == "s" || input == "os" || input == "one" || input == "open a scenario" || input == "open the scenario" || input == "1 1")
+			{
+				open_scenario(input);
+			}
+			else if (input == "2" || input == "bake" || input == "compile" || input == "prebake" || input == "2 1" || input == "pre-bake" || input == "pre-bake scenario" || input == "prebake scenario" || input == "compile scenario" || input == "bake scenario")
+			{
+				bake_scenarios();
+			}
+			else if (input == "3" || input == "exit" || input == "e" || input == "close" || input == "terminate" || input == "two" || input == "end" || input == "quit" || input == "3 1" || input == "3. exit" || input == "3 exit")
+			{
+				game_going = false;
+			}
+			else
+			{
+				clear_screen();
+				println("That's not an option");
+			}
 		}
 		else
 		{
-			clear_screen();
-			println("That's not an option");
+			if (input == "1" || input == "open" || input == "open scenario" || input == "scenario" || input == "o" || input == "s" || input == "os" || input == "one" || input == "open a scenario" || input == "open the scenario" || input == "1 1")
+			{
+				open_scenario(input);
+			}
+			else if (input == "2" || input == "exit" || input == "e" || input == "close" || input == "terminate" || input == "two" || input == "end" || input == "quit" || input == "2 1" || input == "2. exit" || input == "2 exit")
+			{
+				game_going = false;
+			}
+			else
+			{
+				clear_screen();
+				println("That's not an option");
+			}
 		}
 	}
 }
@@ -359,6 +443,7 @@ void engine::start_new_game(const std::string& scenario_name)
 	bool allow_custom_character = false;
 	bool clear_on_scene_change = false;
 	bool save_any_time = true;
+	bool input_substitution_override = false;
 	std::vector<std::string> wildcards;
 
 	bool read_settings = settings.read_raw(settings_directory);
@@ -405,6 +490,16 @@ void engine::start_new_game(const std::string& scenario_name)
 				else
 					print_settings_bool_error();
 			}
+			else if (string_utils.matches_command("input_substitution_override : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
+			{
+				std::string& val = wildcards[0];
+				if (val == "yes" || val == "true")
+					input_substitution_override = true;
+				else if (val == "no" || val == "false")
+					input_substitution_override = false;
+				else
+					print_settings_bool_error();
+			}
 			else if (string_utils.matches_command("allow_character : $name : $alias", line, wildcards, ": "))
 			{
 				std::string& char_name = wildcards[0];
@@ -424,6 +519,7 @@ void engine::start_new_game(const std::string& scenario_name)
 		game* game_instance = new game(scenario_name, this);
 		game_instance->set_clear_on_scene_change(clear_on_scene_change);
 		game_instance->set_save_any_time(save_any_time);
+		game_instance->set_input_substitution_override(input_substitution_override);
 		//HANDLE CHARACTER SELECTION / CREATION
 		entity* pc = nullptr;
 		if (!allow_custom_character && allowed_starter_characters.size() == 0)
@@ -530,37 +626,288 @@ void engine::start_game_instance(game* game_instance)
 
 void engine::open_scenario(std::string& input)
 {
-	println("What is the name of the scenario?");
-	input = get_input();
 
-	res_file save_files;
-	bool found_saves = save_files.read_raw(get_saves_directory(input) + "files.dat");
-	if (found_saves)
-	{
-		if (save_files.lines() == 0 || ((save_files.lines()==1 || save_files.lines()==2) && save_files.get_line(1)==""))
+	auto pick_scenario = [&](const std::string& scenario_name)
 		{
-			start_new_game(input);
-		}
-		else
-		{
-			println("1. New Game");
-			for (res_file::line_num i = 1; i < save_files.lines() && save_files.get_line(i).size() != 0; ++i)
-				println(i + 1, ". ", save_files.get_line(i));
-
-			int choice = get_integer_input(1, save_files.lines());
-			if (choice == 1)
+			res_file save_files;
+			bool found_saves = save_files.read_raw_external(get_saves_directory(scenario_name) + "files.dat");
+			if (found_saves)
 			{
-				start_new_game(input);
+				if (save_files.lines() == 0 || ((save_files.lines() == 1 || save_files.lines() == 2) && save_files.get_line(1) == ""))
+				{
+					start_new_game(input);
+				}
+				else
+				{
+					println("1. New Game");
+					for (res_file::line_num i = 1; i < save_files.lines() && save_files.get_line(i).size() != 0; ++i)
+						println(i + 1, ". ", save_files.get_line(i));
+
+					int choice = get_integer_input(1, save_files.lines());
+					if (choice == 1)
+					{
+						start_new_game(input);
+					}
+					else
+					{
+						game* loaded_game = load_game(input, save_files.get_line(static_cast<res_file::line_num>(choice - 1)));
+						start_game_instance(loaded_game);
+					}
+				}
 			}
 			else
 			{
-				game* loaded_game = load_game(input, save_files.get_line(static_cast<res_file::line_num>(choice - 1)));
-				start_game_instance(loaded_game);
+				println("Error: Could not find scenario");
+			}
+		};
+
+	if (forces_baked_scenario() && baked_scenarios_registry.size() == 1) //Player must choose a baked scenario and only one is available
+	{
+		pick_scenario(baked_scenarios_registry[0]);
+	}
+	else if (INCLUDE_BAKED_SCENARIOS && baked_scenarios_registry.size() > 1) //Player can choose a baked scenario and more than one is present
+	{
+		clear_screen();
+		for (int i = 0; i < baked_scenarios_registry.size(); ++i)
+		{
+			println(i + 1, ". ", baked_scenarios_registry[i]);
+		}
+		if (forces_baked_scenario()) //If there is more than one pre-baked scenario and the player must choose from the list.
+		{
+			println();
+			println("Which one?");
+		}
+		else //If there is more than one pre-baked scenario available but the player isn't forced to choose from them.
+		{
+			println("You can choose from this list, or load from an external folder.");
+		}
+
+		string_utils string_utils;
+
+		input = get_input();
+		string_utils.strip(input);
+
+		bool matched_baked_scenario = false;
+		for (int i = 0; i < baked_scenarios_registry.size(); ++i)
+		{
+			std::string num = std::to_string(i + 1);
+			const std::string& name = baked_scenarios_registry[i];
+			if (input == num || input == name || input == (num + " " + name) || input == (num + "." + name) || input == (num + ". " + name) || input == (num + ":" + name) || input == (num + ": " + name))
+			{
+				input = name;
+				matched_baked_scenario = true;
+				break;
 			}
 		}
+		while (forces_baked_scenario() && !matched_baked_scenario)
+		{
+			println("That's not an option. Which one do you want from the list?");
+
+			input = get_input();
+			string_utils.strip(input);
+
+			for (int i = 0; i < baked_scenarios_registry.size(); ++i)
+			{
+				std::string num = std::to_string(i + 1);
+				const std::string& name = baked_scenarios_registry[i];
+				if (input == num || input == name || input == (num + " " + name) || input == (num + "." + name) || input == (num + ". " + name) || input == (num + ":" + name) || input == (num + ": " + name))
+				{
+					input = name;
+					matched_baked_scenario = true;
+					break;
+				}
+			}
+		}
+
+		pick_scenario(input);
 	}
-	else
+	else //No baked scenarios available, can only pick from external folder scenarios.
 	{
-		println("Error: Could not find scenario");
+		println("What is the name of the scenario?");
+		input = get_input();
+		pick_scenario(input);
 	}
+	
+}
+
+inline void engine::bake_scenarios()
+{
+#if DEV_MODE
+	try {
+		std::filesystem::path dir = std::filesystem::current_path();
+		inst_println("First ensure that every scenario to bake is present in \'Scenarios\' folder,","and that 'Scenarios' is present in the working directory the engine was called from.");
+		inst_println("Current working directory: ", dir);
+		inst_println("Enter anything once ready.");
+		std::string input = get_input();
+		std::filesystem::path scenarios_dir = dir.append("Scenarios");
+		inst_println("Scenarios Direcory: ", scenarios_dir);
+		if (!std::filesystem::exists(scenarios_dir))
+			throw;
+		
+		string_utils string_utils;
+
+		std::vector<std::string> internal_file_builder_cpp;
+
+		internal_file_builder_cpp.push_back("#include \"engine/headers/procedure/internal_file_builder.h\"");
+		internal_file_builder_cpp.push_back("#include \"engine/headers/engine.h\"");
+		internal_file_builder_cpp.push_back("");
+		internal_file_builder_cpp.push_back("//This file essentially hard-codes scenario data into the executable.");
+		internal_file_builder_cpp.push_back("");
+		internal_file_builder_cpp.push_back("void internal_file_builder::build_internal_files()");
+		internal_file_builder_cpp.push_back("{");
+		internal_file_builder_cpp.push_back("#if INCLUDE_BAKED_SCENARIOS");
+		internal_file_builder_cpp.push_back("\tstd::vector<std::string>* ptr = nullptr;");
+
+		auto bake_file_to_code = [&](const std::string & dir)
+		{
+				inst_println("Baking ", dir);
+				std::vector<std::string> lines;
+				std::ifstream reader;
+				reader.open(dir);
+				if (reader.is_open())
+				{
+					std::string line;
+					while (reader.is_open() && reader.good() && !reader.eof())
+					{
+						std::getline(reader, line);
+						std::string finished_line;
+						finished_line.reserve(line.size());
+						for (int i = 0; i < line.size(); ++i)
+						{
+							char lc = line[i];
+							if (lc == '"' || lc == '\'')
+							{
+								finished_line += '\\';
+							}
+							finished_line += lc;
+						}
+						lines.push_back(finished_line);
+					}
+					reader.close();
+				}
+				else
+				{
+					throw;
+				}
+
+				internal_file_builder_cpp.push_back("\tfile_reader::initialize_internal_file(\"" + dir + "\", " + std::to_string(lines.size()) + ");");
+				internal_file_builder_cpp.push_back("\tptr = file_reader::get_internal_file_lines(\"" + dir + "\");");
+				for (size_t i = 0; i < lines.size(); ++i)
+				{
+					internal_file_builder_cpp.push_back("\tptr->push_back(\""+lines[i] + "\");");
+				}
+				internal_file_builder_cpp.push_back("");
+		};
+
+		bake_file_to_code("gamedata/packages/area_scene");
+		bake_file_to_code("gamedata/packages/base_character");
+		bake_file_to_code("gamedata/packages/base_entity");
+		bake_file_to_code("gamedata/packages/base_item");
+
+		bake_file_to_code("gamedata/casual_output_substitution.dat");
+		bake_file_to_code("gamedata/formal_output_substitution.dat");
+		bake_file_to_code("gamedata/generic_output_substitution.dat");
+		bake_file_to_code("gamedata/input_substitution.dat");
+		bake_file_to_code("gamedata/medieval_output_substitution.dat");
+		bake_file_to_code("gamedata/technical_output_substitution.dat");
+
+		auto bake_scenario = [&](const std::filesystem::path& scen)
+			{
+				std::string scenario_name = scen.stem().generic_string();
+				std::filesystem::path entities_folder = scen;
+				std::filesystem::path scenes_folder = scen;
+				std::filesystem::path templates_folder = scen;
+				scenes_folder.append("scenes");
+				entities_folder.append("entities");
+				templates_folder.append("templates");
+				if (!std::filesystem::exists(scenes_folder))
+					throw;
+				if (!std::filesystem::exists(entities_folder))
+					throw;
+				if (!std::filesystem::exists(templates_folder))
+					throw;
+
+				std::string dir = "";
+
+				internal_file_builder_cpp.push_back("\tengine::register_baked_scenario(\"" + scenario_name + "\");");
+
+				for (auto& entry : std::filesystem::directory_iterator(scen))
+				{
+					std::filesystem::path scene = entry.path();
+					std::string filename = scene.filename().generic_string();
+					if (string_utils.ends_with(filename, ".dat"))
+					{
+						dir = "Scenarios/"  + scenario_name + "/" + filename;
+						bake_file_to_code(dir);
+					}
+				}
+
+				for (auto& entry : std::filesystem::directory_iterator(scenes_folder))
+				{
+					std::filesystem::path scene = entry.path();
+					std::string filename = scene.filename().generic_string();
+					if (string_utils.ends_with(filename, ".scene"))
+					{
+						dir = "Scenarios/" + scenario_name + "/scenes/" + filename;
+						bake_file_to_code(dir);
+					}
+				}
+
+				for (auto& entry : std::filesystem::directory_iterator(entities_folder))
+				{
+					std::filesystem::path entity = entry.path();
+					std::string filename = entity.filename().generic_string();
+					if (string_utils.ends_with(filename, ".entity"))
+					{
+						dir = "Scenarios/" + scenario_name + "/entities/" + filename;
+						bake_file_to_code(dir);
+					}
+				}
+
+				for (auto& entry : std::filesystem::directory_iterator(templates_folder))
+				{
+					std::filesystem::path template_file = entry.path();
+					std::string filename = template_file.filename().generic_string();
+					if (string_utils.ends_with(filename, ".template"))
+					{
+						dir = "Scenarios/" + scenario_name + "/templates/" + filename;
+						bake_file_to_code(dir);
+					}
+				}
+
+			};
+
+
+		for (auto& entry : std::filesystem::directory_iterator(scenarios_dir))
+		{
+
+			inst_println("Found scenario: ", entry);
+
+			bake_scenario(entry.path());
+		}
+
+		internal_file_builder_cpp.push_back("#endif");
+		internal_file_builder_cpp.push_back("}");
+
+		std::ofstream writer;
+		writer.open("internal_file_builder.cpp");
+		if (writer.is_open())
+		{
+			for (size_t i = 0; i < internal_file_builder_cpp.size(); ++i)
+			{
+				const std::string& line = internal_file_builder_cpp[i];
+				writer << line << std::endl;
+			}
+			writer.close();
+		}
+		else
+		{
+			throw;
+		}
+	}
+	catch (const std::exception& E)
+	{
+		std::cout << "Encountered Error: " << E.what() << std::endl;
+	}
+#endif
 }
