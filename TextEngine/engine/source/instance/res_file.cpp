@@ -1522,6 +1522,26 @@ void describe_scene_func(game* game_instance, res_file& script, std::vector<uint
 	game_instance->describe_scene(s);
 }
 
+
+void sleep_func(game* game_instance, res_file& script, std::vector<uint32_t>& if_conditions, res_file::line_num& line_num,
+	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
+	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
+{
+	const std::string& time = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	if (string_utils.is_numeric(time))
+	{
+		long double delay_in_seconds = std::stod(time);
+		long long int delay_in_milliseconds = delay_in_seconds * 1000;
+		std::this_thread::sleep_for(std::chrono::milliseconds(delay_in_milliseconds));
+	}
+	else
+	{
+		err_msg = "Error: 'sleep' function variants only 1 number as an argument.";
+	}
+}
+
+
 std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 	res_file::execution_registry_entry("if ( $condition )", &if_then_func, true),
 	res_file::execution_registry_entry("while ( $condition )", &while_func, true),
@@ -1595,6 +1615,8 @@ std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 	res_file::execution_registry_entry("describe_scene", describe_scene_func, false),
 
 	res_file::execution_registry_entry("finish", finish_func, false),
+
+	res_file::execution_registry_entry("pause ( $arg )", sleep_func, false),
 
 	res_file::execution_registry_entry("BREAKPOINT", &breakpoint_func, false)
 };
@@ -1961,6 +1983,10 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 
 	substitute_alias_function("all_entities", "get_all_entities");
 	substitute_alias_function("all_scenes", "get_all_scenes");
+
+	substitute_alias_function("wait", "pause");
+	substitute_alias_function("sleep", "pause");
+	substitute_alias_function("delay", "pause");
 
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
@@ -4919,6 +4945,37 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	char_getter_handler entity_pause_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1)
+			{
+				return "Error: 'sleep' function variants only 1 number as an argument.";
+			}
+			else
+			{
+				::string_utils string_utils;
+				std::string arg = args[0];
+				if (string_utils.is_numeric(arg))
+				{
+					//long double delay_in_seconds = std::stod(arg);
+					//long long int delay_in_ms = delay_in_seconds * 1000;
+					//std::this_thread::sleep_for(std::chrono::milliseconds(delay_in_ms));
+					std::string val = "[";
+					string_utils.strip(arg);
+					val += arg;
+					val += "]";
+					val[0] = delay_marker_char;
+					val[val.size() - 1] = delay_marker_char;
+					return val;
+				}
+				else
+				{
+					return "Error: 'sleep' function variants only 1 number as an argument.";
+				}
+			}
+		};
+
+
 	entity* this_entity = dynamic_cast<entity*>(const_cast<res_file*>(this));
 	register_entity_getter("get_value", get_val_handler, this_entity);
 	register_entity_getter("get_global_value", get_global_val_handler, this_entity);
@@ -4960,6 +5017,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 	register_entity_getter("get_all_entities", entity_get_all_entities_handler, this_entity);
 	register_entity_getter("get_all_scenes", entity_get_all_scenes_handler, this_entity);
+	register_entity_getter("pause", entity_pause_handler, this_entity);
 
 	//////////////////////////////////////////////////////////////////////////////////
 	/* HERE IS WHERE CODE GOES THAT CAN HANDLE GETTING RETURN VALUES FROM USER-FUNCTION CALLS TO ENTITIES */
@@ -5527,7 +5585,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	};
 
-	scene_getter_handler scene_get_meta_val_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+	scene_getter_handler scene_get_meta_value_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 1)
 		{
@@ -5780,12 +5838,43 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+
+	scene_getter_handler scene_pause_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 1)
+			{
+				return "Error: 'sleep' function variants only 1 number as an argument.";
+			}
+			else
+			{
+				::string_utils string_utils;
+				std::string arg = args[0];
+				if (string_utils.is_numeric(arg))
+				{
+					//long double delay_in_seconds = std::stod(arg);
+					//long long int delay_in_ms = delay_in_seconds * 1000;
+					//std::this_thread::sleep_for(std::chrono::milliseconds(delay_in_ms));
+					std::string val = "[";
+					string_utils.strip(arg);
+					val += arg;
+					val += "]";
+					val[0] = delay_marker_char;
+					val[val.size() - 1] = delay_marker_char;
+					return val;
+				}
+				else
+				{
+					return "Error: 'sleep' function variants only 1 number as an argument.";
+				}
+			}
+		};
+
 	register_scene_getter("get_name", scene_get_name_handler, this_scene, this_entity);
 	register_scene_getter("get_children", scene_get_children_handler, this_scene, this_entity);
 	register_scene_getter("entity_exists_here", scene_entity_exists_here_handler, this_scene, this_entity);
 	register_scene_getter("entity_exists", scene_entity_exists_handler, this_scene, this_entity);
 	register_scene_getter("get_global_value", scene_get_global_value_handler, this_scene, this_entity);
-	//register_scene_getter("get_meta_value", scene_entity_exists_handler, this_scene, this_entity);
+	register_scene_getter("get_meta_value", scene_get_meta_value_handler, this_scene, this_entity);
 	register_scene_getter("get_value", scene_get_value_handler, this_scene, this_entity);
 	register_scene_getter("and", scene_and_handler, this_scene, this_entity);
 	register_scene_getter("or", scene_or_handler, this_scene, this_entity);
@@ -5798,6 +5887,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 	register_scene_getter("get_all_entities", scene_get_all_entities_handler, this_scene, this_entity);
 	register_scene_getter("get_all_scenes", scene_get_all_scenes_handler, this_scene, this_entity);
+
+	register_scene_getter("pause", scene_pause_handler, this_scene, this_entity);
 
 	{
 		has_subbed = true;
@@ -6956,6 +7047,85 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 				}
 			}
+		}
+	}
+
+
+	//					THIS HANDLES DYNAMIC COLORING
+
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "color ( $ )", prestring, poststring, wildcards, "() ", false, true);
+		if (has_subbed)
+		{
+			std::string arg = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			string_utils.strip(arg);
+			string_utils.make_lowercase(arg);
+			arg = string_utils.replace_all(arg, "  ", " ", false);
+			std::string val = "[C";
+			val[0] = set_print_color_header;
+			if (arg == "red" || arg == "dark red" || arg == "r")
+			{
+				val[1] = 'r';
+			}
+			else if (arg == "light red")
+			{
+				val[1] = 'R';
+			}
+			else if (arg == "green" || arg == "dark green" || arg == "g")
+			{
+				val[1] = 'g';
+			}
+			else if (arg == "light green" || arg == "lime")
+			{
+				val[1] = 'G';
+			}
+			else if (arg == "blue" || arg == "dark blue" || arg == "royal blue" || arg == "ocean blue" || arg == "b")
+			{
+				val[1] = 'b';
+			}
+			else if (arg == "light blue" || arg == "sky blue")
+			{
+				val[1] = 'B';
+			}
+			else if (arg == "cyan" || arg == "dark cyan")
+			{
+				val[1] = 'c';
+			}
+			else if (arg == "light cyan")
+			{
+				val[1] = 'C';
+			}
+			else if (arg == "gray" || arg == "grey" || arg == "dark grey" || arg == "dark gray")
+			{
+				val[1] = 'z';
+			}
+			else if (arg == "light gray" || arg == "light grey")
+			{
+				val[1] = 'Z';
+			}
+			else if (arg == "magenta" || arg == "pink")
+			{
+				val[1] = 'm';
+			}
+			else if (arg == "light magenta" || arg == "light pink")
+			{
+				val[1] = 'M';
+			}
+			else if (arg == "yellow" || arg == "dark yellow")
+			{
+				val[1] = 'y';
+			}
+			else if (arg == "light yellow")
+			{
+				val[1] = 'Y';
+			}
+			else if (arg == "default" || arg == "def" || arg == "" || arg == " ")
+			{
+				val[1] = 'x';
+			}
+			raw_value = prestring + val + poststring;
 		}
 	}
 

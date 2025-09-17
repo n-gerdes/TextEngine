@@ -27,6 +27,8 @@ end
 function on_entity_approach(ent)
 	if(ent == ~merchant)
 		say("You're just the man I wanted to see!");
+		say("CONGRATS - YOU WIN!");
+		finish;
 	end
 end
 

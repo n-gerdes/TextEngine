@@ -95,9 +95,9 @@ function command:test(caller)
 	opt3 = {3, "Third", "Third Option", "Third One", "3. Third", "3 Third", "I wanna pick the third one", "I pick the third", "#3"};
 
 	entity(caller).tell("Which menu option?");
-	entity(caller).tell("1. First");
-	entity(caller).tell("2. Second");
-	entity(caller).tell("3. Third");
+	entity(caller).tell(concat(color(red),"1. ",pause(0.5),"First"));
+	entity(caller).tell(concat(color(green),"2. ",pause(0.5),"Second"));
+	entity(caller).tell(concat(color(blue),"3. ",pause(0.5),"Third"));
 	ans = entity(caller).get_input(1);
 
 	if(matches_input(ans,opt1)) then

@@ -15,6 +15,7 @@
 std::mutex engine::print_mutex;
 char engine::last_character_printed = '\n';
 std::vector<std::string> engine::baked_scenarios_registry;
+const std::string engine::CONSOLE_DEFAULT = "\033[0;0m";
 
 void engine::register_baked_scenario(const std::string& scenario_name)
 {

@@ -64,6 +64,9 @@ substr(length, full_string) - Gets the first 'length' characters from full_strin
 
 random(min,max) - returns a random number in the interval [min,max]
 
+pause(num_seconds) - pauses the game for the specified number of seconds, which can be a decimal. Can be concatenated into text to cause it to delay how the text is printed.
+color(...) - can be concatenated into text to cause it to change color. The next line will return to being the same color as normal.
+
 not(...) - inverts the argument
 and(...) - returns "true" if all of its arguments are true
 or(...) - returns "true" if any of its arguments are true
