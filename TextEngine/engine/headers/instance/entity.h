@@ -43,7 +43,7 @@ public:
 	inline void						set_in_transfer_queue(bool val);
 	void							attach(entity* follower);
 	void							attach_to(entity* entity_to_attach_to);
-	virtual std::string				call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args) override;
+	virtual std::string				call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args, const std::string& source) override;
 	void							copy_data_from(entity* c);
 	void							damage(game* game_instance, game_obj* source, hp_t amount);
 	void							damage(game* game_instance, hp_t amount);
@@ -58,6 +58,7 @@ public:
 	virtual std::string				get_display_name(bool randomize, bool allow_titles) const override;
 	std::string						get_display_name_of_other_entity(bool randomize, bool allow_titles, const std::string& category, entity* other_entity) const;
 	std::string						get_display_name_of_other_entity(bool randomize, bool allow_titles, entity* other_entity) const;
+	std::vector<std::string>		get_display_names_of_other_entity(bool allow_titles, entity* other_entity) const;
 private:
 	game*							get_game_instance() const;
 public:
@@ -77,10 +78,10 @@ public:
 	void							learn_alias_for_entity(const std::string& entity_true_name, const std::string& alias_category, const std::string& alias);
 private:
 	template <typename T>
-	void							pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int number_of_args);
+	void							pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int number_of_args,const std::string&  source);
 
 	template <typename T>
-	void							pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int min_args, int max_args);
+	void							pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int min_args, int max_args, const std::string& source);
 public:
 	virtual void					process_line_from_file(const std::string& line) override;
 	void							print(game* game_instance, const std::string& text);

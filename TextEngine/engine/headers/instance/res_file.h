@@ -50,7 +50,7 @@ public:
 	std::string					call_function(game* game_instance, const std::string& function_name);
 	std::string					call_function(game* game_instance, const std::string& function_name, std::vector<std::string>& arg_values, std::string& return_value);
 	std::string					call_function(game* game_instance, const std::string& function_name, std::initializer_list<std::string> arg_values, std::string& return_value);
-	virtual std::string			call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& arg_values);
+	virtual std::string			call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& arg_values, const std::string& source);
 public:
 	bool						evaluate_condition(game* game_instance, const std::string& condition, std::string& err_msg, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values);
 private:

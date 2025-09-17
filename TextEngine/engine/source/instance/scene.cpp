@@ -23,16 +23,16 @@ scene::scene()
 	register_innate_function("clone");
 }
 
-void transfer_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
+void transfer_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	scene* new_scene = s;
-	entity* c = game_instance->get_entity_by_name(args[0]);
+	entity* c = game_instance->get_entity_by_name(args[0], source);
 	if (c)
 	{
 		const auto& followers = c->get_attached_entity_names();
 		for (auto i = followers.begin(); i != followers.end(); ++i)
 		{
-			entity* follower = game_instance->get_entity_by_name(*i);
+			entity* follower = game_instance->get_entity_by_name(*i, source);
 			if (follower)
 			{
 				follower->remove_from_scene();
@@ -48,7 +48,7 @@ void transfer_func(game* game_instance, scene* s, std::vector<std::string>& args
 	}
 }
 
-void say_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
+void say_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	if (game_instance->get_perspective_entity() == nullptr)
 		return;
@@ -58,18 +58,18 @@ void say_func(game* game_instance, scene* s, std::vector<std::string>& args, std
 	}
 }
 
-void set_global_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
+void set_global_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	game_instance->set_value(args[0], args[1]);
 }
 
 
-void set_meta_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
+void set_meta_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	game_instance->set_meta_value(args[0], args[1]);
 }
 
-void set_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
+void set_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	const std::string& var_name = args[0];
 	const std::string& var_val = args[1];
@@ -77,7 +77,7 @@ void set_value_func(game* game_instance, scene* s, std::vector<std::string>& arg
 	s->set_value(var_name, var_val);
 }
 
-void set_clear_on_scene_change_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err)
+void set_clear_on_scene_change_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	const std::string& arg = args[0];
 	std::vector<std::string> variable_names;
@@ -87,7 +87,7 @@ void set_clear_on_scene_change_func(game* game_instance, scene* c, std::vector<s
 		game_instance->set_clear_on_scene_change(val);
 }
 
-void set_save_any_time_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err)
+void set_save_any_time_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	const std::string& arg = args[0];
 	std::vector<std::string> variable_names;
@@ -97,41 +97,41 @@ void set_save_any_time_func(game* game_instance, scene* c, std::vector<std::stri
 		game_instance->set_save_any_time(val);
 }
 
-void describe_scene_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err)
+void describe_scene_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	if(c == game_instance->get_perspective_entity()->get_scene())
 		game_instance->describe_scene(c);
 }
 
-void clear_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err)
+void clear_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	if (game_instance->get_perspective_entity()->get_scene() == c)
 		game_instance->get_engine()->clear_screen();
 }
 
-void clone_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err)
+void clone_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	scene* new_scene = game_instance->load_scene_from_file(args[0], s->get_filename());
 	new_scene->copy_data_from(s);
 }
 
-std::string scene::call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args)
+std::string scene::call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args, const std::string& source)
 {
 	std::string err;
 
-	pair_innate_function(&transfer_func, function_name, "transfer", args, game_instance, err, 1);
-	pair_innate_function(&set_global_value_func, function_name, "set_global_value", args, game_instance, err, 2);
-	pair_innate_function(&say_func, function_name, "say", args, game_instance, err, 1);
-	pair_innate_function(&set_meta_value_func, function_name, "set_meta_value", args, game_instance, err, 2);
-	pair_innate_function(&set_value_func, function_name, "set_value", args, game_instance, err, 2);
+	pair_innate_function(&transfer_func, function_name, "transfer", args, game_instance, err, 1, source);
+	pair_innate_function(&set_global_value_func, function_name, "set_global_value", args, game_instance, err, 2, source);
+	pair_innate_function(&say_func, function_name, "say", args, game_instance, err, 1, source);
+	pair_innate_function(&set_meta_value_func, function_name, "set_meta_value", args, game_instance, err, 2, source);
+	pair_innate_function(&set_value_func, function_name, "set_value", args, game_instance, err, 2, source);
 
-	pair_innate_function(&set_clear_on_scene_change_func, function_name, "set_clear_on_scene_change", args, game_instance, err, 1);
-	pair_innate_function(&set_save_any_time_func, function_name, "set_save_any_time", args, game_instance, err, 1);
+	pair_innate_function(&set_clear_on_scene_change_func, function_name, "set_clear_on_scene_change", args, game_instance, err, 1, source);
+	pair_innate_function(&set_save_any_time_func, function_name, "set_save_any_time", args, game_instance, err, 1, source);
 
-	pair_innate_function(&describe_scene_func, function_name, "describe_scene", args, game_instance, err, 0);
-	pair_innate_function(&clear_func, function_name, "clear", args, game_instance, err, 0);
+	pair_innate_function(&describe_scene_func, function_name, "describe_scene", args, game_instance, err, 0, source);
+	pair_innate_function(&clear_func, function_name, "clear", args, game_instance, err, 0, source);
 
-	pair_innate_function(&clone_func, function_name, "clone", args, game_instance, err, 1);
+	pair_innate_function(&clone_func, function_name, "clone", args, game_instance, err, 1, source);
 	return err;
 }
 
@@ -143,12 +143,12 @@ void scene::display_text()
 
 entity* scene::get_entity(game* game_instance, const std::string& name, bool allow_alias) const
 {
-	return game_instance->get_entity_in_scene(name, get_name(), allow_alias);
+	return game_instance->get_entity_in_scene(name, get_name(), allow_alias, get_filename());
 }
 
 entity* scene::get_first_entity(game* game_instance, const std::string& name) const
 {
-	return game_instance->get_first_entity_in_scene(name, get_name());
+	return game_instance->get_first_entity_in_scene(name, get_name(), get_filename());
 }
 
 const std::vector<entity*> scene::get_entities_in_scene() const
@@ -166,7 +166,7 @@ const std::vector<entity*> scene::get_entities_in_scene() const
 		}
 		else if (children.size() == 1)
 		{
-			list.push_back(  game_instance->get_entity((*children.begin())->get_name(), false)  );
+			list.push_back(  game_instance->get_entity((*children.begin())->get_name(), false, "FROM SCENE: " + get_name()));
 			entities_in_scene = 1;
 			return list;
 		}
@@ -175,7 +175,7 @@ const std::vector<entity*> scene::get_entities_in_scene() const
 			for (auto i = children.begin(); i != children.end(); ++i) //crashing error caused here. 'cannot increment value-initialized list iterator'. Only child was the mercant.
 			{
 				std::string child_name = (*i)->get_name();
-				entity* found = game_instance->get_entity(child_name, false);
+				entity* found = game_instance->get_entity(child_name, false, "FROM SCENE: " + get_name());
 				list.push_back(found);
 				++entities_in_scene;
 			}
@@ -350,14 +350,14 @@ void scene::on_destroyed()
 }
 
 template <typename T>
-void scene::pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int number_of_args)
+void scene::pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int number_of_args, const std::string& source)
 {
 	if (checked_func_name == innate_function_name)
 	{
 		if (args.size() == number_of_args)
 		{
 			err = "";
-			internal_func(game_instance, this, args, err);
+			internal_func(game_instance, this, args, err, source);
 		}
 		else if (args.size() < number_of_args)
 		{
@@ -396,14 +396,14 @@ void scene::pair_innate_function(T internal_func, const std::string& checked_fun
 }
 
 template <typename T>
-void scene::pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int min_args, int max_args)
+void scene::pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int min_args, int max_args, const std::string& source)
 {
 	if (checked_func_name == innate_function_name)
 	{
 		if (args.size() >= min_args && args.size() <= max_args)
 		{
 			err = "";
-			internal_func(game_instance, this, args, err);
+			internal_func(game_instance, this, args, err, source);
 		}
 		else if (args.size() < min_args)
 		{

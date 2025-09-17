@@ -95,6 +95,10 @@ public:
 	const game_obj_storage_t&	get_children() const;
 	virtual std::string			get_display_name(bool randomize, bool allow_titles, const std::vector<std::string>& known_names) const;
 	virtual std::string			get_display_name(bool randomize, bool allow_titles) const;
+
+	virtual std::vector<std::string>		get_display_names(bool allow_titles, const std::vector<std::string>& known_names) const;
+	virtual std::vector<std::string>			get_display_names(bool allow_titles) const;
+
 	virtual uint32_t			get_save_id() const;
 	const std::string&			get_name() const;
 	parent_t*					get_parent() const;

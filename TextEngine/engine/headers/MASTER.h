@@ -20,6 +20,8 @@ const static char dummy_space = 132;
 const static char dummy_colon = 133;
 const static char dummy_exclamation = 134;
 const static char dummy_period = 135;
+const static char dummy_left_brace = 139;
+const static char dummy_right_brace = 140;
 
 const static char dummy_array_delimeter = 136;
 

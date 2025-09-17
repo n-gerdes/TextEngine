@@ -480,9 +480,9 @@ void engine::start_new_game(const std::string& scenario_name)
 			if (string_utils.matches_command("allow_custom_character : $bool", line, wildcards, ": ") && false) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
-				if (val == "yes" || val == "true")
+				if (val == "yes" || val == "true" || val == "y" || val == "t")
 					allow_custom_character = true;
-				else if (val == "no" || val == "false")
+				else if (val == "no" || val == "false" || val == "f" || val == "n")
 					allow_custom_character = false;
 				else
 					print_settings_bool_error();
@@ -490,9 +490,9 @@ void engine::start_new_game(const std::string& scenario_name)
 			else if (string_utils.matches_command("save_any_time : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
-				if (val == "yes" || val == "true")
+				if (val == "yes" || val == "true" || val == "y" || val == "t")
 					save_any_time = true;
-				else if (val == "no" || val == "false")
+				else if (val == "no" || val == "false" || val == "f" || val == "n")
 					save_any_time = false;
 				else
 					print_settings_bool_error();
@@ -500,9 +500,9 @@ void engine::start_new_game(const std::string& scenario_name)
 			else if (string_utils.matches_command("clear_on_scene_change : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
-				if (val == "yes" || val == "true")
+				if (val == "yes" || val == "true" || val == "y" || val == "t")
 					clear_on_scene_change = true;
-				else if (val == "no" || val == "false")
+				else if (val == "no" || val == "false" || val == "f" || val == "n")
 					clear_on_scene_change = false;
 				else
 					print_settings_bool_error();
@@ -510,9 +510,9 @@ void engine::start_new_game(const std::string& scenario_name)
 			else if (string_utils.matches_command("input_substitution_override : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
-				if (val == "yes" || val == "true")
+				if (val == "yes" || val == "true" || val == "y" || val == "t")
 					input_substitution_override = true;
-				else if (val == "no" || val == "false")
+				else if (val == "no" || val == "false" || val == "f" || val == "n")
 					input_substitution_override = false;
 				else
 					print_settings_bool_error();
@@ -549,7 +549,7 @@ void engine::start_new_game(const std::string& scenario_name)
 			if (allowed_starter_characters.size() == 1)
 			{
 				std::string starter_character_name = allowed_starter_characters[0];
-				pc = game_instance->load_entity_from_file(starter_character_name);
+				pc = game_instance->load_entity_from_file(starter_character_name, "engine.cpp",  true);
 			}
 			else
 			{
@@ -562,7 +562,7 @@ void engine::start_new_game(const std::string& scenario_name)
 				std::string starter_character_name = allowed_starter_characters[choice - 1];
 
 				println("Chose ", starter_character_aliases[choice - 1]);
-				pc = game_instance->load_entity_from_file(starter_character_name);
+				pc = game_instance->load_entity_from_file(starter_character_name, "engine.cpp", true);
 			}
 			
 		}
@@ -581,7 +581,7 @@ void engine::start_new_game(const std::string& scenario_name)
 			{
 				std::string starter_character_name = allowed_starter_characters[choice - 2];
 				println("Chose ", starter_character_aliases[choice - 2]);
-				pc = game_instance->load_entity_from_file(starter_character_name);
+				pc = game_instance->load_entity_from_file(starter_character_name, "engine.cpp", true);
 				if (pc == nullptr)
 				{
 					println("ERROR: Could not open ", starter_character_name, ".entity or associated file was not a character.");

@@ -9,8 +9,9 @@ get_value($variable_name): Can retrieve a previously saved value. 0 if no value 
 transfer($scene_name): Transfer the entity to the specified scene. Any attached entities are moved with
 	it.
 
-add_alias($alias): Add the specified alias to the entity
+add_alias($alias): Add the specified alias to the entity. An alias is something which an entity might know another entity by, or even be used as a flag. An alias starting with a '~' won't ever be displyed and can be used as a flag or "hidden" alias.
 add_title($alias): Add the specified title to the entity - which is very similar to an alias but may add "the" when displaying output names.
+An alias added via these functions is considered a "public" alias that any script or entity can refer to it by. However, entities can also know each other by other aliases that are stored in the knower of the alias, not the owner.
 
 learn_alias($other_entity, $alias_category, $alias): Allows this entity to refer to another specified
 	entity by the alias given, which is also assigned an alias category. Alias categories are used to get

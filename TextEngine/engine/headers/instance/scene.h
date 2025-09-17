@@ -39,7 +39,7 @@ private:
 	mutable uint32_t			entities_in_scene = 0;
 public:	
 	friend						void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* threads_launched);
-	virtual std::string			call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args) override;
+	virtual std::string			call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args, const std::string& source) override;
 	void						display_text();
 	entity*						get_entity(game* game_instance, const std::string& name, bool allow_alias) const;
 	entity*						get_first_entity(game* game_instance, const std::string& name) const;
@@ -54,10 +54,10 @@ protected:
 	virtual void				on_destroyed();
 	
 	template <typename T>
-	void						pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int number_of_args);
+	void						pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int number_of_args, const std::string& source);
 
 	template <typename T>
-	void						pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int min_args, int max_args);
+	void						pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int min_args, int max_args, const std::string& source);
 public:
 	virtual void				process_line_from_file(const std::string& line) override;
 	virtual bool				resolve_input(game* game_instance, entity* user, const std::string& input, std::string& return_val);

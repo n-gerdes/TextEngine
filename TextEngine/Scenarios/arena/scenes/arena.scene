@@ -1,0 +1,13 @@
+#import combat_scene
+
+function initialize()
+	transfer(~enemy);
+end
+
+function describe()
+	say("You step into the arena");
+end
+
+
+//COMMANDS
+

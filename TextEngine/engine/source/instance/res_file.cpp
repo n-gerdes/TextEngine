@@ -113,8 +113,7 @@ void else_if_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 {
 	//matched_control_statement = true;
 	std::string& condition = wildcards[0];
-	bool evaluation = script.evaluate_condition(game_instance, condition, err_msg, variable_names, variable_values);
-	if ((execution_layer == (line_layer - 1)) && evaluation && (!if_conditions[if_conditions.size() - 1]))
+	if ((execution_layer == (line_layer - 1)) && (!if_conditions[if_conditions.size() - 1]) && script.evaluate_condition(game_instance, condition, err_msg, variable_names, variable_values))
 	{
 		increment_execution_layer(execution_layer);
 		if_conditions.pop_back();
@@ -539,7 +538,7 @@ void call_entity_func_by_alias_argless_func(game* game_instance, res_file& scrip
 	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
-	entity* entity_reference = game_instance->get_entity(entity_name, true);
+	entity* entity_reference = game_instance->get_entity(entity_name, true, script.get_filename() + ": " + code);
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
 		err_msg = "Identity of \'" + entity_name + "\' is ambiguous.";
@@ -564,7 +563,7 @@ void call_entity_func_by_alias_func(game* game_instance, res_file& script, std::
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
-	entity* entity_reference = game_instance->get_entity(entity_name, true);
+	entity* entity_reference = game_instance->get_entity(entity_name, true, script.get_filename() + ": " + code);
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
 		err_msg = "Identity of \'" + entity_name + "\' is ambiguous.";
@@ -589,7 +588,7 @@ void call_entity_func_argless_func(game* game_instance, res_file& script, std::v
 	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
-	entity* entity_reference = game_instance->get_entity_by_name(entity_name);
+	entity* entity_reference = game_instance->get_entity_by_name(entity_name, script.get_filename() + ": " + code);
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
 		err_msg = "Identity of \'" + entity_name + "\' is ambiguous.";
@@ -614,7 +613,7 @@ void call_entity_func_func(game* game_instance, res_file& script, std::vector<ui
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
-	entity* entity_reference = game_instance->get_entity_by_name(entity_name);
+	entity* entity_reference = game_instance->get_entity_by_name(entity_name, script.get_filename() + ": " + code);
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
 		err_msg = "Identity of \'" + entity_name + "\' is ambiguous.";
@@ -640,7 +639,7 @@ void call_first_entity_func_argless_func(game* game_instance, res_file& script, 
 	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
-	entity* entity_reference = game_instance->get_first_entity(entity_name);
+	entity* entity_reference = game_instance->get_first_entity(entity_name, script.get_filename() + ": " + code);
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
 		err_msg = "Identity of \'" + entity_name + "\' is ambiguous.";
@@ -665,7 +664,7 @@ void call_first_entity_func_func(game* game_instance, res_file& script, std::vec
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
-	entity* entity_reference = game_instance->get_first_entity(entity_name);
+	entity* entity_reference = game_instance->get_first_entity(entity_name, script.get_filename() + ": " + code);
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
 		err_msg = "Identity of \'" + entity_name + "\' is ambiguous.";
@@ -691,7 +690,7 @@ void call_any_entity_func_argless_func(game* game_instance, res_file& script, st
 	//substitute_variables(wildcards[0], variable_names, variable_values);
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
-	entity* entity_reference = game_instance->get_any_entity(entity_name);
+	entity* entity_reference = game_instance->get_any_entity(entity_name, script.get_filename() + ": " + code);
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
 		err_msg = "Identity of \'" + entity_name + "\' is ambiguous.";
@@ -716,7 +715,7 @@ void call_any_entity_func_func(game* game_instance, res_file& script, std::vecto
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
-	entity* entity_reference = game_instance->get_any_entity(entity_name);
+	entity* entity_reference = game_instance->get_any_entity(entity_name, script.get_filename() + ": " + code);
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
 		err_msg = "Identity of \'" + entity_name + "\' is ambiguous.";
@@ -747,11 +746,11 @@ void call_entity_here_func_argless_func(game* game_instance, res_file& script, s
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), false);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), false, script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), false);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), false, script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -787,11 +786,11 @@ void call_entity_here_func_func(game* game_instance, res_file& script, std::vect
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), false);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), false, script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), false);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), false, script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -827,11 +826,11 @@ void call_first_entity_here_func_argless_func(game* game_instance, res_file& scr
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_first_entity_in_scene(entity_name, this_scene->get_name());
+		entity_reference = game_instance->get_first_entity_in_scene(entity_name, this_scene->get_name(), script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_first_entity_in_scene(entity_name, this_entity->get_scene_name());
+		entity_reference = game_instance->get_first_entity_in_scene(entity_name, this_entity->get_scene_name(), script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -866,11 +865,11 @@ void call_first_entity_here_func_func(game* game_instance, res_file& script, std
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_first_entity_in_scene(entity_name, this_scene->get_name());
+		entity_reference = game_instance->get_first_entity_in_scene(entity_name, this_scene->get_name(), script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_first_entity_in_scene(entity_name, this_entity->get_scene_name());
+		entity_reference = game_instance->get_first_entity_in_scene(entity_name, this_entity->get_scene_name(), script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -906,11 +905,11 @@ void call_any_entity_here_func_argless_func(game* game_instance, res_file& scrip
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_any_entity_in_scene(entity_name, this_scene->get_name());
+		entity_reference = game_instance->get_any_entity_in_scene(entity_name, this_scene->get_name(), script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_any_entity_in_scene(entity_name, this_entity->get_scene_name());
+		entity_reference = game_instance->get_any_entity_in_scene(entity_name, this_entity->get_scene_name(), script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -945,11 +944,11 @@ void call_any_entity_here_func_func(game* game_instance, res_file& script, std::
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_any_entity_in_scene(entity_name, this_scene->get_name());
+		entity_reference = game_instance->get_any_entity_in_scene(entity_name, this_scene->get_name(), script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_any_entity_in_scene(entity_name, this_entity->get_scene_name());
+		entity_reference = game_instance->get_any_entity_in_scene(entity_name, this_entity->get_scene_name(), script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -985,11 +984,11 @@ void call_any_entity_here_by_alias_func_argless_func(game* game_instance, res_fi
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), true);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), true, script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), true);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), true, script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -1024,11 +1023,11 @@ void call_any_entity_here_by_alias_func_func(game* game_instance, res_file& scri
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), true);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), true, script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), true);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), true, script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -1064,11 +1063,11 @@ void call_entity_by_alias_here_func_argless_func(game* game_instance, res_file& 
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), true);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), true, script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), true);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), true, script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -1103,11 +1102,11 @@ void call_entity_by_alias_here_func_func(game* game_instance, res_file& script, 
 	scene* this_scene = dynamic_cast<scene*>(&script);
 	if (this_scene)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), true);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_scene->get_name(), true, script.get_filename() + ": " + code);
 	}
 	else if (this_entity)
 	{
-		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), true);
+		entity_reference = game_instance->get_entity_in_scene(entity_name, this_entity->get_scene_name(), true, script.get_filename() + ": " + code);
 	}
 	else
 	{
@@ -1138,7 +1137,7 @@ void call_entity_by_alias_in_scene_func_argless_func(game* game_instance, res_fi
 	//matched_command_id = 38;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
-	entity* entity_reference = game_instance->get_entity_in_scene(entity_name, scene_name, true);
+	entity* entity_reference = game_instance->get_entity_in_scene(entity_name, scene_name, true, script.get_filename() + ": " + code);
 
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
@@ -1166,7 +1165,7 @@ void call_entity_by_alias_in_scene_func_func(game* game_instance, res_file& scri
 	std::string& complete_args_token = wildcards[3];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
 
-	entity* entity_reference = game_instance->get_entity_in_scene(entity_name, scene_name, true);
+	entity* entity_reference = game_instance->get_entity_in_scene(entity_name, scene_name, true, script.get_filename() + ": " + code);
 
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
@@ -1192,7 +1191,7 @@ void call_entity_in_scene_func_argless_func(game* game_instance, res_file& scrip
 	//matched_command_id = 40;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
-	entity* entity_reference = game_instance->get_entity_in_scene(entity_name, scene_name, false);
+	entity* entity_reference = game_instance->get_entity_in_scene(entity_name, scene_name, false, script.get_filename() + ": " + code);
 
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
@@ -1220,7 +1219,7 @@ void call_entity_in_scene_func_func(game* game_instance, res_file& script, std::
 	std::string& complete_args_token = wildcards[3];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
 
-	entity* entity_reference = game_instance->get_entity_in_scene(entity_name, scene_name, false);
+	entity* entity_reference = game_instance->get_entity_in_scene(entity_name, scene_name, false, script.get_filename() + ": " + code);
 
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
@@ -1246,7 +1245,7 @@ void call_first_entity_in_scene_func_argless_func(game* game_instance, res_file&
 	//matched_command_id = 42;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
-	entity* entity_reference = game_instance->get_first_entity_in_scene(entity_name, scene_name);
+	entity* entity_reference = game_instance->get_first_entity_in_scene(entity_name, scene_name, script.get_filename() + ": " + code);
 
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
@@ -1274,7 +1273,7 @@ void call_first_entity_in_scene_func_func(game* game_instance, res_file& script,
 	std::string& complete_args_token = wildcards[3];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
 
-	entity* entity_reference = game_instance->get_first_entity_in_scene(entity_name, scene_name);
+	entity* entity_reference = game_instance->get_first_entity_in_scene(entity_name, scene_name, script.get_filename() + ": " + code);
 
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
@@ -1300,7 +1299,7 @@ void call_any_entity_in_scene_func_argless_func(game* game_instance, res_file& s
 	//matched_command_id = 44;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
-	entity* entity_reference = game_instance->get_any_entity_in_scene(entity_name, scene_name);
+	entity* entity_reference = game_instance->get_any_entity_in_scene(entity_name, scene_name, script.get_filename() + ": " + code);
 
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
@@ -1328,7 +1327,7 @@ void call_any_entity_in_scene_func_func(game* game_instance, res_file& script, s
 	std::string& complete_args_token = wildcards[3];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
 
-	entity* entity_reference = game_instance->get_any_entity_in_scene(entity_name, scene_name);
+	entity* entity_reference = game_instance->get_any_entity_in_scene(entity_name, scene_name, script.get_filename() + ": " + code);
 
 	if (entity_reference == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
 	{
@@ -1699,15 +1698,15 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 		if (second_quote_index != std::string::npos && second_quote_index != first_quote_index + 1)
 		{
 			std::string quote = string_utils.substring(line, first_quote_index + 1, second_quote_index - 1);
-			
-			
+
+
 			for (int c_index = 0; c_index < quote.size(); ++c_index)
 			{
 				char& c = quote[c_index];
-				if(c=='=' || c == ':' || c=='!' || c=='.' || true)
+				if (c == '=' || c == ':' || c == '!' || c == '.' || true)
 					engine::swap_to_dummy_char(c); //Originally only swapped '=', but now I'm giving more of them a go. Did this 9/4/2025, may need to revert if it created bugs.
 			}
-			
+
 			//quote = string_utils.replace_all(quote, "=", dummy_equals_string, false);
 			quoted_material.push_back(quote);
 			if (second_quote_index == line.size() - 1)
@@ -1722,6 +1721,31 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 			quote_sub = false;
 		}
 	}
+
+	auto enforce_spaces = [&](char special_char)
+		{
+			for (int i = 1; i < line.size(); ++i)
+			{
+				char& c = line[i - 1];
+				if (c == special_char)
+				{
+					std::string prestring = line.substr(0, i - 1);
+					std::string poststring = line.substr(i);
+
+					line = prestring + " " + special_char + " " + poststring;
+					i += 2;
+				}
+			}
+			if (line.size() >= 1 && line[line.size() - 1] == special_char)
+			{
+				line.resize(line.size() - 1);
+				line += " " + special_char;
+			}
+		};
+
+	enforce_spaces('{');
+	enforce_spaces('}');
+	enforce_spaces('!');
 
 	line = " " + line + " ";
 	const std::string delimeters = " ()+=[].";
@@ -1910,6 +1934,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("type_bool", "prompt_bool");
 	substitute_alias_function("input_bool", "prompt_bool");
 	substitute_alias_function("bool_input", "prompt_bool");
+	substitute_alias_function("prompt_boolean", "prompt_bool");
 	substitute_alias_function("get_bool_input", "prompt_bool");
 	substitute_alias_function("get_input_bool", "prompt_bool");
 	substitute_alias_function("get_boolean", "prompt_bool");
@@ -2207,14 +2232,14 @@ std::string res_file::call_function(game* game_instance, const std::string& func
 		if (start != NO_MATCH) //If start ISN'T no match, then it means the user tried to override this innate function
 		{
 			err_msg = "Error: Cannot override innate function \'" + function_name + "\'";
-			game_instance->get_engine()->println(err_msg);
+			game_instance->get_engine()->println(get_filename(),": ", err_msg);
 			return err_msg;
 		}
 		else
 		{
-			err_msg = call_innate_function(game_instance, function_name, arg_values);
+			err_msg = call_innate_function(game_instance, function_name, arg_values, get_filename());
 			if (err_msg != "")
-				game_instance->get_engine()->println(err_msg);
+				game_instance->get_engine()->println(get_filename(), ": ", err_msg);
 			return err_msg;
 		}
 	}
@@ -2230,7 +2255,7 @@ std::string res_file::call_function(game* game_instance, const std::string& func
 			full_args += "'" + arg_values[i] + "'";
 		}
 		err_msg = "Could not locate function '" + function_name  + "' with " + std::to_string(arg_values.size()) + " args: " + full_args;
-		game_instance->get_engine()->println(err_msg);
+		game_instance->get_engine()->println(get_filename(), ": ", err_msg);
 		//game_instance->get_engine()->println("Error in file \"", filename, "\": Could not locate function \"", function_name, "\" with ",arg_values.size()," arguments");
 		return err_msg;
 	}
@@ -2254,7 +2279,7 @@ std::string res_file::call_function(game* game_instance, const std::string& func
 }
 
 //Meant to be overwritten by subclasses so they can define their own innate functions.
-std::string res_file::call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args)
+std::string res_file::call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args, const std::string& source)
 {
 	return "";
 }
@@ -2275,7 +2300,7 @@ bool res_file::evaluate_condition(game* game_instance, const std::string& condit
 	}
 	else
 	{
-		if (   (string_utils.get_lowercase(processed_condition) == "true") || (string_utils.get_lowercase(processed_condition) == "yes") || (string_utils.get_lowercase(processed_condition) == "true"))
+		if (   (string_utils.get_lowercase(processed_condition) == "true") || (string_utils.get_lowercase(processed_condition) == "yes") || (string_utils.get_lowercase(processed_condition) == "true") || (string_utils.get_lowercase(processed_condition) == "y"))
 			return true;
 		else
 			return false;
@@ -2293,6 +2318,7 @@ void res_file::execute_line(game* game_instance, line_num& line, std::string& er
 	line_commands;
 	string_utils string_utils;
 	std::string code = get_line(line);
+	//game_instance->get_engine()->inst_print("\t",code," ");
 	//std::string precomment;
 	//std::string postcomment;
 	//std::vector<std::string> comment_wildcard;
@@ -2328,16 +2354,22 @@ void res_file::execute_line(game* game_instance, line_num& line, std::string& er
 				err_msg = "An unexpected error has occured.";
 			}
 		};
-
+		
 		if (execution_layer == line_layer)
 		{
+			//game_instance->get_engine()->inst_print("CALLING CODE A!\n");
 			try_call_func();
 		}
 		else
 		{
 			if (entry.control_command)
 			{
+				//game_instance->get_engine()->inst_print("CALLING CODE B!\n");
 				try_call_func();
+			}
+			else
+			{
+				//game_instance->get_engine()->inst_print("SKIPPING!\n");
 			}
 		}
 		
@@ -2680,32 +2712,6 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			for (size_t i = 0; i < quote.size(); ++i)
 			{
 				char& c = quote[i];
-
-				/*
-				if (c == ',')
-					c = dummy_comma;
-				else if (c == '(')
-					c = dummy_left_paran;
-				else if (c == ')')
-					c = dummy_right_paran;
-				else if (c == '/')
-					c = dummy_slash;
-				else if (c == '+')
-					c = dummy_plus;
-				else if (c == '*')
-					c = dummy_star;
-				else if (c == '-')
-					c = dummy_dash;
-				else if (c == '%')
-					c = dummy_percent;
-				else if (c == ':')
-					c = dummy_colon;
-				else if (c == '!')
-					c = dummy_exclamation;
-				else if (c == '.')
-					c = dummy_period;
-					*/
-
 				engine::swap_to_dummy_char(c);
 				
 			}
@@ -2853,6 +2859,151 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	auto register_entity_getter = [&](const std::string& char_script_func_name, char_getter_handler func, entity* this_entity)
 	{
 		//                                       HANDLES BASE FUNCTION CALLS
+
+			has_subbed = true;
+			while (has_subbed)
+			{
+				has_subbed = string_utils.complex_replacement(raw_value, "entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+				if (has_subbed)
+				{
+					std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+					std::vector<std::string> args;
+
+					entity* char_ptr = game_instance->get_entity(char_name, false, get_filename() + ": " + raw_value);
+					if (char_ptr == nullptr)
+					{
+						raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+					}
+					else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+					{
+						raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+					}
+					else if (!(args.size() == 1 && args[0] == ")"))
+					{
+						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					}
+					else
+					{
+						has_subbed = false;
+					}
+				}
+			}
+
+			has_subbed = true;
+			while (has_subbed)
+			{
+				has_subbed = string_utils.complex_replacement(raw_value, "entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+				if (has_subbed)
+				{
+					std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+					std::vector<std::string> args;
+
+					entity* char_ptr = game_instance->get_entity(char_name, true, get_filename() + ": " + raw_value);
+					if (char_ptr == nullptr)
+					{
+						raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+					}
+					else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+					{
+						raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+					}
+					else if (!(args.size() == 1 && args[0] == ")"))
+					{
+						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					}
+					else
+					{
+						has_subbed = false;
+					}
+				}
+			}
+
+			has_subbed = true;
+			while (has_subbed)
+			{
+				has_subbed = string_utils.complex_replacement(raw_value, "first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+				if (has_subbed)
+				{
+					std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+					std::vector<std::string> args;
+
+					entity* char_ptr = game_instance->get_first_entity(char_name, get_filename() + ": " + raw_value);
+					if (char_ptr == nullptr)
+					{
+						raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+					}
+					else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+					{
+						raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+					}
+					else if (!(args.size() == 1 && args[0] == ")"))
+					{
+						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					}
+					else
+					{
+						has_subbed = false;
+					}
+				}
+			}
+
+			has_subbed = true;
+			while (has_subbed)
+			{
+				has_subbed = string_utils.complex_replacement(raw_value, "any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+				if (has_subbed)
+				{
+					std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+					std::vector<std::string> args;
+
+					entity* char_ptr = game_instance->get_any_entity(char_name, get_filename() + ": " + raw_value);
+					if (char_ptr == nullptr)
+					{
+						raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+					}
+					else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+					{
+						raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+					}
+					else if (!(args.size() == 1 && args[0] == ")"))
+					{
+						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					}
+					else
+					{
+						has_subbed = false;
+					}
+				}
+			}
+
+			has_subbed = true;
+			while (has_subbed)
+			{
+				has_subbed = string_utils.complex_replacement(raw_value, "perspective_entity()." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+				if (has_subbed)
+				{
+					std::vector<std::string> args;
+
+					entity* char_ptr = game_instance->get_perspective_entity();
+					if (char_ptr == nullptr)
+					{
+						raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+					}
+					else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+					{
+						raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+					}
+					else if (!(args.size() == 1 && args[0] == ")"))
+					{
+						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					}
+					else
+					{
+						has_subbed = false;
+					}
+				}
+			}
+
 		has_subbed = true;
 		while (has_subbed)
 		{
@@ -2861,7 +3012,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_entity(char_name, false);
+				entity* char_ptr = game_instance->get_entity(char_name, false, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -2872,7 +3023,6 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					//std::cout << "EGASRGAE " << raw_value << std::endl;
 					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 				else
@@ -2890,7 +3040,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_entity(char_name, true);
+				entity* char_ptr = game_instance->get_entity(char_name, true, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -2918,7 +3068,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_first_entity(char_name);
+				entity* char_ptr = game_instance->get_first_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -2946,7 +3096,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_any_entity(char_name);
+				entity* char_ptr = game_instance->get_any_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -2994,154 +3144,171 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 
 
-		//                      HANDLES ARGUMENT-LESS INNATE GETTERS
+		//                     Note: I apparently used to check for the argument versions first, tho I dsicovered that was causing a bug. Why was I doing that?
 
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_entity(char_name, false);
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-				else
-				{
-					has_subbed = false;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_entity(char_name, true);
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-				else
-				{
-					has_subbed = false;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_first_entity(char_name);
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-				else
-				{
-					has_subbed = false;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_any_entity(char_name);
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-				else
-				{
-					has_subbed = false;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "perspective_entity()." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_perspective_entity();
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-				else
-				{
-					has_subbed = false;
-				}
-			}
-		}
+		
 
 
 		//                      HANDLES GETTERS FOR INNATE FUNCTIONS OF ENTITIES WITHIN THE CURRENT SCENE
+
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "entity_here_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			if (has_subbed)
+			{
+				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::vector<std::string> args;
+
+				entity* char_ptr = nullptr;
+				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
+				const entity* this_entity = dynamic_cast<const entity*>(this);
+				if (this_scene)
+				{
+					char_ptr = this_scene->get_entity(game_instance, char_name, true);
+				}
+				else if (this_entity)
+				{
+					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), true, get_filename() + ": " + raw_value);
+				}
+				else
+				{
+					char_ptr = nullptr;
+				}
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else if (!(args.size() == 1 && args[0] == ")"))
+				{
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+			}
+		}
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			if (has_subbed)
+			{
+				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::vector<std::string> args;
+
+				entity* char_ptr = nullptr;
+				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
+				const entity* this_entity = dynamic_cast<const entity*>(this);
+				if (this_scene)
+				{
+					char_ptr = this_scene->get_entity(game_instance, char_name, false);
+				}
+				else if (this_entity)
+				{
+					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), false, get_filename() + ": " + raw_value);
+				}
+				else
+				{
+					char_ptr = nullptr;
+				}
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else if (!(args.size() == 1 && args[0] == ")"))
+				{
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+			}
+		}
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "first_entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			if (has_subbed)
+			{
+				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::vector<std::string> args;
+
+				entity* char_ptr = nullptr;
+				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
+				const entity* this_entity = dynamic_cast<const entity*>(this);
+				if (this_scene)
+				{
+					char_ptr = this_scene->get_first_entity(game_instance, char_name);
+				}
+				else if (this_entity)
+				{
+					char_ptr = game_instance->get_first_entity_in_scene(char_name, this_entity->get_scene_name(), get_filename() + ": " + raw_value);
+				}
+				else
+				{
+					char_ptr = nullptr;
+				}
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else if (!(args.size() == 1 && args[0] == ")"))
+				{
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+			}
+		}
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "any_entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			if (has_subbed)
+			{
+				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::vector<std::string> args;
+
+				entity* char_ptr = nullptr;
+				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
+				const entity* this_entity = dynamic_cast<const entity*>(this);
+				if (this_scene)
+				{
+					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_scene->get_name(), get_filename() + ": " + raw_value);
+				}
+				else if (this_entity)
+				{
+					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_entity->get_scene_name(), get_filename() + ": " + raw_value);
+				}
+				else
+				{
+					char_ptr = nullptr;
+				}
+
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else if (!(args.size() == 1 && args[0] == ")"))
+				{
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+			}
+		}
+
 
 		has_subbed = true;
 		while (has_subbed)
@@ -3160,7 +3327,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), true);
+					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), true, get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3203,7 +3370,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), false);
+					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), false, get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3245,7 +3412,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_first_entity_in_scene(char_name, this_entity->get_scene_name());
+					char_ptr = game_instance->get_first_entity_in_scene(char_name, this_entity->get_scene_name(), get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3283,11 +3450,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				const entity* this_entity = dynamic_cast<const entity*>(this);
 				if (this_scene)
 				{
-					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_scene->get_name());
+					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_scene->get_name(), get_filename() + ": " + raw_value);
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_entity->get_scene_name());
+					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_entity->get_scene_name(), get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3314,12 +3481,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 
 
-		//                    ARGUMENTLESS SCENE-SPECIFIC INNATE GETTERS FOR ENTITIES
+		
+
+		//					HERE IS MORE FOR ACCESSING LOCAL ENTITIES, BUT USING scene()... SYNTAX
+
 
 		has_subbed = true;
 		while (has_subbed)
 		{
-			has_subbed = string_utils.complex_replacement(raw_value, "entity_here_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			has_subbed = string_utils.complex_replacement(raw_value, "scene().entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
@@ -3334,7 +3504,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), true);
+					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), true, get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3348,7 +3518,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
 				}
-				else if (!(args.size() == 1 && args[0]==")"))
+				else if (!(args.size() == 1 && args[0] == ")"))
 				{
 					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
@@ -3358,7 +3528,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = true;
 		while (has_subbed)
 		{
-			has_subbed = string_utils.complex_replacement(raw_value, "entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			has_subbed = string_utils.complex_replacement(raw_value, "scene().entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
@@ -3373,7 +3543,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), false);
+					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), false, get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3387,7 +3557,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
 				}
-				else if (!(args.size() == 1 && args[0]==")"))
+				else if (!(args.size() == 1 && args[0] == ")"))
 				{
 					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
@@ -3397,7 +3567,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = true;
 		while (has_subbed)
 		{
-			has_subbed = string_utils.complex_replacement(raw_value, "first_entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			has_subbed = string_utils.complex_replacement(raw_value, "scene().first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
@@ -3412,7 +3582,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_first_entity_in_scene(char_name, this_entity->get_scene_name());
+					char_ptr = game_instance->get_first_entity_in_scene(char_name, this_entity->get_scene_name(), get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3426,7 +3596,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
 				}
-				else if (!(args.size() == 1 && args[0]==")"))
+				else if (!(args.size() == 1 && args[0] == ")"))
 				{
 					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
@@ -3436,7 +3606,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = true;
 		while (has_subbed)
 		{
-			has_subbed = string_utils.complex_replacement(raw_value, "any_entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			has_subbed = string_utils.complex_replacement(raw_value, "scene().any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
@@ -3447,11 +3617,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				const entity* this_entity = dynamic_cast<const entity*>(this);
 				if (this_scene)
 				{
-					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_scene->get_name());
+					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_scene->get_name(), get_filename() + ": " + raw_value);
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_entity->get_scene_name());
+					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_entity->get_scene_name(), get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3466,14 +3636,12 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
 				}
-				else if (!(args.size() == 1 && args[0]==")"))
+				else if (!(args.size() == 1 && args[0] == ")"))
 				{
 					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
-
-		//					HERE IS MORE FOR ACCESSING LOCAL ENTITIES, BUT USING scene()... SYNTAX
 
 		has_subbed = true;
 		while (has_subbed)
@@ -3492,7 +3660,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), true);
+					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), true, get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3534,7 +3702,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), false);
+					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), false, get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3576,7 +3744,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_first_entity_in_scene(char_name, this_entity->get_scene_name());
+					char_ptr = game_instance->get_first_entity_in_scene(char_name, this_entity->get_scene_name(), get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3614,11 +3782,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				const entity* this_entity = dynamic_cast<const entity*>(this);
 				if (this_scene)
 				{
-					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_scene->get_name());
+					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_scene->get_name(), get_filename() + ": " + raw_value);
 				}
 				else if (this_entity)
 				{
-					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_entity->get_scene_name());
+					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_entity->get_scene_name(), get_filename() + ": " + raw_value);
 				}
 				else
 				{
@@ -3645,166 +3813,128 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 
 
-		//                    ARGUMENTLESS SCENE-SPECIFIC INNATE GETTERS FOR ENTITIES VIA SCENE()... SYNTAX
 
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene().entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
 
-				entity* char_ptr = nullptr;
-				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
-				const entity* this_entity = dynamic_cast<const entity*>(this);
-				if (this_scene)
-				{
-					char_ptr = this_scene->get_entity(game_instance, char_name, true);
-				}
-				else if (this_entity)
-				{
-					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), true);
-				}
-				else
-				{
-					char_ptr = nullptr;
-				}
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene().entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = nullptr;
-				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
-				const entity* this_entity = dynamic_cast<const entity*>(this);
-				if (this_scene)
-				{
-					char_ptr = this_scene->get_entity(game_instance, char_name, false);
-				}
-				else if (this_entity)
-				{
-					char_ptr = game_instance->get_entity_in_scene(char_name, this_entity->get_scene_name(), false);
-				}
-				else
-				{
-					char_ptr = nullptr;
-				}
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene().first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = nullptr;
-				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
-				const entity* this_entity = dynamic_cast<const entity*>(this);
-				if (this_scene)
-				{
-					char_ptr = this_scene->get_first_entity(game_instance, char_name);
-				}
-				else if (this_entity)
-				{
-					char_ptr = game_instance->get_first_entity_in_scene(char_name, this_entity->get_scene_name());
-				}
-				else
-				{
-					char_ptr = nullptr;
-				}
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene().any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = nullptr;
-				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
-				const entity* this_entity = dynamic_cast<const entity*>(this);
-				if (this_scene)
-				{
-					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_scene->get_name());
-				}
-				else if (this_entity)
-				{
-					char_ptr = game_instance->get_any_entity_in_scene(char_name, this_entity->get_scene_name());
-				}
-				else
-				{
-					char_ptr = nullptr;
-				}
-
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-			}
-		}
 
 		//					HERE IS WHERE CODE GOES TO CALL INNATE GETTERS ON ENTITIES WITHIN A SCENE BY NAME
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			if (has_subbed)
+			{
+				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::vector<std::string> args;
+
+				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, true, get_filename() + ": " + raw_value);
+
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else if (!(args.size() == 1 && args[0] == ")"))
+				{
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+				else
+				{
+					has_subbed = false;
+				}
+			}
+
+		}
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			if (has_subbed)
+			{
+				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::vector<std::string> args;
+
+				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
+
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else if (!(args.size() == 1 && args[0] == ")"))
+				{
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+				else
+				{
+					has_subbed = false;
+				}
+			}
+		}
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "scene($).first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			if (has_subbed)
+			{
+				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::vector<std::string> args;
+
+				entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
+
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else if (!(args.size() == 1 && args[0] == ")"))
+				{
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+			}
+		}
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "scene($).any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+			if (has_subbed)
+			{
+				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::vector<std::string> args;
+
+				entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
+
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else if (!(args.size() == 1 && args[0] == ")"))
+				{
+					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+			}
+		}
+
 
 		has_subbed = true;
 		while (has_subbed)
@@ -3815,7 +3945,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, true);
+				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, true, get_filename() + ": " + raw_value);
 
 				if (char_ptr == nullptr)
 				{
@@ -3846,7 +3976,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false);
+				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 
 				if (char_ptr == nullptr)
 				{
@@ -3876,7 +4006,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name);
+				entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 
 				if (char_ptr == nullptr)
 				{
@@ -3906,7 +4036,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name);
+				entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 
 				if (char_ptr == nullptr)
 				{
@@ -3927,122 +4057,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		}
 
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, true);
-
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-				else
-				{
-					has_subbed = false;
-				}
-			}
-
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false);
-
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-				else
-				{
-					has_subbed = false;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene($).first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name);
-
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "scene($).any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name);
-
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else if (!(args.size() == 1 && args[0]==")"))
-				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-			}
-		}
+		
 
 
 
@@ -4182,7 +4197,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else if (args.size() == 1)
 		{
-			entity* found_entity = game_instance->get_entity_by_name(args[0]);
+			entity* found_entity = game_instance->get_entity_by_name(args[0], self->get_filename() + "/get_display_name");
 			if (found_entity)
 			{
 				return found_entity->get_display_name_of_other_entity(true, true, char_ptr);
@@ -4206,7 +4221,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			bool exists = game_instance->get_entity(args[0], char_ptr) != nullptr;
+			bool exists = game_instance->get_entity(args[0], char_ptr, self->get_filename() + "/entity_exists") != nullptr;
 
 			if (exists)
 			{
@@ -4227,7 +4242,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			bool exists = game_instance->get_entity_in_scene(args[0], char_ptr->get_scene_name(), char_ptr) != nullptr;
+			bool exists = game_instance->get_entity_in_scene(args[0], char_ptr->get_scene_name(), char_ptr, self->get_filename()+"/entity_exists_here") != nullptr;
 
 			if (exists)
 			{
@@ -4264,7 +4279,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		{
 			std::string& other_entity_true_name = args[1];
 			std::string& alias = args[0];
-			entity* other_entity = game_instance->get_entity(other_entity_true_name, false);
+			entity* other_entity = game_instance->get_entity(other_entity_true_name, false, self->get_filename()+"/knows_alias");
 			bool knows = false;
 			if (other_entity)
 			{
@@ -4305,7 +4320,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	{
 		if (args.size() != 0)
 		{
-			return "INVALID ARGS FOR 'get_hp'; EXPECTED 0, GOT " + args.size();
+			return "INVALID ARGS FOR 'get_hp'; EXPECTED 0, GOT " + std::to_string(args.size()) + " INSTEAD";
 		}
 		else
 		{
@@ -5019,6 +5034,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_entity_getter("get_all_scenes", entity_get_all_scenes_handler, this_entity);
 	register_entity_getter("pause", entity_pause_handler, this_entity);
 
+	//register_entity_getter("get_aliases", entity_get_aliases_handler, this_entity);
+
 	//////////////////////////////////////////////////////////////////////////////////
 	/* HERE IS WHERE CODE GOES THAT CAN HANDLE GETTING RETURN VALUES FROM USER-FUNCTION CALLS TO ENTITIES */
 	{
@@ -5026,15 +5043,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = true;
 		while (has_subbed)
 		{
-			has_subbed = string_utils.complex_replacement(raw_value, "entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+			has_subbed = string_utils.complex_replacement(raw_value, "entity($).$()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::string func_name = wildcards[1];
-				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-				//std::cout << "HERE  " << raw_value << std::endl;
-				
-				entity* char_ptr = game_instance->get_entity(char_name, false);
+				std::vector<std::string> args;
+				//std::cout << "5euthdsrgre\n";
+				entity* char_ptr = game_instance->get_entity(char_name, false, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -5055,14 +5071,44 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = true;
 		while (has_subbed)
 		{
-			has_subbed = string_utils.complex_replacement(raw_value, "entity($).$()", prestring, poststring, wildcards, ".() ", false);
+			has_subbed = string_utils.complex_replacement(raw_value, "entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+			if (has_subbed)
+			{
+				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string func_name = wildcards[1];
+				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				//std::cout << "HERE  " << raw_value << std::endl;
+				
+				entity* char_ptr = game_instance->get_entity(char_name, false, get_filename() + ": " + raw_value);
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else
+				{
+					std::string return_val;
+					char_ptr->call_function(game_instance, func_name, args, return_val);
+					raw_value = prestring + return_val + poststring;
+				}
+			}
+		}
+	
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "first_entity($).$()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args;
-				//std::cout << "5euthdsrgre\n";
-				entity* char_ptr = game_instance->get_entity(char_name, false);
+
+				entity* char_ptr = game_instance->get_first_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -5089,62 +5135,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_first_entity(char_name);
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else
-				{
-					std::string return_val;
-					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "first_entity($).$()", prestring, poststring, wildcards, ".() ", false);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string func_name = wildcards[1];
-				std::vector<std::string> args;
-
-				entity* char_ptr = game_instance->get_first_entity(char_name);
-				if (char_ptr == nullptr)
-				{
-					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-				}
-				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-				{
-					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-				}
-				else
-				{
-					std::string return_val;
-					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
-				}
-			}
-		}
-
-		has_subbed = true;
-		while (has_subbed)
-		{
-			has_subbed = string_utils.complex_replacement(raw_value, "any_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
-			if (has_subbed)
-			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string func_name = wildcards[1];
-				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_any_entity(char_name);
+				entity* char_ptr = game_instance->get_first_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -5172,7 +5163,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args;
 
-				entity* char_ptr = game_instance->get_any_entity(char_name);
+				entity* char_ptr = game_instance->get_any_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -5193,12 +5184,13 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = true;
 		while (has_subbed)
 		{
-			has_subbed = string_utils.complex_replacement(raw_value, "perspective_entity() . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+			has_subbed = string_utils.complex_replacement(raw_value, "any_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string func_name = wildcards[0];
-				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
-				entity* char_ptr = game_instance->get_perspective_entity();
+				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string func_name = wildcards[1];
+				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				entity* char_ptr = game_instance->get_any_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
 					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -5243,6 +5235,34 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		}
 	}
+
+		has_subbed = true;
+		while (has_subbed)
+		{
+			has_subbed = string_utils.complex_replacement(raw_value, "perspective_entity() . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+			if (has_subbed)
+			{
+				std::string func_name = wildcards[0];
+				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				entity* char_ptr = game_instance->get_perspective_entity();
+				if (char_ptr == nullptr)
+				{
+					raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+				}
+				else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+				{
+					raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+				}
+				else
+				{
+					std::string return_val;
+					char_ptr->call_function(game_instance, func_name, args, return_val);
+					raw_value = prestring + return_val + poststring;
+				}
+			}
+		}
+
+		
 
 	//////////////////////////////////////////////////////////////////////////////////
 	/*     HERE IS WHERE CODE GOES THAT HANDLES CALLS TO USER FUNCTIONS IN SCENES    */
@@ -5510,7 +5530,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					all_args += ", ";
 				all_args += args[i];
 			}
-			return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
+			return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + " (" + all_args + ")";
 		}
 		else
 		{
@@ -5539,7 +5559,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			bool exists = game_instance->get_entity_in_scene(args[0], scene_ptr->get_name(), false) != nullptr;
+			bool exists = game_instance->get_entity_in_scene(args[0], scene_ptr->get_name(), false, self->get_filename()+"/entity_exists_here") != nullptr;
 
 			if (exists)
 			{
@@ -5560,7 +5580,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			bool exists = game_instance->get_entity_by_name(args[0]) != nullptr;
+			bool exists = game_instance->get_entity_by_name(args[0], self->get_filename()+"/entity_exists") != nullptr;
 
 			if (exists)
 			{
@@ -5944,34 +5964,6 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
-		if (has_subbed)
-		{
-			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
-			std::string func_name = wildcards[2];
-			std::vector<std::string> args = extract_args_from_token(wildcards[3], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false);
-			if (char_ptr == nullptr)
-			{
-				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-			}
-			else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-			{
-				raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-			}
-			else
-			{
-				std::string return_val;
-				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
-			}
-		}
-	}
-
-	has_subbed = true;
-	while (has_subbed)
-	{
 		has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity($).$()", prestring, poststring, wildcards, ".() ", false);
 		if (has_subbed)
 		{
@@ -5980,7 +5972,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false);
+			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6001,14 +5993,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "scene($).first_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
 			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args = extract_args_from_token(wildcards[3], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6037,7 +6029,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6058,14 +6050,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "scene($).any_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		has_subbed = string_utils.complex_replacement(raw_value, "scene($).first_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
 			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args = extract_args_from_token(wildcards[3], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6094,7 +6086,35 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
+			if (char_ptr == nullptr)
+			{
+				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+			}
+			else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+			{
+				raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+			}
+			else
+			{
+				std::string return_val;
+				char_ptr->call_function(game_instance, func_name, args, return_val);
+				raw_value = prestring + return_val + poststring;
+			}
+		}
+	}
+
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "scene($).any_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		if (has_subbed)
+		{
+			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string func_name = wildcards[2];
+			std::vector<std::string> args = extract_args_from_token(wildcards[3], variable_names, variable_values, game_instance);
+			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6118,44 +6138,6 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "scene().entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
-		if (has_subbed)
-		{
-			const scene* this_scene = dynamic_cast<const scene*>(this);
-			const entity* this_entity = dynamic_cast<const entity*>(this);
-			std::string scene_name = "";
-			if (this_scene)
-			{
-				scene_name = this_scene->get_name();
-			}
-			else if (this_entity)
-			{
-				scene_name = this_entity->get_scene_name();
-			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string func_name = wildcards[1];
-			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false);
-			if (char_ptr == nullptr)
-			{
-				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
-			}
-			else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
-			{
-				raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
-			}
-			else
-			{
-				std::string return_val;
-				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
-			}
-		}
-	}
-
-	has_subbed = true;
-	while (has_subbed)
-	{
 		has_subbed = string_utils.complex_replacement(raw_value, "scene().entity($).$()", prestring, poststring, wildcards, ".() ", false);
 		if (has_subbed)
 		{
@@ -6174,7 +6156,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false);
+			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6195,7 +6177,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "scene().first_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		has_subbed = string_utils.complex_replacement(raw_value, "scene().entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
 			const scene* this_scene = dynamic_cast<const scene*>(this);
@@ -6212,7 +6194,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6251,7 +6233,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6272,7 +6254,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "scene().any_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		has_subbed = string_utils.complex_replacement(raw_value, "scene().first_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
 			const scene* this_scene = dynamic_cast<const scene*>(this);
@@ -6289,7 +6271,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6328,7 +6310,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6346,13 +6328,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	}
 
-
-	//DEBUG_BREAKPOINT(5);
-
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "entity_here ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		has_subbed = string_utils.complex_replacement(raw_value, "scene().any_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
 			const scene* this_scene = dynamic_cast<const scene*>(this);
@@ -6369,7 +6348,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false);
+			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6408,7 +6387,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false);
+			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6429,7 +6408,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "first_entity_here ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		has_subbed = string_utils.complex_replacement(raw_value, "entity_here ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
 			const scene* this_scene = dynamic_cast<const scene*>(this);
@@ -6446,7 +6425,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6485,7 +6464,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6506,7 +6485,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "any_entity_here ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		has_subbed = string_utils.complex_replacement(raw_value, "first_entity_here ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
 			const scene* this_scene = dynamic_cast<const scene*>(this);
@@ -6523,7 +6502,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
-			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -6562,7 +6541,45 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
-			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name);
+			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
+			if (char_ptr == nullptr)
+			{
+				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
+			}
+			else if (char_ptr == game_instance->get_engine()->AMBIGUOUS_CHARACTER())
+			{
+				raw_value = prestring + "AMBIGUOUS_CHARACTER" + poststring;
+			}
+			else
+			{
+				std::string return_val;
+				char_ptr->call_function(game_instance, func_name, args, return_val);
+				raw_value = prestring + return_val + poststring;
+			}
+		}
+	}
+
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "any_entity_here ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
+		if (has_subbed)
+		{
+			const scene* this_scene = dynamic_cast<const scene*>(this);
+			const entity* this_entity = dynamic_cast<const entity*>(this);
+			std::string scene_name = "";
+			if (this_scene)
+			{
+				scene_name = this_scene->get_name();
+			}
+			else if (this_entity)
+			{
+				scene_name = this_entity->get_scene_name();
+			}
+			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string func_name = wildcards[1];
+			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
 				raw_value = prestring + "NO_SUCH_CHARACTER" + poststring;
@@ -7073,35 +7090,35 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				val[1] = 'R';
 			}
-			else if (arg == "green" || arg == "dark green" || arg == "g")
+			else if (arg == "green" || arg == "dark green" || arg == "g" || arg == "dark_green")
 			{
 				val[1] = 'g';
 			}
-			else if (arg == "light green" || arg == "lime")
+			else if (arg == "light green" || arg == "lime" || arg == "light_green")
 			{
 				val[1] = 'G';
 			}
-			else if (arg == "blue" || arg == "dark blue" || arg == "royal blue" || arg == "ocean blue" || arg == "b")
+			else if (arg == "blue" || arg == "dark blue" || arg == "royal blue" || arg == "ocean blue" || arg == "b" || arg == "dark_blue" || arg == "royal_blue" || arg == "ocean_blue")
 			{
 				val[1] = 'b';
 			}
-			else if (arg == "light blue" || arg == "sky blue")
+			else if (arg == "light blue" || arg == "sky blue" || arg == "light_blue" || arg == "sky_blue")
 			{
 				val[1] = 'B';
 			}
-			else if (arg == "cyan" || arg == "dark cyan")
+			else if (arg == "cyan" || arg == "dark cyan" || arg == "dark_cyan")
 			{
 				val[1] = 'c';
 			}
-			else if (arg == "light cyan")
+			else if (arg == "light cyan" || arg == "light_cyan")
 			{
 				val[1] = 'C';
 			}
-			else if (arg == "gray" || arg == "grey" || arg == "dark grey" || arg == "dark gray")
+			else if (arg == "gray" || arg == "grey" || arg == "dark grey" || arg == "dark gray" || arg == "dark_grey" || arg == "dark_gray")
 			{
 				val[1] = 'z';
 			}
-			else if (arg == "light gray" || arg == "light grey")
+			else if (arg == "light gray" || arg == "light grey" || arg == "light_gray" || arg == "light_grey")
 			{
 				val[1] = 'Z';
 			}
@@ -7109,15 +7126,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				val[1] = 'm';
 			}
-			else if (arg == "light magenta" || arg == "light pink")
+			else if (arg == "light magenta" || arg == "light pink" || arg == "light_magenta" || arg == "light_pink")
 			{
 				val[1] = 'M';
 			}
-			else if (arg == "yellow" || arg == "dark yellow")
+			else if (arg == "yellow" || arg == "dark yellow" || arg == "dark_yellow")
 			{
 				val[1] = 'y';
 			}
-			else if (arg == "light yellow")
+			else if (arg == "light yellow" || arg == "light_yellow")
 			{
 				val[1] = 'Y';
 			}
@@ -7144,7 +7161,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	}
 
 	/*THIS HANDLES BOOLEAN OPERATORS*/
-										//DEBUG_BREAKPOINT(10);
+
 	has_subbed = true;
 	while (has_subbed)
 	{

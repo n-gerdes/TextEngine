@@ -1,0 +1,63 @@
+#import base_character
+
+//This is responsible for setting various variables as a part of this entity's setup
+function initialize()
+	add_title("enemy");
+	add_alias("guy");
+	set_max_hp(10);
+	set_hp(10);
+end
+
+function describe()
+	say("You see an imposing enemy before you.");
+end
+
+//Allows you to make something happen after an entity takes damage
+function on_damage_taken(source, amount)
+
+end
+
+//Function that controls this entity's behavior when it isn't the perspective entity
+function get_ai_command()
+	return "do nothing"
+end
+
+//This is called before this entity takes its turn
+function before_turn()
+	//Called before this entity's turn
+end
+
+function wait(time)
+	//println: time
+	if(!is_int(time))
+		return "You must enter a whole number"
+	end
+	if(get_value("rounds_spent_waiting") >= time)
+		set_value("rounds_spent_waiting", 1)
+		return FINISH
+	else
+		set_value("rounds_spent_waiting", get_value("rounds_spent_waiting") + 1)
+		//println: "HAVE WAITED FOR " get_value("rounds_spent_waiting") " ROUNDS OUT OF " time
+		return REPEAT
+	end
+end
+
+function before_leave(room)
+
+end
+
+/////////////////////
+
+function command:fight $enmy(caller, enmy)
+	if(entity(caller).knows_alias(enmy, get_true_name())) then
+		start = entity(caller).prompt_boolean("yes", concat("Start combat against ", get_display_name(), "?") );
+		if(start) then
+			scene().start_fight({caller}, {get_true_name()})
+		else
+			entity(caller).tell(concat("Didn't start a fight with ", get_display_name()));
+			return NO_MATCH;
+		end
+	else
+		return NO_MATCH;
+	end
+end

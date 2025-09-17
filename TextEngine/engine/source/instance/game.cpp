@@ -108,7 +108,7 @@ bool game::game_is_active() const
 	return game_going;
 }
 
-entity* game::get_any_entity(const std::string& name)
+entity* game::get_any_entity(const std::string& name, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -135,7 +135,7 @@ entity* game::get_any_entity(const std::string& name)
 	}
 	if (possible_entities.size() == 0)
 	{
-		return load_entity_from_file(name);
+		return load_entity_from_file(name, source, source);
 	}
 	else
 	{
@@ -143,7 +143,7 @@ entity* game::get_any_entity(const std::string& name)
 	}
 }
 
-entity* game::get_any_entity_in_scene(const std::string& entity_name, const std::string& scene_name)
+entity* game::get_any_entity_in_scene(const std::string& entity_name, const std::string& scene_name, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -202,7 +202,7 @@ std::vector<entity*> game::get_entities()
 	return return_val;
 }
 
-entity* game::get_entity(const std::string& name, bool allow_alias)
+entity* game::get_entity(const std::string& name, bool allow_alias, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -231,7 +231,7 @@ entity* game::get_entity(const std::string& name, bool allow_alias)
 	}
 	if (possible_entities.size() == 0)
 	{
-		return load_entity_from_file(name);
+		return load_entity_from_file(name, source, true);
 	}
 	else
 	{
@@ -239,7 +239,7 @@ entity* game::get_entity(const std::string& name, bool allow_alias)
 	}
 }
 
-entity* game::get_entity_in_scene(const std::string& entity_name, const std::string& scene_name, bool allow_alias)
+entity* game::get_entity_in_scene(const std::string& entity_name, const std::string& scene_name, bool allow_alias, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -283,7 +283,7 @@ entity* game::get_entity_in_scene(const std::string& entity_name, const std::str
 	}
 }
 
-entity* game::get_first_entity(const std::string& name)
+entity* game::get_first_entity(const std::string& name, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -307,10 +307,10 @@ entity* game::get_first_entity(const std::string& name)
 			return nullptr;
 		}
 	}
-	return load_entity_from_file(name);
+	return load_entity_from_file(name, source, true);
 }
 
-entity* game::get_first_entity_in_scene(const std::string& entity_name, const std::string& scene_name)
+entity* game::get_first_entity_in_scene(const std::string& entity_name, const std::string& scene_name, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -342,7 +342,7 @@ std::string game::get_scenario_directory() const
 	return "Scenarios/" + get_name() + "/";
 }
 
-entity* game::get_any_entity(const std::string& alias, entity* seeker)
+entity* game::get_any_entity(const std::string& alias, entity* seeker, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -377,7 +377,7 @@ entity* game::get_any_entity(const std::string& alias, entity* seeker)
 	}
 }
 
-entity* game::get_any_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker)
+entity* game::get_any_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -412,7 +412,7 @@ entity* game::get_any_entity_in_scene(const std::string& alias, const std::strin
 	}
 }
 
-entity* game::get_entity(const std::string& alias, entity* seeker)
+entity* game::get_entity(const std::string& alias, entity* seeker, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -449,7 +449,7 @@ entity* game::get_entity(const std::string& alias, entity* seeker)
 	}
 }
 
-entity* game::get_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker)
+entity* game::get_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -489,7 +489,7 @@ entity* game::get_entity_in_scene(const std::string& alias, const std::string& s
 	}
 }
 
-entity* game::get_entity_by_name(const std::string& name)
+entity* game::get_entity_by_name(const std::string& name, const std::string& source)
 {
 	auto found = name_to_entity.find(name);
 	if (found == name_to_entity.end())
@@ -522,7 +522,7 @@ entity* game::get_entity_by_name(const std::string& name)
 				return nullptr;
 			}
 		}
-		entity* loaded_from_file = load_entity_from_file(name);
+		entity* loaded_from_file = load_entity_from_file(name, source, true);
 		if (loaded_from_file != nullptr)
 		{
 			name_to_entity_mutex.lock();
@@ -550,7 +550,7 @@ uint64_t game::get_current_turn()
 	}
 }
 
-entity* game::get_first_entity(const std::string& alias, entity* seeker)
+entity* game::get_first_entity(const std::string& alias, entity* seeker, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -577,7 +577,7 @@ entity* game::get_first_entity(const std::string& alias, entity* seeker)
 	return nullptr;
 }
 
-entity* game::get_first_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker)
+entity* game::get_first_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker, const std::string& source)
 {
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
@@ -677,12 +677,12 @@ entity* game::get_perspective_entity()
 	return perspective_entity_ptr;
 }
 
-entity* game::load_entity_from_file(const std::string& entity_name)
+entity* game::load_entity_from_file(const std::string& entity_name, const std::string& source, bool dummy)
 {
-	return load_entity_from_file(entity_name, game_engine->get_scenario_directory(get_name()) + "entities/" + entity_name + ".entity");
+	return load_entity_from_file(entity_name, game_engine->get_scenario_directory(get_name()) + "entities/" + entity_name + ".entity", source);
 }
 
-entity* game::load_entity_from_file(const std::string& entity_name, const std::string& file)
+entity* game::load_entity_from_file(const std::string& entity_name, const std::string& file, const std::string& source)
 {
 	const std::string& filename = file;
 	//std::ifstream peek;
@@ -717,7 +717,7 @@ entity* game::load_entity_from_file(const std::string& entity_name, const std::s
 	}
 	else
 	{
-		get_engine()->println("Error: Could not read ", filename);
+		get_engine()->println("Error: Could not read ", filename, "(",source,")");
 		return nullptr;
 	}
 }

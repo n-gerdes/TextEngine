@@ -139,12 +139,22 @@ void entity::load_variables(std::ifstream& file, const std::string& scenario_nam
 	}
 }
 
-void tell_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void tell_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	c->println(game_instance, game_instance->get_engine()->correct_tokenizer_bug(args[0]));
+	if (args.size() == 0)
+	{
+		c->println(game_instance, "");
+		return;
+	}
+	std::string disp;
+	for (int i = 0; i < args.size(); ++i)
+	{
+		disp += args[i];
+	}
+	c->println(game_instance, game_instance->get_engine()->correct_tokenizer_bug(disp)); //Should I correct_tokenizer_bug on the whole thing or each individual one?
 }
 
-void set_value_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void set_value_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	//string_utils string_utils;
 	std::string& val_name = args[0];
@@ -152,7 +162,7 @@ void set_value_func(game* game_instance, entity* c, std::vector<std::string>& ar
 	c->set_value(val_name, arg_value);
 }
 
-void set_scene_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void set_scene_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	std::string& scene_name = args[0];
 
@@ -164,19 +174,19 @@ void set_scene_func(game* game_instance, entity* c, std::vector<std::string>& ar
 	}
 }
 
-void add_alias_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void add_alias_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	std::string& alias = args[0];
 	c->add_alias(alias);
 }
 
-void add_title_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void add_title_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	std::string& title = args[0];
 	c->add_title(title);
 }
 
-void say_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void say_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	if (c->get_scene_name()!="NULL" && (c->get_scene() == game_instance->get_perspective_entity()->get_scene()))
 	{
@@ -184,7 +194,7 @@ void say_func(game* game_instance, entity* c, std::vector<std::string>& args, st
 	}
 }
 
-void learn_alias_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void learn_alias_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	string_utils string_utils;
 	std::string& ent_name = args[0];
@@ -194,7 +204,7 @@ void learn_alias_func(game* game_instance, entity* c, std::vector<std::string>& 
 	c->learn_alias_for_entity(ent_name, alias_category, alias);
 }
 
-void learn_title_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void learn_title_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	string_utils string_utils;
 	std::string ent_name = args[0];
@@ -205,7 +215,7 @@ void learn_title_func(game* game_instance, entity* c, std::vector<std::string>& 
 	c->learn_alias_for_entity(ent_name, alias_category, "the "+alias);
 }
 
-void transfer_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void transfer_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	std::string& new_scene_name = args[0];
 	if (new_scene_name == c->get_scene_name())
@@ -219,7 +229,7 @@ void transfer_func(game* game_instance, entity* c, std::vector<std::string>& arg
 		const auto& followers = c->get_attached_entity_names();
 		for (auto i = followers.begin(); i != followers.end(); ++i)
 		{
-			entity* follower = game_instance->get_entity_by_name(*i);
+			entity* follower = game_instance->get_entity_by_name(*i, source);
 			if (follower)
 			{
 				follower->call_function(game_instance, "before_leave", { new_scene_name }, dummy_return_value);
@@ -237,7 +247,7 @@ void transfer_func(game* game_instance, entity* c, std::vector<std::string>& arg
 	}
 }
 
-void damage_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void damage_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& code_source)
 {
 	std::string& dmg_arg = args[0];
 	string_utils string_utils;
@@ -251,7 +261,7 @@ void damage_func(game* game_instance, entity* c, std::vector<std::string>& args,
 		}
 		else if (args.size() == 2)
 		{
-			source = game_instance->get_entity_by_name(args[1]);
+			source = game_instance->get_entity_by_name(args[1], code_source);
 			if (source)
 			{
 				c->damage(game_instance, source, amount);
@@ -272,7 +282,7 @@ void damage_func(game* game_instance, entity* c, std::vector<std::string>& args,
 	}
 }
 
-void heal_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void heal_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& code_source)
 {
 	std::string& heal_arg = args[0];
 	string_utils string_utils;
@@ -286,14 +296,14 @@ void heal_func(game* game_instance, entity* c, std::vector<std::string>& args, s
 		}
 		else if (args.size() == 2)
 		{
-			source = game_instance->get_entity_by_name(args[1]);
+			source = game_instance->get_entity_by_name(args[1], code_source);
 			if (source)
 			{
 				c->recover(source, amount);
 			}
 			else
 			{
-				err = "Error: Found no entity by the name of " + args[1];
+				err = "Error: Found no entity by the name of " + args[1] + "(" + code_source + ")";
 			}
 		}
 		else
@@ -303,28 +313,28 @@ void heal_func(game* game_instance, entity* c, std::vector<std::string>& args, s
 	}
 	else
 	{
-		err = "Error: Amount of HP recovered must be an integer";
+		err = "Error: Amount of HP recovered must be an integer (" + code_source + ")";
 	}
 }
 
-void attach_to_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void attach_to_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	std::string& arg = args[0];
-	entity* target = game_instance->get_entity_by_name(arg);
+	entity* target = game_instance->get_entity_by_name(arg, source);
 	if (target)
 	{
 		c->attach_to(target);
 	}
 	else
 	{
-		err = "Could not attach " + c->get_name() + " to entity '" + arg + "' because '" + arg + "' does not exist";
+		err = "Could not attach " + c->get_name() + " to entity '" + arg + "' because '" + arg + "' does not exist (" + source + ")";
 	}
 }
 
-void attach_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void attach_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	std::string& arg = args[0];
-	entity* target = game_instance->get_entity_by_name(arg);
+	entity* target = game_instance->get_entity_by_name(arg, source);
 	if (target)
 	{
 		c->attach(target);
@@ -335,7 +345,7 @@ void attach_func(game* game_instance, entity* c, std::vector<std::string>& args,
 	}
 }
 
-void unattach_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void unattach_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	if (args.size() == 0)
 	{
@@ -351,28 +361,28 @@ void unattach_func(game* game_instance, entity* c, std::vector<std::string>& arg
 	}
 }
 
-void clone_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void clone_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	entity* new_ent = game_instance->load_entity_from_file(args[0], c->get_filename());
+	entity* new_ent = game_instance->load_entity_from_file(args[0], c->get_filename(), source);
 	new_ent->copy_data_from(c);
 }
 
-void set_global_value_func(game* game_instance, entity* s, std::vector<std::string>& args, std::string& err)
+void set_global_value_func(game* game_instance, entity* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	game_instance->set_value(args[0], args[1]);
 }
 
-void wipe_aliases_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void wipe_aliases_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	c->wipe_aliases(game_instance);
 }
 
-void set_meta_value_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void set_meta_value_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	game_instance->set_meta_value(args[0], args[1]);
 }
 
-void set_max_hp_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void set_max_hp_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	string_utils string_utils;
 	if (string_utils.is_integer(args[0]))
@@ -386,7 +396,7 @@ void set_max_hp_func(game* game_instance, entity* c, std::vector<std::string>& a
 	}
 }
 
-void set_hp_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void set_hp_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	string_utils string_utils;
 	if (string_utils.is_integer(args[0]))
@@ -400,7 +410,7 @@ void set_hp_func(game* game_instance, entity* c, std::vector<std::string>& args,
 	}
 }
 
-void set_clear_on_scene_change_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void set_clear_on_scene_change_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	const std::string& arg = args[0];
 	std::vector<std::string> variable_names;
@@ -410,7 +420,7 @@ void set_clear_on_scene_change_func(game* game_instance, entity* c, std::vector<
 		game_instance->set_clear_on_scene_change(val);
 }
 
-void set_save_any_time_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void set_save_any_time_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	const std::string& arg = args[0];
 	std::vector<std::string> variable_names;
@@ -420,47 +430,47 @@ void set_save_any_time_func(game* game_instance, entity* c, std::vector<std::str
 		game_instance->set_save_any_time(val);
 }
 
-void describe_scene_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void describe_scene_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	if(c == game_instance->get_perspective_entity())
 		game_instance->describe_scene(c->get_scene());
 }
 
-void clear_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err)
+void clear_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	if (game_instance->get_perspective_entity()->get_scene() == c->get_scene())
 		game_instance->get_engine()->clear_screen();
 }
 
-std::string entity::call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args)
+std::string entity::call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args, const std::string& source)
 {
 	std::string err;
 	
-	pair_innate_function(&tell_func, function_name, "tell", args, game_instance, err, 1);
-	pair_innate_function(&set_value_func, function_name, "set_value", args, game_instance, err, 2);
-	pair_innate_function(&add_alias_func, function_name, "add_alias", args, game_instance, err, 1);
-	pair_innate_function(&add_title_func, function_name, "add_title", args, game_instance, err, 1);
-	pair_innate_function(&learn_alias_func, function_name, "learn_alias", args, game_instance, err, 3);
-	pair_innate_function(&learn_title_func, function_name, "learn_title", args, game_instance, err, 3);
-	pair_innate_function(&transfer_func, function_name, "transfer", args, game_instance, err, 1);
-	pair_innate_function(&say_func, function_name, "say", args, game_instance, err, 1);
-	pair_innate_function(&damage_func, function_name, "damage", args, game_instance, err, 1, 2);
-	pair_innate_function(&attach_func, function_name, "attach", args, game_instance, err, 1);
-	pair_innate_function(&attach_to_func, function_name, "attach_to", args, game_instance, err, 1);
-	pair_innate_function(&unattach_func, function_name, "unattach", args, game_instance, err, 0, 1);
-	pair_innate_function(&clone_func, function_name, "clone", args, game_instance, err, 1);
-	pair_innate_function(&set_global_value_func, function_name, "set_global_value", args, game_instance, err, 2);
-	pair_innate_function(&wipe_aliases_func, function_name, "wipe_aliases", args, game_instance, err, 2);
-	pair_innate_function(&set_meta_value_func, function_name, "set_meta_value", args, game_instance, err, 2);
-	pair_innate_function(&heal_func, function_name, "recover", args, game_instance, err, 1, 2);
-	pair_innate_function(&set_max_hp_func, function_name, "set_max_hp", args, game_instance, err, 1);
-	pair_innate_function(&set_hp_func, function_name, "set_hp", args, game_instance, err, 1);
+	pair_innate_function(&tell_func, function_name, "tell", args, game_instance, err, 0, 99, source);
+	pair_innate_function(&set_value_func, function_name, "set_value", args, game_instance, err, 2, source);
+	pair_innate_function(&add_alias_func, function_name, "add_alias", args, game_instance, err, 1, source);
+	pair_innate_function(&add_title_func, function_name, "add_title", args, game_instance, err, 1, source);
+	pair_innate_function(&learn_alias_func, function_name, "learn_alias", args, game_instance, err, 3, source);
+	pair_innate_function(&learn_title_func, function_name, "learn_title", args, game_instance, err, 3, source);
+	pair_innate_function(&transfer_func, function_name, "transfer", args, game_instance, err, 1, source);
+	pair_innate_function(&say_func, function_name, "say", args, game_instance, err, 1, source);
+	pair_innate_function(&damage_func, function_name, "damage", args, game_instance, err, 1, 2, source);
+	pair_innate_function(&attach_func, function_name, "attach", args, game_instance, err, 1, source);
+	pair_innate_function(&attach_to_func, function_name, "attach_to", args, game_instance, err, 1, source);
+	pair_innate_function(&unattach_func, function_name, "unattach", args, game_instance, err, 0, 1, source);
+	pair_innate_function(&clone_func, function_name, "clone", args, game_instance, err, 1, source);
+	pair_innate_function(&set_global_value_func, function_name, "set_global_value", args, game_instance, err, 2, source);
+	pair_innate_function(&wipe_aliases_func, function_name, "wipe_aliases", args, game_instance, err, 2, source);
+	pair_innate_function(&set_meta_value_func, function_name, "set_meta_value", args, game_instance, err, 2, source);
+	pair_innate_function(&heal_func, function_name, "recover", args, game_instance, err, 1, 2, source);
+	pair_innate_function(&set_max_hp_func, function_name, "set_max_hp", args, game_instance, err, 1, source);
+	pair_innate_function(&set_hp_func, function_name, "set_hp", args, game_instance, err, 1, source);
 
-	pair_innate_function(&set_clear_on_scene_change_func, function_name, "set_clear_on_scene_change", args, game_instance, err, 1);
-	pair_innate_function(&set_save_any_time_func, function_name, "set_save_any_time", args, game_instance, err, 1);
+	pair_innate_function(&set_clear_on_scene_change_func, function_name, "set_clear_on_scene_change", args, game_instance, err, 1, source);
+	pair_innate_function(&set_save_any_time_func, function_name, "set_save_any_time", args, game_instance, err, 1, source);
 
-	pair_innate_function(&describe_scene_func, function_name, "describe_scene", args, game_instance, err, 0);
-	pair_innate_function(&clear_func, function_name, "clear", args, game_instance, err, 0);
+	pair_innate_function(&describe_scene_func, function_name, "describe_scene", args, game_instance, err, 0, source);
+	pair_innate_function(&clear_func, function_name, "clear", args, game_instance, err, 0, source);
 	return err;
 }
 
@@ -665,6 +675,28 @@ std::string entity::get_display_name_of_other_entity(bool randomize, bool allow_
 	}
 }
 
+std::vector<std::string> entity::get_display_names_of_other_entity(bool allow_titles, entity* other_entity) const
+{
+	std::vector<std::string> possibilities;
+	if (known_aliases.find(other_entity->get_name()) != known_aliases.end())
+	{
+		const std::map<std::string, std::vector<std::string>>& categories = known_aliases.at(other_entity->get_name());
+		std::vector<std::string> master_list;
+		for (auto category = categories.begin(); category != categories.end(); ++category)
+		{
+			const std::vector<std::string>& aliases_in_category = category->second;
+			for (size_t i = 0; i < aliases_in_category.size(); ++i)
+			{
+				master_list.push_back(aliases_in_category[i]);
+			}
+		}
+
+		return other_entity->get_display_names(allow_titles, master_list);
+	}
+	return other_entity->get_display_names(allow_titles);
+}
+
+
 std::string entity::get_display_name(bool randomize, bool allow_titles, const std::vector<std::string>& known_names) const
 {
 	string_utils string_utils;
@@ -804,14 +836,14 @@ game* entity::get_game_instance() const
 }
 
 template <typename T>
-void entity::pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int number_of_args)
+void entity::pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int number_of_args, const std::string& source)
 {
 	if (checked_func_name == innate_function_name)
 	{
 		if (args.size() == number_of_args)
 		{
 			err = "";
-			internal_func(game_instance, this, args, err);
+			internal_func(game_instance, this, args, err, source);
 		}
 		else if (args.size() < number_of_args)
 		{
@@ -850,14 +882,14 @@ void entity::pair_innate_function(T internal_func, const std::string& checked_fu
 }
 
 template <typename T>
-void entity::pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int min_args, int max_args)
+void entity::pair_innate_function(T internal_func, const std::string& checked_func_name, const std::string& innate_function_name, std::vector<std::string>& args, game* game_instance, std::string& err, int min_args, int max_args, const std::string& source)
 {
 	if (checked_func_name == innate_function_name)
 	{
 		if (args.size() >= min_args && args.size() <= max_args)
 		{
 			err = "";
-			internal_func(game_instance, this, args, err);
+			internal_func(game_instance, this, args, err, source);
 		}
 		else if (args.size() < min_args)
 		{
@@ -1218,7 +1250,7 @@ void entity::unattach(const std::string& follower)
 	{
 		//std::cout << "UNATTACHING " << follower << " FROM " << get_name() << std::endl;
 		attached_entity_names.remove(follower);
-		entity* existing_entity = get_game_instance()->get_entity_by_name(follower);
+		entity* existing_entity = get_game_instance()->get_entity_by_name(follower, get_name());
 		if (existing_entity)
 		{
 			existing_entity->attached_to = "NULL";
@@ -1233,10 +1265,11 @@ void entity::unattach(const std::string& follower)
 entity::hp_t entity::set_hp(hp_t new_hp)
 {
 	hp_mutex.lock();
-	hp_t old_hp = get_hp();
+	hp_t old_hp = hp;
 	hp_t val = new_hp;
-	if (val > get_max_hp())
-		val = get_max_hp();
+	if (val > max_hp)
+		val =  max_hp;
+	hp = val;
 	hp_mutex.unlock();
 	std::string dummy_return_val;
 	call_function(get_game_instance(), "on_hp_change", { std::to_string(old_hp), std::to_string(val) }, dummy_return_val);
@@ -1248,6 +1281,8 @@ void entity::set_max_hp(hp_t new_max_hp)
 	hp_t old_max = get_max_hp();
 	max_hp_mutex.lock();
 	max_hp = new_max_hp;
+	if (hp > max_hp)
+		hp = max_hp;
 	max_hp_mutex.unlock();
 	std::string dummy_return_val;
 	call_function(get_game_instance(), "on_max_hp_change", { std::to_string(old_max), std::to_string(new_max_hp) }, dummy_return_val);
@@ -1257,7 +1292,7 @@ void entity::unattach()
 {
 	if (attached_to != "NULL")
 	{
-		entity* attachment = get_game_instance()->get_entity_by_name(attached_to);
+		entity* attachment = get_game_instance()->get_entity_by_name(attached_to, get_name());
 		if (attachment)
 		{
 			attachment->unattach(get_name());

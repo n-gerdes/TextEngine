@@ -165,6 +165,94 @@ game_obj* game_obj::get(game* game_instance, const std::string& path)
 	return found;
 }
 
+
+std::vector<std::string> game_obj::get_display_names(bool allow_titles, const std::vector<std::string>& known_names) const
+{
+	std::vector<std::string> possible_names;
+	possible_names.reserve(known_names.size() + aliases.size());
+	//First it adds privately known names.
+	for (size_t i = 0; i < known_names.size(); ++i) //Next it will add all aliases and titles
+	{
+		const std::string& alias = known_names[i];
+		if (alias.find("~") == std::string::npos)
+		{
+			if (i == known_names.size() - 1) //If it's the last one then it can't be a title
+			{
+				possible_names.push_back(alias);
+			}
+			else
+			{
+				if (known_names[i + 1] == "the " + alias) //If the next one on the list is "the [blank]" then this alias is a title, and the title must be added as a possible display name but not this (i.e., "the wizard casts a spell" vs "wizard casts a spell").
+				{
+					if (allow_titles)
+						possible_names.push_back(known_names[i + 1]);
+					++i; //Since it would've checked the next alias (a known title) to see if it was a title (when I know this one was) then there is no need to check it again; increment i so when it increments again it skips to the next unique alias.
+				}
+			}
+		}
+	}
+
+	for (size_t i = 0; i < aliases.size(); ++i) //Next it will add all aliases and titles
+	{
+		const std::string& alias = aliases[i];
+		if (alias.find("~") == std::string::npos)
+		{
+			if (i == aliases.size() - 1) //If it's the last one then it can't be a title
+			{
+				possible_names.push_back(alias);
+			}
+			else
+			{
+				if (aliases[i + 1] == "the " + alias) //If the next one on the list is "the [blank]" then this alias is a title, and the title must be added as a possible display name but not this (i.e., "the wizard casts a spell" vs "wizard casts a spell").
+				{
+					if (allow_titles)
+						possible_names.push_back(aliases[i + 1]);
+					++i; //Since it would've checked the next alias (a known title) to see if it was a title (when I know this one was) then there is no need to check it again; increment i so when it increments again it skips to the next unique alias.
+				}
+			}
+		}
+	}
+
+	return possible_names;
+}
+
+std::vector<std::string> game_obj::get_display_names(bool allow_titles) const
+{
+	std::vector<std::string> possible_names;
+	possible_names.reserve(aliases.size() + 1);
+
+	if (game_obj_name.find("~") == std::string::npos) //A non-ID name can be added to the list of possible display names
+	{
+		possible_names.push_back(game_obj_name);
+	}
+
+	for (size_t i = 0; i < aliases.size(); ++i) //Next it will add all aliases and titles
+	{
+		const std::string& alias = aliases[i];
+		if (alias.find("~") == std::string::npos)
+		{
+			if (i == aliases.size() - 1) //If it's the last one then it can't be a title
+			{
+				possible_names.push_back(alias);
+			}
+			else
+			{
+				if (aliases[i + 1] == "the " + alias) //If the next one on the list is "the [blank]" then this alias is a title, and the title must be added as a possible display name but not this (i.e., "the wizard casts a spell" vs "wizard casts a spell").
+				{
+					if (allow_titles)
+						possible_names.push_back(aliases[i + 1]);
+					++i; //Since it would've checked the next alias (a known title) to see if it was a title (when I know this one was) then there is no need to check it again; increment i so when it increments again it skips to the next unique alias.
+				}
+			}
+		}
+	}
+
+	return possible_names;
+}
+
+
+
+
 std::string game_obj::get_display_name(bool randomize, bool allow_titles, const std::vector<std::string>& known_names) const
 {
 	std::vector<std::string> possible_names;

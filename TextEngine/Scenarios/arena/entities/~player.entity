@@ -1,0 +1,78 @@
+#import base_character
+
+//This is responsible for setting various variables as a part of this entity's setup
+function initialize()
+	set_max_hp(10);
+	set_hp(10);
+end
+
+//Allows you to make something happen after an entity takes damage
+function on_damage_taken(source, amount)
+
+end
+
+//Function that controls this entity's behavior when it isn't the perspective entity
+function get_ai_command()
+	return "do nothing"
+end
+
+//This is called before this entity takes its turn
+function before_turn()
+	//Called before this entity's turn
+end
+
+function wait(time)
+	//println: time
+	if(!is_int(time))
+		return "You must enter a whole number"
+	end
+	if(get_value("rounds_spent_waiting") >= time)
+		set_value("rounds_spent_waiting", 1)
+		return FINISH
+	else
+		set_value("rounds_spent_waiting", get_value("rounds_spent_waiting") + 1)
+		//println: "HAVE WAITED FOR " get_value("rounds_spent_waiting") " ROUNDS OUT OF " time
+		return REPEAT
+	end
+end
+
+function before_leave(room)
+
+end
+
+/////////////////////
+
+function command:wait $time minutes(ent, time)
+	if(ent != get_true_name())
+		return FAILURE
+	end
+	return wait(time*12)
+end
+
+function command:wait $time seconds(ent, time)
+	if(ent != get_true_name())
+		return FAILURE
+	end
+	return wait(int(time/5))
+end
+
+function command:wait $time hours(ent, time)
+	if(ent != get_true_name())
+		return FAILURE
+	end
+	return wait(time*720)
+end
+
+function command:wait $time(ent, time)
+	if(ent != get_true_name())
+		return FAILURE
+	end
+	return wait(time)
+end
+
+function command:wait(ent)
+	if(ent != get_true_name())
+		return FAILURE
+	end
+	return wait(1)
+end
