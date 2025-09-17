@@ -1960,6 +1960,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("input_match", "string_matches_input");
 
 	substitute_alias_function("all_entities", "get_all_entities");
+	substitute_alias_function("all_scenes", "get_all_scenes");
 
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
@@ -4878,6 +4879,46 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	char_getter_handler entity_get_all_scenes_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 0)
+			{
+				std::string all_args;
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					if (i != 0)
+						all_args += ", ";
+					all_args += args[i];
+				}
+				return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
+			}
+			else
+			{
+				std::string arr = "{";
+				std::string del = ",";
+				std::string pair_delimeter = "0";
+				pair_delimeter[0] = pair_delimeter_character;
+				del[0] = dummy_array_delimeter;
+				size_t index = 0;
+
+				const auto& scenes = char_ptr->get_parent()->get_parent()->find_first_child(game_instance, "scenes")->get_children();
+				for (auto s = scenes.begin(); s != scenes.end(); ++s)
+				{
+					scene* sc = (scene*)(*s);
+					const std::string& name = sc->get_name();
+					if (index != 0)
+						arr += del;
+					arr += std::to_string(index) + pair_delimeter;
+					arr += name;
+					++index;
+				}
+
+				arr += "}";
+				return arr;
+
+			}
+		};
+
 	entity* this_entity = dynamic_cast<entity*>(const_cast<res_file*>(this));
 	register_entity_getter("get_value", get_val_handler, this_entity);
 	register_entity_getter("get_global_value", get_global_val_handler, this_entity);
@@ -4918,6 +4959,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_entity_getter("string_matches_input", entity_matches_input_handler, this_entity);
 
 	register_entity_getter("get_all_entities", entity_get_all_entities_handler, this_entity);
+	register_entity_getter("get_all_scenes", entity_get_all_scenes_handler, this_entity);
 
 	//////////////////////////////////////////////////////////////////////////////////
 	/* HERE IS WHERE CODE GOES THAT CAN HANDLE GETTING RETURN VALUES FROM USER-FUNCTION CALLS TO ENTITIES */
@@ -5359,6 +5401,46 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 		};
 
+	scene_getter_handler scene_get_all_scenes_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
+		{
+			if (args.size() != 0)
+			{
+				std::string all_args;
+				for (size_t i = 0; i < args.size(); ++i)
+				{
+					if (i != 0)
+						all_args += ", ";
+					all_args += args[i];
+				}
+				return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
+			}
+			else
+			{
+				std::string arr = "{";
+				std::string del = ",";
+				std::string pair_delimeter = "0";
+				pair_delimeter[0] = pair_delimeter_character;
+				del[0] = dummy_array_delimeter;
+				size_t index = 0;
+
+				const auto& scenes = scene_ptr->get_parent()->get_children();
+				for (auto s = scenes.begin(); s != scenes.end(); ++s)
+				{
+					scene* sc = (scene*)(*s);
+					const std::string& name = sc->get_name();
+					if (index != 0)
+						arr += del;
+					arr += std::to_string(index) + pair_delimeter;
+					arr += name;
+					++index;
+				}
+
+				arr += "}";
+				return arr;
+
+			}
+		};
+
 	scene_getter_handler scene_get_children_handler = [](game* game_instance, scene* scene_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 	{
 		if (args.size() != 0)
@@ -5715,6 +5797,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_scene_getter("string_matches_input", scene_matches_input_handler, this_scene, this_entity);
 
 	register_scene_getter("get_all_entities", scene_get_all_entities_handler, this_scene, this_entity);
+	register_scene_getter("get_all_scenes", scene_get_all_scenes_handler, this_scene, this_entity);
 
 	{
 		has_subbed = true;
