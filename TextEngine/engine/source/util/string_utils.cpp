@@ -1,4 +1,5 @@
 #include "engine/headers/util/string_utils.h"
+#include "engine/headers/MASTER.h"
 #include <iostream>
 #include <mutex>
 #include <map>
@@ -428,6 +429,64 @@ std::vector<std::string> string_utils::extract_tokens(const std::string& input, 
 	return tokens;
 }
 
+std::vector<std::string> string_utils::extract_tokens_with_potential_subfunctions(const std::string& input, const std::string& delimeters) const
+{
+	std::vector<std::string> tokens;
+
+	std::string token;
+	tokens.reserve(10);
+	int paran_level = 0;
+	auto push_token = [&]()
+		{
+			if (token.size() > 0)
+			{
+				tokens.push_back(token);
+				token = "";
+			}
+		};
+
+	auto char_is_delimeter = [&](char entity) -> bool
+		{
+			for (size_t i = 0; i < delimeters.size(); ++i)
+				if (entity == delimeters[i])
+					return true;
+			return false;
+		};
+
+	for (size_t i = 0; i < input.size(); i++)
+	{
+		char entity = input.at(i);
+		if (entity == '(')
+		{
+			++paran_level;
+			token += entity;
+		}
+		else if (entity == ')')
+		{
+			--paran_level;
+			if (paran_level < 0)
+				paran_level = 0;
+			token += entity;
+		}
+		else if (char_is_delimeter(entity) && paran_level == 0)
+		{
+			push_token();
+			if (entity != ' ') //Non-space delimeters get their own associated tokens.
+			{
+				token = " ";
+				token[0] = entity;
+				push_token();
+			}
+		}
+		else
+		{
+			token += entity;
+		}
+	}
+	push_token();
+	return tokens;
+}
+
 std::vector<std::string> string_utils::extract_tokens(const std::string& input, char delimeter) const
 {
 	std::string del = "0";
@@ -575,23 +634,9 @@ bool string_utils::matches_command(const std::string& command, const std::string
 {
 	variable_tokens.clear();
 	string_utils string_utils;
-	auto command_tokens = string_utils.extract_tokens(command, delimeters);
-	auto input_tokens = string_utils.extract_tokens(input, delimeters);
+	auto command_tokens = string_utils.extract_tokens(replace_all(replace_all(command, var_val_space, " ",false), variable_value_header, "", false), delimeters);
+	auto input_tokens = string_utils.extract_tokens(replace_all(replace_all(input, var_val_space, " ", false), variable_value_header, "", false), delimeters);
 
-	/*
-	std::cout << "INPUT TOKENS: ";
-	for (int i = 0; i < input_tokens.size(); ++i)
-	{
-		std::cout << input_tokens[i] << "|";
-	}
-	std::cout << std::endl;
-	std::cout << "COMMAND TOKENS: ";
-	for (int i = 0; i < command_tokens.size(); ++i)
-	{
-		std::cout << command_tokens[i] << "|";
-	}
-	std::cout << std::endl;
-	*/
 	size_t num_of_command_tokens = command_tokens.size();
 	size_t num_of_input_tokens = input_tokens.size();
 

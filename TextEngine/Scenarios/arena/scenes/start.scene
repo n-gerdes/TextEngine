@@ -2,7 +2,7 @@ Notes can be freely written outside of functions and the first line & other sett
 However, within blocks of code, comments must be denoted by writing // at the beginning of the line.
 
 function initialize()
-	entity(~player).transfer(arena);
+	entity("~player").transfer("arena");
 end
 
 function describe()

@@ -147,8 +147,10 @@ void println_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_val)
 {
-	std::string text = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	//std::cout << "HERE = " << text << std::endl;
+	string_utils string_utils;
+	std::string text = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = text;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	game_instance->get_engine()->println(game_instance->get_engine()->correct_tokenizer_bug(text));
 }
 
@@ -156,8 +158,10 @@ void print_func(game* game_instance, res_file& script, std::vector<uint32_t>& if
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_val)
 {
-	std::string text = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	//std::cout << "HERE = " << text << std::endl;
+	string_utils string_utils;
+	std::string text = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = text;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	game_instance->get_engine()->print(game_instance->get_engine()->correct_tokenizer_bug(text));
 }
 
@@ -231,7 +235,25 @@ void set_arr_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 		for (size_t i = 2; i < wildcards.size(); ++i)
 			rval += wildcards[i];
 
-		std::string var_val = script.resolve_expression(rval, variable_names, variable_values, game_instance);
+		auto is_array_format = [&](std::string val) -> bool
+			{
+				val = string_utils.replace_all(val, variable_value_header, "", false);
+				std::string& vsub = val;
+				vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+				string_utils.strip(val);
+				if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			};
+
+		std::string var_val = string_utils.replace_all(script.resolve_expression(rval, variable_names, variable_values, game_instance), variable_value_header, "", false);
+		std::string& vsub = var_val;
+		vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 		if (script.find_match(0, "function " + var_name + "( $args )") == res_file::NO_MATCH)
 		{
 			size_t existing_variable_index;
@@ -245,11 +267,15 @@ void set_arr_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 			}
 			if (var_name != var_val) //Assigning a variable to itself does nothing
 			{
+				std::string& vsub = var_val;
+				vsub = string_utils.replace_all(vsub, " ", var_val_space, false);
 
 				std::string pair_delimeter_string = "0";
 				pair_delimeter_string[0] = pair_delimeter_character;
 
-				const std::string& index = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string index = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string& vsub2 = index;
+				vsub2 = string_utils.replace_all(vsub2, var_val_space," ", false);
 				//std::cout << "INDEX = " << std::endl;
 				if (existing_variable_index == variable_names.size())
 				{
@@ -260,15 +286,18 @@ void set_arr_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 				else
 				{
 					//std::cout << var_name << std::endl;
-					std::string new_total_value = "{";
+					std::string new_total_value = variable_value_header + "{";
 					std::string current_value = variable_values[existing_variable_index];
+					current_value = string_utils.replace_all(current_value, var_val_space, " ", false);
+					current_value = string_utils.replace_all(current_value, variable_value_header, "", false);
 					if (current_value == "{}" || current_value == "{ }")
 					{
-						new_total_value = "{" + index + pair_delimeter_string + var_val + "}";
+						new_total_value = variable_value_header + "{" + index + pair_delimeter_string + var_val + "}";
+						new_total_value = string_utils.replace_all(new_total_value, " ", var_val_space, false);
 						variable_values[existing_variable_index] = new_total_value;
 						return;
 					}
-					else if (!(current_value.size() >= 2 && current_value[0] == '{' && current_value[current_value.size() - 1] == '}'))
+					else if (!(is_array_format(current_value)))
 					{
 						err_msg = var_name + " does not hold an array";
 						return;
@@ -322,6 +351,8 @@ void set_arr_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 						new_total_value += index + pair_delimeter_string + var_val + "}";
 					}
 					new_total_value[new_total_value.size() - 1] = '}';
+					std::string& vsub = new_total_value;
+					vsub = string_utils.replace_all(vsub, " ", var_val_space, false);
 					variable_values[existing_variable_index] = new_total_value;
 				}
 
@@ -407,7 +438,9 @@ void set_var_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 	}
 	else
 	{
-		std::string var_val = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+		std::string var_val = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			std::string& vsub = var_val;
+			vsub = string_utils.replace_all(vsub, " ", var_val_space, false);
 		//std::cout << "Setting " << var_name << " to " << var_val << std::endl;
 		if (script.find_match(0, "function " + var_name + "( $args )") == res_file::NO_MATCH)
 		{
@@ -423,12 +456,12 @@ void set_var_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 				{
 					//std::cout << "INITIALIZING " << var_name << " TO " << var_val << std::endl;
 					variable_names.push_back(var_name);
-					variable_values.push_back(var_val);
+					variable_values.push_back(variable_value_header + var_val);
 				}
 				else
 				{
 					//std::cout << "SETTING " << var_name << " TO " << var_val << std::endl;
-					variable_values[existing_variable_index] = var_val;//script.resolve_expression(var_val, variable_names, variable_values, game_instance);//script.substitute_variables(var_val, variable_names, variable_values, game_instance);
+					variable_values[existing_variable_index] = variable_value_header + var_val;//script.resolve_expression(var_val, variable_names, variable_values, game_instance);//script.substitute_variables(var_val, variable_names, variable_values, game_instance);
 				}
 			}
 			else
@@ -452,7 +485,10 @@ void return_val_func(game* game_instance, res_file& script, std::vector<uint32_t
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
 	//err_msg = "";
-	return_value = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	return_value = variable_value_header + string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = return_value;
+	vsub = string_utils.replace_all(vsub, " ", var_val_space, false);
 	early_return = true;
 	//matched_command_id = 52;
 }
@@ -535,7 +571,10 @@ void call_entity_func_by_alias_argless_func(game* game_instance, res_file& scrip
 {
 	//err_msg = "";
 	//matched_command_id = 12;
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
 	entity* entity_reference = game_instance->get_entity(entity_name, true, script.get_filename() + ": " + code);
@@ -559,7 +598,10 @@ void call_entity_func_by_alias_func(game* game_instance, res_file& script, std::
 {
 	//err_msg = "";
 	//matched_command_id = 13;
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
@@ -585,7 +627,10 @@ void call_entity_func_argless_func(game* game_instance, res_file& script, std::v
 {
 	//err_msg = "";
 	//matched_command_id = 14;
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
 	entity* entity_reference = game_instance->get_entity_by_name(entity_name, script.get_filename() + ": " + code);
@@ -609,7 +654,10 @@ void call_entity_func_func(game* game_instance, res_file& script, std::vector<ui
 {
 	//err_msg = "";
 	//matched_command_id = 15;
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
@@ -636,7 +684,10 @@ void call_first_entity_func_argless_func(game* game_instance, res_file& script, 
 {
 	//matched_command_id = 16;
 	//err_msg = "";
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
 	entity* entity_reference = game_instance->get_first_entity(entity_name, script.get_filename() + ": " + code);
@@ -660,7 +711,10 @@ void call_first_entity_func_func(game* game_instance, res_file& script, std::vec
 {
 	//matched_command_id = 17;
 	//err_msg = "";
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
@@ -686,7 +740,10 @@ void call_any_entity_func_argless_func(game* game_instance, res_file& script, st
 {
 	//matched_command_id = 18;
 	//err_msg = "";
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	//substitute_variables(wildcards[0], variable_names, variable_values);
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
@@ -711,7 +768,10 @@ void call_any_entity_func_func(game* game_instance, res_file& script, std::vecto
 {
 	//matched_command_id = 19;
 	//err_msg = "";
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
@@ -737,7 +797,10 @@ void call_entity_here_func_argless_func(game* game_instance, res_file& script, s
 {
 	//matched_command_id = 20;
 	//err_msg = "";
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
@@ -776,7 +839,10 @@ void call_entity_here_func_func(game* game_instance, res_file& script, std::vect
 {
 	//matched_command_id = 21;
 	//err_msg = "";
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
@@ -816,7 +882,10 @@ void call_first_entity_here_func_argless_func(game* game_instance, res_file& scr
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	//matched_command_id = 22;
 	//err_msg = "";
 	std::string& func_name = wildcards[1];
@@ -854,7 +923,10 @@ void call_first_entity_here_func_func(game* game_instance, res_file& script, std
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	//err_msg = "";
 	std::string& complete_args_token = wildcards[2];
@@ -895,7 +967,10 @@ void call_any_entity_here_func_argless_func(game* game_instance, res_file& scrip
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	//matched_command_id = 24;
 	//err_msg = "";
 	std::string& func_name = wildcards[1];
@@ -933,7 +1008,10 @@ void call_any_entity_here_func_func(game* game_instance, res_file& script, std::
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
@@ -974,7 +1052,10 @@ void call_any_entity_here_by_alias_func_argless_func(game* game_instance, res_fi
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	//matched_command_id = 26;
 	//err_msg = "";
 	std::string& func_name = wildcards[1];
@@ -1012,7 +1093,10 @@ void call_any_entity_here_by_alias_func_func(game* game_instance, res_file& scri
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
@@ -1053,7 +1137,10 @@ void call_entity_by_alias_here_func_argless_func(game* game_instance, res_file& 
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	//matched_command_id = 28;
 	//err_msg = "";
 	std::string& func_name = wildcards[1];
@@ -1091,7 +1178,10 @@ void call_entity_by_alias_here_func_func(game* game_instance, res_file& script, 
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string entity_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	//err_msg = "";
 	std::string& complete_args_token = wildcards[2];
@@ -1132,8 +1222,14 @@ void call_entity_by_alias_in_scene_func_argless_func(game* game_instance, res_fi
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	std::string entity_name = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	//matched_command_id = 38;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
@@ -1157,8 +1253,14 @@ void call_entity_by_alias_in_scene_func_func(game* game_instance, res_file& scri
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	std::string entity_name = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	//matched_command_id = 39;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
@@ -1186,8 +1288,14 @@ void call_entity_in_scene_func_argless_func(game* game_instance, res_file& scrip
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	std::string entity_name = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	//matched_command_id = 40;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
@@ -1211,8 +1319,14 @@ void call_entity_in_scene_func_func(game* game_instance, res_file& script, std::
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	std::string entity_name = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	//matched_command_id = 41;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
@@ -1240,8 +1354,14 @@ void call_first_entity_in_scene_func_argless_func(game* game_instance, res_file&
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	std::string entity_name = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	//matched_command_id = 42;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
@@ -1265,8 +1385,14 @@ void call_first_entity_in_scene_func_func(game* game_instance, res_file& script,
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	std::string entity_name = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	//matched_command_id = 43;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
@@ -1294,8 +1420,14 @@ void call_any_entity_in_scene_func_argless_func(game* game_instance, res_file& s
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	std::string entity_name = script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	//matched_command_id = 44;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
@@ -1319,8 +1451,14 @@ void call_any_entity_in_scene_func_func(game* game_instance, res_file& script, s
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-	std::string entity_name = script. resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string entity_name = string_utils.replace_all(script.resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = entity_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	//matched_command_id = 45;
 	//err_msg = "";
 	std::string& func_name = wildcards[2];
@@ -1371,7 +1509,10 @@ void call_scene_func_func(game* game_instance, res_file& script, std::vector<uin
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub2 = scene_name;
+	vsub2 = string_utils.replace_all(vsub2, var_val_space, " ", false);
 	std::string& func_name = wildcards[1];
 	std::string& complete_args_token = wildcards[2];
 	std::vector<std::string> new_call_args = script.extract_args_from_token(complete_args_token, variable_names, variable_values, game_instance);
@@ -1392,7 +1533,11 @@ void call_scene_func_argless_func(game* game_instance, res_file& script, std::ve
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	std::string scene_name = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = scene_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+
 	std::string& func_name = wildcards[1];
 	std::vector<std::string> empty_args;
 	scene* scene_reference = game_instance->get_scene(scene_name);
@@ -1486,7 +1631,10 @@ void breakpoint_func(game* game_instance, res_file& script, std::vector<uint32_t
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
+
 	game_instance->get_engine()->println("BREAKPOINT REACHED");
+	std::string dummy;
+	std::getline(std::cin, dummy);
 }
 
 
@@ -1526,8 +1674,10 @@ void sleep_func(game* game_instance, res_file& script, std::vector<uint32_t>& if
 	const std::string& code, int& line_layer, int& execution_layer, std::vector<std::string>& variable_names, std::vector<std::string>& variable_values,
 	std::vector<std::string>& wildcards, std::string& err_msg, bool& early_return, std::string& return_value)
 {
-	const std::string& time = script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 	string_utils string_utils;
+	std::string time = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+	std::string& vsub = time;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	if (string_utils.is_numeric(time))
 	{
 		long double delay_in_seconds = std::stod(time);
@@ -1622,6 +1772,19 @@ std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 
 void preprocess_line(std::string& line, const string_utils& string_utils, const std::string& filename)
 {
+	string_utils.strip(line);
+
+	if (line == "{")
+	{
+		line = "";
+		return;
+	}
+	else if (line == "}")
+	{
+		line = "end";
+		return;
+	}
+
 	for (size_t i = 0; i < line.size(); ++i)
 	{
 		char check = line[i];
@@ -1634,36 +1797,101 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	if (comment_index != std::string::npos)
 		line.resize(comment_index);
 
-	string_utils.strip(line);
-	std::string prestring, poststring;
-	std::vector<std::string> wildcards;
-	bool subbed = true;
+	
+	
+	auto extra_control_stuff = [&]()
+		{
+			std::string prestring, poststring;
+			std::vector<std::string> wildcards;
+			bool subbed = true;
 
-	while (subbed)
-	{
-		//std::cout << "LOPO\n";
-		subbed = string_utils.complex_replacement(line, "if ( $ ) then", prestring, poststring, wildcards, " ()", false, true);
-		if (subbed)
-		{
-			std::string args;
-			for (size_t i = 0; i < wildcards.size(); ++i)
-				args += wildcards[i];
-			line = prestring + "if (" + args + ")" + poststring;
-			//std::cout << "NEWLINE = " << line << std::endl;
-		}
-	}
-	subbed = true;
-	while (subbed)
-	{
-		subbed = string_utils.complex_replacement(line, "while ($) do", prestring, poststring, wildcards, " ()", false, true);
-		if (subbed)
-		{
-			std::string args;
-			for (size_t i = 0; i < wildcards.size(); ++i)
-				args += wildcards[i];
-			line = prestring + "while (" + args + ")" + poststring;
-		}
-	}
+			while (subbed)
+			{
+				//std::cout << "LOPO\n";
+				subbed = string_utils.complex_replacement(line, "if ( $ ) then", prestring, poststring, wildcards, " ()", false, true);
+				if (subbed)
+				{
+					std::string args;
+					for (size_t i = 0; i < wildcards.size(); ++i)
+						args += wildcards[i];
+					line = prestring + "if (" + args + ")" + poststring;
+					//std::cout << "NEWLINE = " << line << std::endl;
+				}
+			}
+
+			subbed = true;
+
+			while (subbed)
+			{
+				//std::cout << "LOPO\n";
+				subbed = string_utils.complex_replacement(line, "if ( $ ) {", prestring, poststring, wildcards, " ()", false, true);
+				if (subbed)
+				{
+					std::string args;
+					for (size_t i = 0; i < wildcards.size(); ++i)
+						args += wildcards[i];
+					line = prestring + "if (" + args + ")" + poststring;
+					//std::cout << "NEWLINE = " << line << std::endl;
+				}
+			}
+
+			subbed = true;
+
+			while (subbed)
+			{
+				//std::cout << "LOPO\n";
+				subbed = string_utils.complex_replacement(line, "if ( $ ){", prestring, poststring, wildcards, " ()", false, true);
+				if (subbed)
+				{
+					std::string args;
+					for (size_t i = 0; i < wildcards.size(); ++i)
+						args += wildcards[i];
+					line = prestring + "if (" + args + ")" + poststring;
+					//std::cout << "NEWLINE = " << line << std::endl;
+				}
+			}
+
+			subbed = true;
+			while (subbed)
+			{
+				subbed = string_utils.complex_replacement(line, "while ($) do", prestring, poststring, wildcards, " ()", false, true);
+				if (subbed)
+				{
+					std::string args;
+					for (size_t i = 0; i < wildcards.size(); ++i)
+						args += wildcards[i];
+					line = prestring + "while (" + args + ")" + poststring;
+				}
+			}
+
+			subbed = true;
+			while (subbed)
+			{
+				subbed = string_utils.complex_replacement(line, "while ($) {", prestring, poststring, wildcards, " ()", false, true);
+				if (subbed)
+				{
+					std::string args;
+					for (size_t i = 0; i < wildcards.size(); ++i)
+						args += wildcards[i];
+					line = prestring + "while (" + args + ")" + poststring;
+				}
+			}
+
+			subbed = true;
+			while (subbed)
+			{
+				subbed = string_utils.complex_replacement(line, "while ($){", prestring, poststring, wildcards, " ()", false, true);
+				if (subbed)
+				{
+					std::string args;
+					for (size_t i = 0; i < wildcards.size(); ++i)
+						args += wildcards[i];
+					line = prestring + "while (" + args + ")" + poststring;
+				}
+			}
+		};
+
+	extra_control_stuff();
 
 	bool quote_sub = true;
 
@@ -1943,7 +2171,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("boolean_input", "prompt_bool");
 	substitute_alias_function("get_boolean_input", "prompt_bool");
 	substitute_alias_function("get_input_boolean", "prompt_bool");
-
+	
 	substitute_alias_function("get_num", "prompt_num");
 	substitute_alias_function("type_num", "prompt_num");
 	substitute_alias_function("input_num", "prompt_num");
@@ -2013,6 +2241,8 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("sleep", "pause");
 	substitute_alias_function("delay", "pause");
 
+	substitute_alias_function("get_scene", "get_scene_name");
+
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
 	{
@@ -2060,6 +2290,9 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	{
 		line.pop_back();
 	}
+
+	if (line == "}")
+		line = "end";
 }
 
 void res_file::check_line_match(const std::string& line, line_num line_num)
@@ -2288,8 +2521,11 @@ bool res_file::evaluate_condition(game* game_instance, const std::string& condit
 {
 	string_utils string_utils;
 	std::string processed_condition = resolve_expression(condition, variable_names, variable_values, game_instance);
-	string_utils.strip(processed_condition);
+	
+	processed_condition = string_utils.replace_all(processed_condition, variable_value_header, "", false);
+	processed_condition = string_utils.replace_all(processed_condition, var_val_space, " ", false);
 
+	string_utils.strip(processed_condition);
 	if(string_utils.is_integer(processed_condition))
 	{
 		int numeric = std::stoi(processed_condition);
@@ -2411,12 +2647,14 @@ std::vector<std::string> res_file::extract_args_from_token(std::string complete_
 	string_utils string_utils;
 
 		string_utils.strip(complete_args_token); //New. Just for testing purposes.
-	complete_args_token = resolve_expression(complete_args_token, variable_names, variable_values, game_instance, true);
-	// 
-	//std::cout << "ARGS: " << complete_args_token << std::endl;
+
+	//complete_args_token = resolve_expression(complete_args_token, variable_names, variable_values, game_instance, true);
+	//This was to compensate for the fact that some arguments might be functions with arguments of their own, with their own commas that would split them apart and prevent them from parsing correctly.
+	//That method worked surprisingly well, but not well enough.
 	
+
 	std::vector<std::string> new_call_arg_values;
-	std::vector<std::string> arg_tokens = string_utils.extract_tokens(complete_args_token, ",");
+	std::vector<std::string> arg_tokens = string_utils.extract_tokens_with_potential_subfunctions(complete_args_token, ",");
 	new_call_arg_values.reserve(arg_tokens.size());
 	for (size_t i = 0; i < arg_tokens.size(); ++i)
 	{
@@ -2673,6 +2911,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		return raw_value;
 	string_utils string_utils;
 
+	//raw_value = string_utils.replace_all(raw_value, variable_value_temp_flag, "", false);
+
 	std::vector<std::string> quotes_wildcards;
 	std::string pre_quote_string;
 	std::string post_quote_string;
@@ -2739,13 +2979,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0) //Then finally puts all the quoted stuff back.
 	{
+		std::string& vsub = quoted_material[0];
+		vsub = string_utils.replace_all(vsub, " ", var_val_space, false);
 		if (re_place_quotes)
 		{
-			raw_value = string_utils.replace_first(raw_value, dummy_command_string, "\"" + quoted_material[0] + "\"");
+			raw_value = string_utils.replace_first(raw_value, dummy_command_string, "\"" + variable_value_header + quoted_material[0] + "\"");
 		}
 		else
 		{
-			raw_value = string_utils.replace_first(raw_value, dummy_command_string, quoted_material[0]);
+			raw_value = string_utils.replace_first(raw_value, dummy_command_string, variable_value_header + quoted_material[0]);
 		}
 		
 		quoted_material.pop_front();
@@ -2781,8 +3023,12 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	std::string prestring;
 	std::string poststring;
 
-	auto is_array_format = [&](const std::string& val) -> bool
+	auto is_array_format = [&](std::string val) -> bool
 		{
+			val = string_utils.replace_all(val, variable_value_header, "", false);
+			std::string& vsub = val;
+			vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+			string_utils.strip(val);
 			if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
 			{
 				return true;
@@ -2801,6 +3047,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		par_del[0] = pair_delimeter_character;
 		::string_utils string_utils;
 		string_utils.strip(whole_arr);
+
+		whole_arr = string_utils.replace_all(whole_arr, variable_value_header, "", false);
+		std::string& vsub = whole_arr;
+		vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 
 		std::string arr_del = ",";
 		arr_del[0] = dummy_array_delimeter;
@@ -2859,6 +3109,20 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	auto register_entity_getter = [&](const std::string& char_script_func_name, char_getter_handler func, entity* this_entity)
 	{
 		//                                       HANDLES BASE FUNCTION CALLS
+			if (raw_value.find(char_script_func_name) == std::string::npos) //If the function name isn't even on this line then it'd be wasting its time to do all these checks.
+				return;
+
+			auto format_args = [&](std::vector<std::string>& args)
+				{
+					for (int i = 0; i < args.size(); ++i)
+					{
+						std::string& arg = args[i];
+						::string_utils string_utils;
+						arg = string_utils.replace_all(arg, variable_value_header, "", false);
+						arg = string_utils.replace_all(arg, var_val_space, " ", false);
+
+					}
+				};
 
 			has_subbed = true;
 			while (has_subbed)
@@ -2866,7 +3130,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				has_subbed = string_utils.complex_replacement(raw_value, "entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 				if (has_subbed)
 				{
-					std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+					std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+					std::string& vsub = char_name;
+					vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 					std::vector<std::string> args;
 
 					entity* char_ptr = game_instance->get_entity(char_name, false, get_filename() + ": " + raw_value);
@@ -2880,7 +3146,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					}
 					else if (!(args.size() == 1 && args[0] == ")"))
 					{
-						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -2895,7 +3161,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				has_subbed = string_utils.complex_replacement(raw_value, "entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 				if (has_subbed)
 				{
-					std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+					std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+					std::string& vsub = char_name;
+					vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 					std::vector<std::string> args;
 
 					entity* char_ptr = game_instance->get_entity(char_name, true, get_filename() + ": " + raw_value);
@@ -2909,7 +3177,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					}
 					else if (!(args.size() == 1 && args[0] == ")"))
 					{
-						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -2924,7 +3192,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				has_subbed = string_utils.complex_replacement(raw_value, "first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 				if (has_subbed)
 				{
-					std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+					std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+					std::string& vsub = char_name;
+					vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 					std::vector<std::string> args;
 
 					entity* char_ptr = game_instance->get_first_entity(char_name, get_filename() + ": " + raw_value);
@@ -2938,7 +3208,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					}
 					else if (!(args.size() == 1 && args[0] == ")"))
 					{
-						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -2953,7 +3223,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				has_subbed = string_utils.complex_replacement(raw_value, "any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 				if (has_subbed)
 				{
-					std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+					std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+					std::string& vsub = char_name;
+					vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 					std::vector<std::string> args;
 
 					entity* char_ptr = game_instance->get_any_entity(char_name, get_filename() + ": " + raw_value);
@@ -2967,7 +3239,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					}
 					else if (!(args.size() == 1 && args[0] == ")"))
 					{
-						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -2995,7 +3267,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					}
 					else if (!(args.size() == 1 && args[0] == ")"))
 					{
-						raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 					}
 					else
 					{
@@ -3010,8 +3282,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false,true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_entity(char_name, false, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
@@ -3023,7 +3297,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3038,8 +3312,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "entity_by_alias($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false,true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_entity(char_name, true, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
@@ -3051,7 +3326,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3066,8 +3341,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "first_entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false,true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_first_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
@@ -3079,7 +3355,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3094,8 +3370,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "any_entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_any_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
@@ -3107,7 +3384,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3123,6 +3400,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			if (has_subbed)
 			{
 				std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_perspective_entity();
 				if (char_ptr == nullptr)
 				{
@@ -3134,7 +3412,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3158,7 +3436,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "entity_here_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = nullptr;
@@ -3186,7 +3464,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3197,7 +3475,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = nullptr;
@@ -3225,7 +3503,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3236,7 +3514,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "first_entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = nullptr;
@@ -3264,7 +3542,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3275,7 +3553,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "any_entity_here($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = nullptr;
@@ -3304,7 +3582,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3316,8 +3594,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "entity_here_by_alias($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = nullptr;
 				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
 				const entity* this_entity = dynamic_cast<const entity*>(this);
@@ -3343,7 +3622,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3359,8 +3638,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "entity_here($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = nullptr;
 				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
 				const entity* this_entity = dynamic_cast<const entity*>(this);
@@ -3386,7 +3666,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3401,8 +3681,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "first_entity_here($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = nullptr;
 				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
 				const entity* this_entity = dynamic_cast<const entity*>(this);
@@ -3428,7 +3709,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3443,8 +3724,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "any_entity_here($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = nullptr;
 				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
 				const entity* this_entity = dynamic_cast<const entity*>(this);
@@ -3471,7 +3753,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3492,7 +3774,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene().entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = nullptr;
@@ -3520,7 +3802,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3531,7 +3813,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene().entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = nullptr;
@@ -3559,7 +3841,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3570,7 +3852,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene().first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = nullptr;
@@ -3598,7 +3880,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3609,7 +3891,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene().any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = nullptr;
@@ -3638,7 +3920,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3649,8 +3931,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene().entity_by_alias($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = nullptr;
 				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
 				const entity* this_entity = dynamic_cast<const entity*>(this);
@@ -3676,7 +3959,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3691,8 +3974,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene().entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = nullptr;
 				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
 				const entity* this_entity = dynamic_cast<const entity*>(this);
@@ -3718,7 +4002,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3733,8 +4017,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene().first_entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = nullptr;
 				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
 				const entity* this_entity = dynamic_cast<const entity*>(this);
@@ -3760,7 +4045,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3775,8 +4060,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene().any_entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = nullptr;
 				const scene* this_scene = dynamic_cast<const scene*>(this); //Extremely bad practice for a class to be aware of its subclasses.
 				const entity* this_entity = dynamic_cast<const entity*>(this);
@@ -3803,7 +4089,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3824,8 +4110,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity_by_alias($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, true, get_filename() + ": " + raw_value);
@@ -3840,7 +4126,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3856,8 +4142,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
@@ -3872,7 +4158,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3887,8 +4173,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).first_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
@@ -3903,7 +4189,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3914,8 +4200,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).any_entity($)." + char_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args;
 
 				entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
@@ -3930,7 +4216,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0] == ")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -3942,9 +4228,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity_by_alias($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, true, get_filename() + ": " + raw_value);
 
 				if (char_ptr == nullptr)
@@ -3957,7 +4244,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -3973,9 +4260,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 
 				if (char_ptr == nullptr)
@@ -3988,7 +4276,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -4003,9 +4291,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).first_entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 
 				if (char_ptr == nullptr)
@@ -4018,7 +4307,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 				else
 				{
@@ -4033,9 +4322,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).any_entity($)." + char_script_func_name + "($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 
 				if (char_ptr == nullptr)
@@ -4048,7 +4338,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 				else if (!(args.size() == 1 && args[0]==")"))
 				{
-					raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 				}
 			}
 			else
@@ -4087,7 +4377,6 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					if (has_subbed)
 					{
 						std::vector<std::string> args;
-
 						entity* char_ptr = this_entity;
 						if (char_ptr == nullptr)
 						{
@@ -4099,7 +4388,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						}
 						else
 						{
-							raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+							raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 						}
 					}
 				}
@@ -4111,6 +4400,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					if (has_subbed)
 					{
 						std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
+						format_args(args);
 						entity* char_ptr = this_entity;
 						if (char_ptr == nullptr)
 						{
@@ -4123,7 +4413,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						else if (!(args.size() == 1 && args[0] == ")"))
 						{
 							//std::cout << "AEGHSRGEAWFE " << raw_value << std::endl;
-							raw_value = prestring + func(game_instance, char_ptr, args, variable_names, variable_values, this) + poststring;
+							raw_value = prestring + variable_value_header + string_utils.replace_all(func(game_instance, char_ptr, args, variable_names, variable_values, this), " ", var_val_space, false) + poststring;
 						}
 						else
 						{
@@ -4312,7 +4602,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			return char_ptr->get_name() + " ";
+			return char_ptr->get_name();
 		}
 	};
 
@@ -4459,9 +4749,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				for (size_t i = 0; i < args.size(); ++i)
 				{
-					std::string v = self->resolve_expression(args[i], variable_names, variable_values, game_instance);
+					//std::string v = self->resolve_expression(args[i], variable_names, variable_values, game_instance);
+					//std::cout << "OR:" << args[i] << "/" << args.size() << std::endl;
 					std::string err = "";
-					bool c = self->evaluate_condition(game_instance, v, err, variable_names, variable_values);
+					bool c = self->evaluate_condition(game_instance, args[i], err, variable_names, variable_values);
 					if (err != "")
 						c = false;
 
@@ -4714,8 +5005,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						game_instance->get_engine()->print(prompt);
 						std::cout << " ";
 						value = game_instance->get_engine()->get_input();
-						
+
 						bool c = self->evaluate_condition(game_instance, value, err, variable_names, variable_values);
+
 						if (err != "")
 						{
 							value = "";
@@ -4773,9 +5065,12 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	char_getter_handler entity_matches_input_handler = [](game* game_instance, entity* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 		{
 			::string_utils string_utils;
-			auto is_array_format = [&](const std::string& val) -> bool
+			auto is_array_format = [&](std::string val) -> bool
 				{
-					if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
+					val = string_utils.replace_all(val, variable_value_header, "", false);
+					val = string_utils.replace_all(val, var_val_space, " ", false);
+					string_utils.strip(val);
+					if (val.size() > 2 && ((val[0] == '{' && val[val.size() - 1] == '}') || val.size() > 3 && val[0] == variable_value_header_char && val[1]=='{' && val[val.size()-1]=='}'))
 					{
 						return true;
 					}
@@ -4787,6 +5082,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 			auto extract_vals_from_arr = [&](std::string whole_arr) -> std::vector<std::string>
 				{
+					whole_arr = string_utils.replace_all(whole_arr, variable_value_header, "", false);
+					whole_arr = string_utils.replace_all(whole_arr, var_val_space, " ", false);
+					string_utils.strip(whole_arr);
 					std::vector<std::string> values;
 					std::string par_del = "0";
 
@@ -4796,11 +5094,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 					string_utils.strip(whole_arr);
 
-					if (whole_arr == "{}" || whole_arr == "{ }") //Blank arrays return as such
+					if (whole_arr == "{}" || whole_arr == "{ }" || whole_arr == variable_value_header+"{}" || whole_arr == variable_value_header + "{ }") //Blank arrays return as such
 						return values;
 
 
 					std::string arr = whole_arr.substr(1);
+					if (arr[0] == '{')
+						arr = arr.substr(1);
+
 					arr.resize(arr.size() - 1);
 					string_utils.strip(arr);
 
@@ -5035,18 +5336,30 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	register_entity_getter("pause", entity_pause_handler, this_entity);
 
 	//register_entity_getter("get_aliases", entity_get_aliases_handler, this_entity);
+	auto format_args = [&](std::vector<std::string>& args)
+		{
+			for (int i = 0; i < args.size(); ++i)
+			{
+				std::string& arg = args[i];
+				::string_utils string_utils;
+				arg = string_utils.replace_all(arg, variable_value_header, "", false);
+				arg = string_utils.replace_all(arg, var_val_space, " ", false);
+
+			}
+		};
 
 	//////////////////////////////////////////////////////////////////////////////////
 	/* HERE IS WHERE CODE GOES THAT CAN HANDLE GETTING RETURN VALUES FROM USER-FUNCTION CALLS TO ENTITIES */
 	{
 
+		
 		has_subbed = true;
 		while (has_subbed)
 		{
 			has_subbed = string_utils.complex_replacement(raw_value, "entity($).$()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args;
 				//std::cout << "5euthdsrgre\n";
@@ -5063,7 +5376,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5074,11 +5387,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
 				//std::cout << "HERE  " << raw_value << std::endl;
-				
+				format_args(args);
 				entity* char_ptr = game_instance->get_entity(char_name, false, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
@@ -5092,7 +5405,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5104,7 +5417,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "first_entity($).$()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args;
 
@@ -5121,7 +5434,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5132,9 +5445,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "first_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_first_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
@@ -5148,7 +5462,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5159,7 +5473,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "any_entity($).$()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args;
 
@@ -5176,7 +5490,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5187,9 +5501,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "any_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_any_entity(char_name, get_filename() + ": " + raw_value);
 				if (char_ptr == nullptr)
 				{
@@ -5203,7 +5518,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5230,7 +5545,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5244,6 +5559,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string func_name = wildcards[0];
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				entity* char_ptr = game_instance->get_perspective_entity();
 				if (char_ptr == nullptr)
 				{
@@ -5257,7 +5573,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					char_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5271,6 +5587,20 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 	auto register_scene_getter = [&](const std::string& scene_script_func_name, scene_getter_handler func, scene* this_scene, entity* this_entity)
 	{
+			if (raw_value.find(scene_script_func_name) == std::string::npos)
+				return;
+			auto format_args = [&](std::vector<std::string>& args)
+				{
+					for (int i = 0; i < args.size(); ++i)
+					{
+						std::string& arg = args[i];
+						::string_utils string_utils;
+						arg = string_utils.replace_all(arg, variable_value_header, "", false);
+						arg = string_utils.replace_all(arg, var_val_space, " ", false);
+
+					}
+				};
+
 		//                                       HANDLES BASE FUNCTION CALLS
 		has_subbed = true;
 		while (has_subbed)
@@ -5280,12 +5610,13 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
 				std::vector<std::string> args = extract_args_from_token(wildcards[1], variable_names, variable_values, game_instance);
+				format_args(args);
 				if (!(args.size() == 1 && args[0] == ")"))
 				{
 					scene* scene_ptr = game_instance->get_scene(scene_name);
 					if (scene_ptr)
 					{
-						raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 				}
 				else
@@ -5308,7 +5639,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				scene* scene_ptr = game_instance->get_scene(scene_name);
 				if (scene_ptr)
 				{
-					raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -5323,10 +5654,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				if (has_subbed)
 				{
 					std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
+					format_args(args);
 					if (!(args.size() == 1 && args[0] == ")"))
 					{
 						scene* scene_ptr = this_entity->get_scene();
-						raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -5343,7 +5675,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::vector<std::string> args;
 					scene* scene_ptr = this_entity->get_scene();
-					raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -5360,10 +5692,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				if (has_subbed)
 				{
 					std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
+					format_args(args);
 					if (!(args.size() == 1 && args[0] == ")"))
 					{
 						scene* scene_ptr = this_scene;
-						raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -5380,7 +5713,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::vector<std::string> args;
 					scene* scene_ptr = this_scene;
-					raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 
@@ -5392,10 +5725,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				if (has_subbed)
 				{
 					std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
+					format_args(args);
 					if (!(args.size() == 1 && args[0] == ")"))
 					{
 						scene* scene_ptr = this_scene;
-						raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+						raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 					}
 					else
 					{
@@ -5412,7 +5746,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::vector<std::string> args;
 					scene* scene_ptr = this_scene;
-					raw_value = prestring + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+					raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
 				}
 			}
 		}
@@ -5454,7 +5788,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 			else
 			{
-				std::string arr = "{";
+				std::string arr = variable_value_header+"{";
 				std::string del = ",";
 				std::string pair_delimeter = "0";
 				pair_delimeter[0] = pair_delimeter_character;
@@ -5474,6 +5808,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 
 				arr += "}";
+				//::string_utils su;
+			//	arr = su.replace_all(arr, " ", var_val_space, false);
 				return arr;
 				
 			}
@@ -5494,7 +5830,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			}
 			else
 			{
-				std::string arr = "{";
+				std::string arr = variable_value_header + "{";
 				std::string del = ",";
 				std::string pair_delimeter = "0";
 				pair_delimeter[0] = pair_delimeter_character;
@@ -5514,6 +5850,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 
 				arr += "}";
+				//::string_utils su;
+				//arr = su.replace_all(arr, " ", var_val_space, false);
 				return arr;
 
 			}
@@ -5534,7 +5872,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			std::string arr = "{";
+			std::string arr = variable_value_header + "{";
 			std::string del = ",";
 			del[0] = dummy_array_delimeter;
 			const std::vector<entity*>& children = scene_ptr->get_entities_in_scene();
@@ -5547,6 +5885,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				arr += name;
 			}
 			arr += "}";
+			::string_utils su;
+			arr = su.replace_all(arr, " ", var_val_space, false);
 			return arr;
 		}
 	};
@@ -5601,7 +5941,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			return game_instance->get_value(args[0]);
+			::string_utils string_utils;
+			std::string arg = args[0];
+			//arg = string_utils.replace_all(arg, );
+			return game_instance->get_value(arg);
 		}
 	};
 
@@ -5749,8 +6092,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	scene_getter_handler scene_matches_input_handler = [](game* game_instance, scene* char_ptr, std::vector<std::string>& args, const std::vector<std::string>& variable_names, const std::vector<std::string>& variable_values, res_file* self) -> std::string
 		{
 			::string_utils string_utils;
-			auto is_array_format = [&](const std::string& val) -> bool
+			auto is_array_format = [&](std::string val) -> bool
 				{
+					val = string_utils.replace_all(val, variable_value_header, "", false);
+					val = string_utils.replace_all(val, var_val_space, " ", false);
+					string_utils.strip(val);
 					if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
 					{
 						return true;
@@ -5763,6 +6109,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 			auto extract_vals_from_arr = [&](std::string whole_arr) -> std::vector<std::string>
 				{
+					whole_arr = string_utils.replace_all(whole_arr, variable_value_header, "", false);
 					std::vector<std::string> values;
 					std::string par_del = "0";
 					
@@ -5910,6 +6257,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 	register_scene_getter("pause", scene_pause_handler, this_scene, this_entity);
 
+
 	{
 		has_subbed = true;
 		while (has_subbed)
@@ -5917,9 +6265,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).$($)", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+				format_args(args);
 				scene* scene_ptr = game_instance->get_scene(scene_name);
 				if (scene_ptr == nullptr)
 				{
@@ -5929,7 +6278,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					scene_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ",var_val_space,false) + poststring;
 				}
 			}
 		}
@@ -5940,7 +6289,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, "scene($).$()", prestring, poststring, wildcards, ".() ", false);
 			if (has_subbed)
 			{
-				std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 				std::string func_name = wildcards[1];
 				std::vector<std::string> args;
 
@@ -5953,7 +6302,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					std::string return_val;
 					scene_ptr->call_function(game_instance, func_name, args, return_val);
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				}
 			}
 		}
@@ -5967,8 +6316,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity($).$()", prestring, poststring, wildcards, ".() ", false);
 		if (has_subbed)
 		{
-			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args;
 
@@ -5985,7 +6334,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -5996,10 +6345,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "scene($).entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
-			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args = extract_args_from_token(wildcards[3], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6013,7 +6363,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6024,8 +6374,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "scene($).first_entity($).$()", prestring, poststring, wildcards, ".() ", false);
 		if (has_subbed)
 		{
-			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args;
 
@@ -6042,7 +6392,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6053,10 +6403,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "scene($).first_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
-			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args = extract_args_from_token(wildcards[3], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6070,7 +6421,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6081,8 +6432,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "scene($).any_entity($).$()", prestring, poststring, wildcards, ".() ", false);
 		if (has_subbed)
 		{
-			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args;
 
@@ -6099,7 +6450,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6110,10 +6461,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "scene($).any_entity ( $ ) . $ ( $ )", prestring, poststring, wildcards, ".() ", false, true);
 		if (has_subbed)
 		{
-			std::string scene_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string char_name = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string scene_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[2];
 			std::vector<std::string> args = extract_args_from_token(wildcards[3], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6127,7 +6479,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6152,7 +6504,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
@@ -6169,7 +6521,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6191,9 +6543,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6207,7 +6560,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6229,7 +6582,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
@@ -6246,7 +6599,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6268,9 +6621,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6284,7 +6638,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6306,7 +6660,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
@@ -6323,7 +6677,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6345,9 +6699,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6361,7 +6716,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6383,7 +6738,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
@@ -6400,7 +6755,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6422,9 +6777,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_entity_in_scene(char_name, scene_name, false, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6438,7 +6794,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6460,7 +6816,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
@@ -6477,7 +6833,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6499,9 +6855,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_first_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6515,7 +6872,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6537,7 +6894,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args;
 
@@ -6554,7 +6911,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
@@ -6576,9 +6933,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				scene_name = this_entity->get_scene_name();
 			}
-			std::string char_name = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string char_name = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			std::string func_name = wildcards[1];
 			std::vector<std::string> args = extract_args_from_token(wildcards[2], variable_names, variable_values, game_instance);
+			format_args(args);
 			entity* char_ptr = game_instance->get_any_entity_in_scene(char_name, scene_name, get_filename() + ": " + raw_value);
 			if (char_ptr == nullptr)
 			{
@@ -6592,13 +6950,12 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			{
 				std::string return_val;
 				char_ptr->call_function(game_instance, func_name, args, return_val);
-				raw_value = prestring + return_val + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 			}
 		}
 	}
 
 	//							THIS HANDLES SIZE() FUNCTION THAT GETS THE SIZE OF AN ARRAY
-	//DEBUG_BREAKPOINT(6);
 	
 
 	has_subbed = true;
@@ -6609,7 +6966,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		arr_del = dummy_array_delimeter;
 		if (has_subbed)
 		{
-			std::string arr = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string arr = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			arr = string_utils.replace_all(arr, var_val_space, " ",false);
+			string_utils.strip(arr);
 			size_t existing_index;
 			for (existing_index = 0; existing_index < variable_names.size(); ++existing_index)
 			{
@@ -6634,28 +6993,37 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 							if (elements[i] != arr_del)
 								++size;
 						}
-						raw_value = prestring + std::to_string(size) + poststring;
+						raw_value = prestring + variable_value_header + std::to_string(size) + poststring;
 					}
 					else if (whole_arr == "{}" || whole_arr == "{ }")
 					{
-						raw_value = prestring + "0" + poststring;
+						raw_value = prestring + variable_value_header + "0" + poststring;
 					}
 					else
 					{
-						raw_value = prestring + std::to_string(whole_arr.size()) + poststring;
+						raw_value = prestring + variable_value_header + std::to_string(whole_arr.size()) + poststring;
 					}
 				}
 				else if (arr == "{}" || arr == "{ }")
 				{
-					raw_value = prestring + "0" + poststring;
+					raw_value = prestring + variable_value_header + "0" + poststring;
 				}
 				else
-					raw_value = prestring + "NO_SUCH_ARR [" + wildcards[0] + "]" + poststring;
+				{
+					std::string name = "";
+					if (this_entity)
+						name = this_entity->get_name();
+					else if (this_scene)
+						name = this_scene->get_name();
+					raw_value = prestring + variable_value_header + "NO_SUCH_ARR [" + wildcards[0] + "]" + "(" + get_filename() + " / " + name + ")" + poststring;
+				}
 			}
 			else
 			{
 				size_t size = 0;
 				std::string whole_arr = variable_values[existing_index];
+				whole_arr = string_utils.replace_all(whole_arr, var_val_space, " ", false);
+				whole_arr = string_utils.replace_all(whole_arr, variable_value_header, "", false);
 				if (is_array_format(whole_arr))
 				{
 					whole_arr = whole_arr.substr(1);
@@ -6666,52 +7034,37 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						if (elements[i] != arr_del)
 							++size;
 					}
-					raw_value = prestring + std::to_string(size) + poststring;
+					raw_value = prestring + variable_value_header + std::to_string(size) + poststring;
 				}
 				else if (whole_arr == "{}" || whole_arr == "{ }")
 				{
-					raw_value = prestring + "0" + poststring;
+					raw_value = prestring + variable_value_header + "0" + poststring;
 				}
 				else
 				{
-					raw_value = prestring + std::to_string(whole_arr.size()) + poststring;
+					raw_value = prestring + variable_value_header + std::to_string(whole_arr.size()) + poststring;
 				}
 			}
 		}
 	}
 
-	//DEBUG_BREAKPOINT(7);
 	//							THIS HANDLES STRING MANIPULATION
 	has_subbed = true;
 	while (has_subbed)
 	{
-		has_subbed = string_utils.complex_replacement(raw_value, "concat( $ )", prestring, poststring, wildcards, "(), ", false, true);
+		has_subbed = string_utils.complex_replacement(raw_value, "concat ( $ )", prestring, poststring, wildcards, "(), ", false, true);
 		if (has_subbed)
 		{
 			std::string val = "";
 			std::vector<std::string> args = extract_args_from_token(wildcards[0], variable_names, variable_values, game_instance);
 			for (size_t i = 0; i < args.size(); ++i)
 			{
-				val += resolve_expression(args[i], variable_names, variable_values, game_instance);
+				val += string_utils.replace_all(resolve_expression(args[i], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			}
-			raw_value = prestring + val + poststring;
+			val = variable_value_header + string_utils.replace_all(val, variable_value_header, "", false);
+			raw_value = prestring + string_utils.replace_all(val, " ", var_val_space, false) + poststring;
 		}
 	}
-
-	/*
-	has_subbed = true;
-	while (has_subbed)
-	{
-		has_subbed = string_utils.complex_replacement(raw_value, "concat( $ , $ )", prestring, poststring, wildcards, "(), ", false, true);
-		if (has_subbed)
-		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
-			raw_value = prestring + left + right + poststring;
-		}
-	}
-	
-	*/
 
 	has_subbed = true;
 	while (has_subbed)
@@ -6719,9 +7072,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "to_uppercase( $ )", prestring, poststring, wildcards, "(), ", false, true);
 		if (has_subbed)
 		{
-			std::string str = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string str = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			string_utils.make_uppercase(str);
-			raw_value = prestring + str + poststring;
+			raw_value = prestring + variable_value_header + string_utils.replace_all(str, " ", var_val_space, false) + poststring;
 		}
 	}
 
@@ -6731,9 +7084,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "to_lowercase( $ )", prestring, poststring, wildcards, "(), ", false, true);
 		if (has_subbed)
 		{
-			std::string str = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string str = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			string_utils.make_lowercase(str);
-			raw_value = prestring + str + poststring;
+			raw_value = prestring + variable_value_header + string_utils.replace_all(str, " ", var_val_space, false) + poststring;
 		}
 	}
 
@@ -6743,9 +7096,12 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "substr( $ , $ , $ )", prestring, poststring, wildcards, "(), ", false, true);
 		if (has_subbed)
 		{
-			std::string start_str = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string length_str = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
-			std::string string = resolve_expression(wildcards[2], variable_names, variable_values, game_instance);
+			std::string start_str = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			start_str = string_utils.replace_all(start_str, var_val_space, " ", false);
+			std::string length_str = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			length_str = string_utils.replace_all(length_str, var_val_space, " ", false);
+			std::string string = string_utils.replace_all(resolve_expression(wildcards[2], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			string = string_utils.replace_all(string, var_val_space, " ", false);
 			if (string_utils.is_integer(start_str) && string_utils.is_integer(length_str))
 			{
 				int start = std::stoi(start_str);
@@ -6756,11 +7112,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					int characters_past_end = (last_index - string.size()) + 1;
 					length -= characters_past_end;
 				}
-				raw_value = prestring + string.substr(start, length) + poststring;
+				raw_value = prestring + variable_value_header + string_utils.replace_all(string.substr(start, length), " ", var_val_space, false) + poststring;
 			}
 			else
 			{
-				raw_value = prestring + "ERR" + poststring;
+				raw_value = prestring + variable_value_header + "ERR" + poststring;
 			}
 		}
 	}
@@ -6771,20 +7127,22 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "substr( $ , $ )", prestring, poststring, wildcards, "(), ", false, true);
 		if (has_subbed)
 		{
-			std::string start = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string string = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string start = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			start = string_utils.replace_all(start, var_val_space, " ", false);
+			std::string string = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			string = string_utils.replace_all(string, var_val_space, " ", false);
 			if(string_utils.is_integer(start))
 			{
-				raw_value = prestring + string.substr(std::stoi(start)) + poststring;
+				raw_value = prestring + variable_value_header + string.substr(std::stoi(start)) + poststring;
 			}
 			else
 			{
-				raw_value = prestring + "ERR" + poststring;
+				raw_value = prestring + variable_value_header + "ERR" + poststring;
 			}
 		}
 	}
 
-	//DEBUG_BREAKPOINT(8);
+
 	//							THIS HANDLES TYPE CHECKING
 	has_subbed = true;
 	while (has_subbed)
@@ -6792,14 +7150,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "is_int($)", prestring, poststring, wildcards, "() ", false, true);
 		if (has_subbed)
 		{
-			std::string val = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string val = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			val = string_utils.replace_all(val, var_val_space, " ", false);
 			if (string_utils.is_integer(val))
 			{
-				raw_value = prestring + "true" + poststring;
+				raw_value = prestring + variable_value_header + "true" + poststring;
 			}
 			else
 			{
-				raw_value = prestring + "false" + poststring;
+				raw_value = prestring + variable_value_header + "false" + poststring;
 			}
 		}
 	}
@@ -6810,14 +7169,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "is_decimal($)", prestring, poststring, wildcards, "() ", false, true);
 		if (has_subbed)
 		{
-			std::string val = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string val = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			val = string_utils.replace_all(val, var_val_space, " ", false);
 			if (string_utils.is_decimal(val))
 			{
-				raw_value = prestring + "true" + poststring;
+				raw_value = prestring + variable_value_header + "true" + poststring;
 			}
 			else
 			{
-				raw_value = prestring + "false" + poststring;
+				raw_value = prestring + variable_value_header + "false" + poststring;
 			}
 		}
 	}
@@ -6828,14 +7188,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "is_number($)", prestring, poststring, wildcards, "() ", false, true);
 		if (has_subbed)
 		{
-			std::string val = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string val = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			val = string_utils.replace_all(val, var_val_space, " ", false);
 			if (string_utils.is_numeric(val))
 			{
-				raw_value = prestring + "true" + poststring;
+				raw_value = prestring + variable_value_header + "true" + poststring;
 			}
 			else
 			{
-				raw_value = prestring + "false" + poststring;
+				raw_value = prestring + variable_value_header + "false" + poststring;
 			}
 		}
 	}
@@ -6846,14 +7207,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "is_array($)", prestring, poststring, wildcards, "() ", false, true);
 		if (has_subbed)
 		{
-			std::string val = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string val = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			val = string_utils.replace_all(val, var_val_space, " ", false);
 			if (is_array_format(val))
 			{
-				raw_value = prestring + "true" + poststring;
+				raw_value = prestring + variable_value_header+"true" + poststring;
 			}
 			else
 			{
-				raw_value = prestring + "false" + poststring;
+				raw_value = prestring + variable_value_header+"false" + poststring;
 			}
 		}
 	}
@@ -6866,13 +7228,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "int($)", prestring, poststring, wildcards, "() ", false, true);
 		if (has_subbed)
 		{
-			std::string val = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string val = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			val = string_utils.replace_all(val, var_val_space, " ", false);
 			if (string_utils.is_decimal(val))
 			{
 				double num = std::stod(val);
 				int casted_val = static_cast<int>(num);
 
-				raw_value = prestring + std::to_string(casted_val) + poststring;
+				raw_value = prestring + variable_value_header + std::to_string(casted_val) + poststring;
 			}
 		}
 	}
@@ -6883,10 +7246,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "decimal($)", prestring, poststring, wildcards, "() ", false, true);
 		if (has_subbed)
 		{
-			std::string val = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			std::string val = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			val = string_utils.replace_all(val, var_val_space, " ", false);
 			if (string_utils.is_integer(val))
 			{
-				raw_value = prestring + val+".0" + poststring;
+				raw_value = prestring + variable_value_header + val+".0" + poststring;
 			}
 		}
 	}
@@ -6905,14 +7269,16 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			//std::cout << raw_value << " SUBBED = " << has_subbed << std::endl;
 			if (has_subbed)
 			{
-				std::string strength = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-				std::string sentence = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				std::string strength = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				std::string sentence = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				strength = string_utils.replace_all(strength, var_val_space, " ", false);
+				sentence = string_utils.replace_all(sentence, var_val_space, " ", false);
 				int percent_chance = 0;
 				if(string_utils.is_integer(strength))
 				{
 					percent_chance = std::stoi(strength);
 					sentence = game_instance->get_engine()->output_substitution(game_instance, name, sentence, percent_chance);
-					raw_value = prestring + sentence + poststring;
+					raw_value = prestring + variable_value_header + sentence + poststring;
 				}
 				else
 				{
@@ -6927,9 +7293,10 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			has_subbed = string_utils.complex_replacement(raw_value, name+"_substitution($)", prestring, poststring, wildcards, ".() ", false, true);
 			if (has_subbed)
 			{
-				std::string sentence = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+				std::string sentence = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+				sentence = string_utils.replace_all(sentence, var_val_space, " ", false);
 				sentence = game_instance->get_engine()->output_substitution(game_instance, name, sentence, 40);
-				raw_value = prestring + sentence + poststring;
+				raw_value = prestring + variable_value_header + sentence + poststring;
 			}
 		}
 	};
@@ -6946,14 +7313,17 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "substitution( $ , $ , $ )", prestring, poststring, wildcards, ".(), ", false, true);
 		if (has_subbed)
 		{
-			std::string thesaurus = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string sentence = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
-			std::string chance = resolve_expression(wildcards[2], variable_names, variable_values, game_instance);
+			std::string thesaurus = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			thesaurus = string_utils.replace_all(thesaurus, var_val_space, " ", false);
+			std::string sentence = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			sentence = string_utils.replace_all(sentence, var_val_space, " ", false);
+			std::string chance = string_utils.replace_all(resolve_expression(wildcards[2], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			chance = string_utils.replace_all(chance, var_val_space, " ", false);
 			if (string_utils.is_numeric(chance))
 			{
 				int strength = std::stoi(chance);
 				sentence = game_instance->get_engine()->output_substitution(game_instance, thesaurus, sentence, strength);
-				raw_value = prestring + sentence + poststring;
+				raw_value = prestring + variable_value_header+sentence + poststring;
 			}
 		}
 	}
@@ -6964,10 +7334,12 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "substitution( $ , $ )", prestring, poststring, wildcards, ".(), ", false, true);
 		if (has_subbed)
 		{
-			std::string thesaurus = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string sentence = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string thesaurus = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			thesaurus = string_utils.replace_all(thesaurus, var_val_space, " ", false);
+			std::string sentence = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
 			sentence = game_instance->get_engine()->output_substitution(game_instance, thesaurus, sentence, 40);
-			raw_value = prestring + sentence + poststring;
+			sentence = string_utils.replace_all(sentence, var_val_space, " ", false);
+			raw_value = prestring + variable_value_header+sentence + poststring;
 		}
 	}
 
@@ -6981,7 +7353,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	/////////////////////////////////////////////////////////////////////////////////
 
 	//										THIS HANDLES CALLS TO FUNCTIONS IN THE SAME FILE
-											//DEBUG_BREAKPOINT(9);
+
 	for (size_t i = 0; i < scripted_functions.size(); ++i)
 	{
 		const std::string& scripted_func_name = scripted_functions[i];
@@ -6998,7 +7370,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				std::string return_val;
 				const std::string& err = call_function(game_instance, scripted_func_name, args, return_val);
 				if (err == "")
-					raw_value = prestring + return_val + poststring;
+					raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 				else
 					raw_value = prestring + err + poststring;
 			}
@@ -7020,7 +7392,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					std::string return_val;
 					const std::string& err = call_function(game_instance, scripted_func_name, args, return_val);
 					if (err == "")
-						raw_value = prestring + return_val + poststring;
+						raw_value = prestring + variable_value_header + string_utils.replace_all(return_val, " ", var_val_space, false) + poststring;
 					else
 						raw_value = prestring + err + poststring;
 				}
@@ -7042,9 +7414,13 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		if (has_subbed)
 		{
 			std::string min_value = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			min_value = string_utils.replace_all(min_value, variable_value_header, "", false);
+			min_value = string_utils.replace_all(min_value, var_val_space, " ", false);
 			if (string_utils.is_integer(min_value))
 			{
 				std::string max_value = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+				max_value = string_utils.replace_all(max_value, variable_value_header, "", false);
+				max_value = string_utils.replace_all(max_value, var_val_space, " ", false);
 				if (string_utils.is_integer(max_value))
 				{
 					int min = std::stoi(min_value);
@@ -7059,7 +7435,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						int range = (max - min) + 1;
 						int num = rand() % range;
 						num += min;
-						raw_value = prestring + std::to_string(num) + poststring;
+						raw_value = prestring + variable_value_header + std::to_string(num) + poststring;
 					}
 
 				}
@@ -7077,6 +7453,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		if (has_subbed)
 		{
 			std::string arg = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			arg = string_utils.replace_all(arg, var_val_space, " ", false);
+			arg = string_utils.replace_all(arg, variable_value_header, "", false);
 			string_utils.strip(arg);
 			string_utils.make_lowercase(arg);
 			arg = string_utils.replace_all(arg, "  ", " ", false);
@@ -7156,6 +7534,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		if (has_subbed)
 		{
 			std::string sub_expression = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			sub_expression = string_utils.replace_all(sub_expression, variable_value_header, "", false);
+			sub_expression = string_utils.replace_all(sub_expression, var_val_space, " ", false);
 			raw_value = prestring + sub_expression + poststring;
 		}
 	}
@@ -7168,8 +7548,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ > $", prestring, poststring, wildcards, " >", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
+
 			if (string_utils.is_numeric(left) && string_utils.is_numeric(right))
 			{
 				int L = std::stoi(left);
@@ -7181,7 +7568,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				else
 					resolution = "false";
 				
-				raw_value = prestring + resolution + poststring;
+				raw_value = prestring + variable_value_header+resolution + poststring;
 			}
 			else
 				break;
@@ -7194,8 +7581,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ < $", prestring, poststring, wildcards, " <", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
+
 			if (string_utils.is_numeric(left) && string_utils.is_numeric(right))
 			{
 				int L = std::stoi(left);
@@ -7207,7 +7601,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				else
 					resolution = "false";
 
-				raw_value = prestring + resolution + poststring;
+				raw_value = prestring + variable_value_header+resolution + poststring;
 			}
 			else
 				break;
@@ -7220,8 +7614,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ >= $", prestring, poststring, wildcards, " >=", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
+
 			if(string_utils.is_numeric(left) && string_utils.is_numeric(right))
 			{
 				int L = std::stoi(left);
@@ -7233,7 +7634,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				else
 					resolution = "false";
 
-				raw_value = prestring + resolution + poststring;
+				raw_value = prestring + variable_value_header+resolution + poststring;
 			}
 			else
 				break;
@@ -7246,8 +7647,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ <= $", prestring, poststring, wildcards, " <=", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
+
 			if(string_utils.is_numeric(left) && string_utils.is_numeric(right))
 			{
 				int L = std::stoi(left);
@@ -7259,7 +7667,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				else
 					resolution = "false";
 
-				raw_value = prestring + resolution + poststring;
+				raw_value = prestring + variable_value_header+resolution + poststring;
 			}
 			else
 				break;
@@ -7272,8 +7680,15 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ == $", prestring, poststring, wildcards, " =", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
+
 			std::string equality;
 			if (left.size() == right.size())
 			{
@@ -7292,7 +7707,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				equality = "false";
 			}
 			
-			raw_value = prestring + equality + poststring;
+			raw_value = prestring + variable_value_header+equality + poststring;
 		}
 		else
 			break;
@@ -7304,14 +7719,21 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ != $", prestring, poststring, wildcards, " !=", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
+
 			std::string equality;
 			if (left != right)
 				equality = "true";
 			else
 				equality = "false";
-			raw_value = prestring + equality + poststring;
+			raw_value = prestring + variable_value_header+equality + poststring;
 		}
 		else
 			break;
@@ -7325,8 +7747,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ ^ $", prestring, poststring, wildcards, " ^", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
 
 			bool left_is_int = false;
 			bool left_is_decimal = false;
@@ -7388,7 +7816,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				sum = string_utils.shorten_decimal(std::to_string(std::pow(left_decimal, right_decimal)));
 			}
 
-			raw_value = prestring + sum + poststring;
+			raw_value = prestring + variable_value_header+sum + poststring;
 		}
 	}
 
@@ -7398,8 +7826,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ % $", prestring, poststring, wildcards, " %", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
 
 			bool left_is_int = false;
 			bool left_is_decimal = false;
@@ -7449,7 +7883,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				sum = left + " % " + right;
 			}
 
-			raw_value = prestring + sum + poststring;
+			raw_value = prestring + variable_value_header+sum + poststring;
 		}
 	}
 
@@ -7459,8 +7893,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ * $", prestring, poststring, wildcards, " *", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
 
 			bool left_is_int = false;
 			bool left_is_decimal = false;
@@ -7518,7 +7958,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				sum = string_utils.shorten_decimal(std::to_string(left_decimal * right_int));
 			}
 
-			raw_value = prestring + sum + poststring;
+			raw_value = prestring + variable_value_header+sum + poststring;
 		}
 	}
 
@@ -7529,8 +7969,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ / $", prestring, poststring, wildcards, " /", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
 
 			bool left_is_int = false;
 			bool left_is_decimal = false;
@@ -7588,7 +8034,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				sum = string_utils.shorten_decimal(std::to_string(left_decimal / static_cast<long double>(right_int)));
 			}
 
-			raw_value = prestring + sum + poststring;
+			raw_value = prestring + variable_value_header+sum + poststring;
 		}
 	}
 
@@ -7598,8 +8044,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ + $", prestring, poststring, wildcards, " +", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
 
 			bool left_is_int = false;
 			bool left_is_decimal = false;
@@ -7657,7 +8109,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				sum = string_utils.shorten_decimal(std::to_string(left_decimal + right_int));
 			}
 
-			raw_value = prestring + sum + poststring;
+			raw_value = prestring + variable_value_header+sum + poststring;
 		}
 	}
 
@@ -7667,8 +8119,14 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "$ - $", prestring, poststring, wildcards, " -", false);
 		if (has_subbed)
 		{
-			std::string left = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			std::string right = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
 
 			bool left_is_int = false;
 			bool left_is_decimal = false;
@@ -7726,7 +8184,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				sum = string_utils.shorten_decimal(std::to_string(left_decimal - right_int));
 			}
 
-			raw_value = prestring + sum + poststring;
+			raw_value = prestring + variable_value_header+sum + poststring;
 		}
 	}
 	//DEBUG_BREAKPOINT(11);
@@ -7734,28 +8192,79 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 	string_utils.strip(raw_value);
 	while (string_utils.contains(raw_value, "! true", false) || string_utils.contains(raw_value, "! false", false))
 	{
-		raw_value = string_utils.replace_all(raw_value, "! true", "false", false);
-		raw_value = string_utils.replace_all(raw_value, "! false", "true", false);
+		raw_value = string_utils.replace_all(raw_value, "! true", variable_value_header + "false", false);
+		raw_value = string_utils.replace_all(raw_value, "! false", variable_value_header + "true", false);
 	}
 
 	while (string_utils.contains(raw_value, "!true", false) || string_utils.contains(raw_value, "!false", false))
 	{
-		raw_value = string_utils.replace_all(raw_value, "!true", "false", false);
-		raw_value = string_utils.replace_all(raw_value, "!false", "true", false);
+		raw_value = string_utils.replace_all(raw_value, "!true", variable_value_header + "false", false);
+		raw_value = string_utils.replace_all(raw_value, "!false", variable_value_header + "true", false);
 	}
 
 	while (string_utils.contains(raw_value, "! 0", false) || string_utils.contains(raw_value, "! 1", false))
 	{
-		raw_value = string_utils.replace_all(raw_value, "! 1", "false", false);
-		raw_value = string_utils.replace_all(raw_value, "! 0", "true", false);
+		raw_value = string_utils.replace_all(raw_value, "! 1", variable_value_header + "false", false);
+		raw_value = string_utils.replace_all(raw_value, "! 0", variable_value_header + "true", false);
 	}
 
 	while (string_utils.contains(raw_value, "!1", false) || string_utils.contains(raw_value, "!0", false))
 	{
-		raw_value = string_utils.replace_all(raw_value, "!1", "false", false);
-		raw_value = string_utils.replace_all(raw_value, "!0", "true", false);
+		raw_value = string_utils.replace_all(raw_value, "!1", variable_value_header + "false", false);
+		raw_value = string_utils.replace_all(raw_value, "!0", variable_value_header+"true", false);
 	}
+
+
+
+	while (string_utils.contains(raw_value, "! " + variable_value_header + "true", false) || string_utils.contains(raw_value, "! " + variable_value_header + "false", false))
+	{
+		raw_value = string_utils.replace_all(raw_value, "! " + variable_value_header+"true", variable_value_header + "false", false);
+		raw_value = string_utils.replace_all(raw_value, "! " + variable_value_header+"false", variable_value_header + "true", false);
+	}
+
+	while (string_utils.contains(raw_value, "!" + variable_value_header + "true", false) || string_utils.contains(raw_value, "!" + variable_value_header + "false", false))
+	{
+		raw_value = string_utils.replace_all(raw_value, "!" + variable_value_header+"true", variable_value_header + "false", false);
+		raw_value = string_utils.replace_all(raw_value, "!" + variable_value_header+"false", variable_value_header + "true", false);
+	}
+
+	while (string_utils.contains(raw_value, "!" + variable_value_header+ " 0", false) || string_utils.contains(raw_value, "!" + variable_value_header + "1", false))
+	{
+		raw_value = string_utils.replace_all(raw_value, "! 1", variable_value_header + "false", false);
+		raw_value = string_utils.replace_all(raw_value, "! 0", variable_value_header + "true", false);
+	}
+
+	while (string_utils.contains(raw_value, "!" + variable_value_header + "1", false) || string_utils.contains(raw_value, "!" + variable_value_header + "0", false))
+	{
+		raw_value = string_utils.replace_all(raw_value, "!" + variable_value_header + "1", variable_value_header+"false", false);
+		raw_value = string_utils.replace_all(raw_value, "!" + variable_value_header+"0", variable_value_header+"true", false);
+	}
+
 	//DEBUG_BREAKPOINT(12);
+
+	if (is_array_format(raw_value))
+	{
+		while (raw_value[0] != '{')
+		{
+			raw_value = raw_value.substr(1);
+		}
+		while (raw_value[raw_value.size() - 1] != '}')
+		{
+			raw_value.resize(raw_value.size() - 1);
+		}
+		int first_value_index;
+		for (first_value_index = 1; first_value_index < raw_value.size(); ++first_value_index)
+		{
+			char& c = raw_value[first_value_index];
+			if (c != ' ')
+			{
+				break;
+			}
+		}
+		raw_value = "{" + raw_value.substr(first_value_index);
+		if (!is_array_format(raw_value))
+			raw_value = "{ }";
+	}
 	return raw_value;
 }
 
@@ -7776,8 +8285,9 @@ std::string res_file::substitute_variables(const std::string& original, const st
 	delimeter[0] = element_delimeter;
 	pair_delimeter[0] = pair_delimeter_character;
 
-	auto is_array_format = [&](const std::string& val) -> bool
+	auto is_array_format = [&](std::string val) -> bool
 	{
+		val = string_utils.replace_all(val, variable_value_header, "", false);
 		if (val.size() > 2 && val[0] == '{' && val[val.size() - 1] == '}')
 		{
 			return true;
@@ -7841,11 +8351,12 @@ std::string res_file::substitute_variables(const std::string& original, const st
 	std::string base = " " + original + " ";
 	std::vector<std::string> wildcards;
 	std::string prestring, poststring;
+
 	for (size_t i = 0; i < variable_names.size(); ++i)
 	{
 		const std::string& var_name = variable_names[i];
-		const std::string& var_val = variable_values[i];
-		
+		std::string var_val = string_utils.replace_all(variable_values[i], variable_value_header, "", false);
+		var_val = string_utils.replace_all(var_val, " ", var_val_space, false);
 		if (is_array_format(var_val))
 		{
 			bool subbed = true;
@@ -7854,22 +8365,26 @@ std::string res_file::substitute_variables(const std::string& original, const st
 				subbed = string_utils.complex_replacement(base, var_name + "[ $ ]", prestring, poststring, wildcards, " []", false, true);
 				if (subbed)
 				{
-					std::string index = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-					base = prestring + get_val_from_array(var_val, index) + poststring;
+					std::string index = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+					base = prestring + variable_value_header + get_val_from_array(var_val, index) + poststring;
 				}
 				else
 				{
-					string_utils.replace_all(base, " " + var_name + " ", var_val, false);
+					string_utils.replace_all(base, " " + var_name + " ", variable_value_header+var_val, false);
 				}
 			}
 
-			base = string_utils.replace_all(base, " " + var_name + " ", var_val, false);
+			base = string_utils.replace_all(base, " " + var_name + " ", variable_value_header+var_val, false);
 		}
 		else
 		{
-			base = string_utils.replace_all(base, " " + var_name + " ", var_val, false);
-		}
+			base = string_utils.replace_all(base, " " + var_name + " ", variable_value_header+var_val, false); //Problem: If a variable has a value that is equal to the name of another variable that comes later, then when it substitites that variable later it actually changes the original substitution over to the new value.
+		} //I need to somehow flag which characters are already substitutes so that it can skip substituting them again.
+		//I wish I had honestly just written my own string class at the beginning of this project...
+		//By appending a special flag character to each variable value up front, it keeps them from getting substituted again if the value was later shared by another variable name.
+		//Then I just filter them out at the end.
 	}
+	//base = string_utils.replace_all(base, variable_value_temp_flag, "", false);
 	string_utils.strip(base);
 	return base;
 }

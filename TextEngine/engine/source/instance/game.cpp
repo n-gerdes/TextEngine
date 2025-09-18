@@ -108,8 +108,12 @@ bool game::game_is_active() const
 	return game_going;
 }
 
-entity* game::get_any_entity(const std::string& name, const std::string& source)
+entity* game::get_any_entity(std::string name, const std::string& source)
 {
+	string_utils string_utils;
+	name = string_utils.replace_all(name, variable_value_header, "", false);
+	name = string_utils.replace_all(name, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -143,8 +147,11 @@ entity* game::get_any_entity(const std::string& name, const std::string& source)
 	}
 }
 
-entity* game::get_any_entity_in_scene(const std::string& entity_name, const std::string& scene_name, const std::string& source)
+entity* game::get_any_entity_in_scene(std::string entity_name, const std::string& scene_name, const std::string& source)
 {
+	string_utils string_utils;
+	entity_name = string_utils.replace_all(entity_name, variable_value_header, "", false);
+	entity_name = string_utils.replace_all(entity_name, var_val_space, " ", false);
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -202,8 +209,12 @@ std::vector<entity*> game::get_entities()
 	return return_val;
 }
 
-entity* game::get_entity(const std::string& name, bool allow_alias, const std::string& source)
+entity* game::get_entity(std::string name, bool allow_alias, const std::string& source)
 {
+	string_utils string_utils;
+	name = string_utils.replace_all(name, variable_value_header, "", false);
+	name = string_utils.replace_all(name, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -239,8 +250,12 @@ entity* game::get_entity(const std::string& name, bool allow_alias, const std::s
 	}
 }
 
-entity* game::get_entity_in_scene(const std::string& entity_name, const std::string& scene_name, bool allow_alias, const std::string& source)
+entity* game::get_entity_in_scene(std::string entity_name, const std::string& scene_name, bool allow_alias, const std::string& source)
 {
+	string_utils string_utils;
+	entity_name = string_utils.replace_all(entity_name, variable_value_header, "", false);
+	entity_name = string_utils.replace_all(entity_name, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -283,8 +298,12 @@ entity* game::get_entity_in_scene(const std::string& entity_name, const std::str
 	}
 }
 
-entity* game::get_first_entity(const std::string& name, const std::string& source)
+entity* game::get_first_entity(std::string name, const std::string& source)
 {
+	string_utils string_utils;
+	name = string_utils.replace_all(name, variable_value_header, "", false);
+	name = string_utils.replace_all(name, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -310,8 +329,12 @@ entity* game::get_first_entity(const std::string& name, const std::string& sourc
 	return load_entity_from_file(name, source, true);
 }
 
-entity* game::get_first_entity_in_scene(const std::string& entity_name, const std::string& scene_name, const std::string& source)
+entity* game::get_first_entity_in_scene(std::string entity_name, const std::string& scene_name, const std::string& source)
 {
+	string_utils string_utils;
+	entity_name = string_utils.replace_all(entity_name, variable_value_header, "", false);
+	entity_name = string_utils.replace_all(entity_name, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -342,8 +365,11 @@ std::string game::get_scenario_directory() const
 	return "Scenarios/" + get_name() + "/";
 }
 
-entity* game::get_any_entity(const std::string& alias, entity* seeker, const std::string& source)
+entity* game::get_any_entity(std::string alias, entity* seeker, const std::string& source)
 {
+	string_utils string_utils;
+	alias = string_utils.replace_all(alias, variable_value_header, "", false);
+	alias = string_utils.replace_all(alias, var_val_space, " ", false);
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -377,8 +403,11 @@ entity* game::get_any_entity(const std::string& alias, entity* seeker, const std
 	}
 }
 
-entity* game::get_any_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker, const std::string& source)
+entity* game::get_any_entity_in_scene(std::string alias, const std::string& scene_name, entity* seeker, const std::string& source)
 {
+	string_utils string_utils;
+	alias = string_utils.replace_all(alias, variable_value_header, "", false);
+	alias = string_utils.replace_all(alias, var_val_space, " ", false);
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -412,8 +441,12 @@ entity* game::get_any_entity_in_scene(const std::string& alias, const std::strin
 	}
 }
 
-entity* game::get_entity(const std::string& alias, entity* seeker, const std::string& source)
+entity* game::get_entity(std::string alias, entity* seeker, const std::string& source)
 {
+	string_utils string_utils;
+	alias = string_utils.replace_all(alias, variable_value_header, "", false);
+	alias = string_utils.replace_all(alias, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -449,8 +482,12 @@ entity* game::get_entity(const std::string& alias, entity* seeker, const std::st
 	}
 }
 
-entity* game::get_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker, const std::string& source)
+entity* game::get_entity_in_scene(std::string alias, const std::string& scene_name, entity* seeker, const std::string& source)
 {
+	string_utils string_utils;
+	alias = string_utils.replace_all(alias, variable_value_header, "", false);
+	alias = string_utils.replace_all(alias, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -489,8 +526,12 @@ entity* game::get_entity_in_scene(const std::string& alias, const std::string& s
 	}
 }
 
-entity* game::get_entity_by_name(const std::string& name, const std::string& source)
+entity* game::get_entity_by_name(std::string name, const std::string& source)
 {
+	string_utils string_utils;
+	name = string_utils.replace_all(name, variable_value_header, "", false);
+	name = string_utils.replace_all(name, var_val_space, " ", false);
+
 	auto found = name_to_entity.find(name);
 	if (found == name_to_entity.end())
 	{
@@ -550,8 +591,12 @@ uint64_t game::get_current_turn()
 	}
 }
 
-entity* game::get_first_entity(const std::string& alias, entity* seeker, const std::string& source)
+entity* game::get_first_entity(std::string alias, entity* seeker, const std::string& source)
 {
+	string_utils string_utils;
+	alias = string_utils.replace_all(alias, variable_value_header, "", false);
+	alias = string_utils.replace_all(alias, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -577,8 +622,12 @@ entity* game::get_first_entity(const std::string& alias, entity* seeker, const s
 	return nullptr;
 }
 
-entity* game::get_first_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker, const std::string& source)
+entity* game::get_first_entity_in_scene(std::string alias, const std::string& scene_name, entity* seeker, const std::string& source)
 {
+	string_utils string_utils;
+	alias = string_utils.replace_all(alias, variable_value_header, "", false);
+	alias = string_utils.replace_all(alias, var_val_space, " ", false);
+
 	game_obj* entity_folder = find_first_child(this, "entities");
 	if (entity_folder == nullptr)
 	{
@@ -652,8 +701,11 @@ std::string game::get_meta_value(const std::string& variable_name)
 	return val;
 }
 
-scene* game::get_scene(const std::string& scene_name)
+scene* game::get_scene(std::string scene_name)
 {
+	string_utils string_utils;
+	scene_name = string_utils.replace_all(scene_name, variable_value_header, "", false);
+	scene_name = string_utils.replace_all(scene_name, var_val_space, " ", false);
 	if (scene_name == "" || scene_name == "NULL")
 		return nullptr;
 	scene* found_scene = dynamic_cast<scene*>(get(this, "scenes/" + scene_name));
@@ -803,6 +855,7 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 	{
 		string_utils string_utils;
 		std::string input = input_;
+
 		/*
 		std::string input = string_utils.replace_all(input_, ", ", "", false);
 		input = string_utils.replace_all(input, ".", "",false);

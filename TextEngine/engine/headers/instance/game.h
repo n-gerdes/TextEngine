@@ -46,31 +46,31 @@ public:
 
 							game(const std::string& scenario_name, engine* engine_instance) : game_engine(engine_instance) { set_name(scenario_name); initialize(); }
 	bool					game_is_active() const;
-	entity*					get_any_entity(const std::string& name, const std::string& source);
-	entity*					get_any_entity_in_scene(const std::string& entity_name, const std::string& scene_name, const std::string& source);
+	entity*					get_any_entity(std::string name, const std::string& source);
+	entity*					get_any_entity_in_scene(std::string entity_name, const std::string& scene_name, const std::string& source);
 
 	std::vector<entity*>	get_entities();
 
-	entity*					get_entity(const std::string& name, bool allow_alias, const std::string& source);
-	entity*					get_entity_in_scene(const std::string& entity_name, const std::string& scene_name, bool allow_alias, const std::string& source);
+	entity*					get_entity(std::string name, bool allow_alias, const std::string& source);
+	entity*					get_entity_in_scene(std::string entity_name, const std::string& scene_name, bool allow_alias, const std::string& source);
 
-	entity*					get_first_entity(const std::string& name, const std::string& source);
-	entity*					get_first_entity_in_scene(const std::string& entity_name, const std::string& room_name, const std::string& source);
+	entity*					get_first_entity(std::string name, const std::string& source);
+	entity*					get_first_entity_in_scene(std::string entity_name, const std::string& room_name, const std::string& source);
 	std::string				get_scenario_directory() const;
 	//							NOW FOR VARIATIONS THAT GET ENTITIES FROM ALIASES PROVIDED BY ENTITIES
 
-	entity*					get_any_entity(const std::string& alias, entity* seeker, const std::string& source);
-	entity*					get_any_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker, const std::string& source);
+	entity*					get_any_entity(std::string alias, entity* seeker, const std::string& source);
+	entity*					get_any_entity_in_scene(std::string alias, const std::string& scene_name, entity* seeker, const std::string& source);
 
-	entity*					get_entity(const std::string& alias, entity* seeker, const std::string& source);
-	entity*					get_entity_in_scene(const std::string& alias, const std::string& scene_name, entity* seeker, const std::string& source);
+	entity*					get_entity(std::string alias, entity* seeker, const std::string& source);
+	entity*					get_entity_in_scene(std::string alias, const std::string& scene_name, entity* seeker, const std::string& source);
 
-	entity*					get_entity_by_name(const std::string& name, const std::string& source);
+	entity*					get_entity_by_name(std::string name, const std::string& source);
 
 	uint64_t				get_current_turn();
 
-	entity*					get_first_entity(const std::string& alias, entity* seeker, const std::string& source);
-	entity*					get_first_entity_in_scene(const std::string& alias, const std::string& room_name, entity* seeker, const std::string& source);
+	entity*					get_first_entity(std::string alias, entity* seeker, const std::string& source);
+	entity*					get_first_entity_in_scene(std::string alias, const std::string& room_name, entity* seeker, const std::string& source);
 	
 
 	void					game_loop();
@@ -86,7 +86,7 @@ private:
 	std::string				get_meta_directory(const std::string& variable_name);
 public:
 	std::string				get_meta_value(const std::string& variable_name);
-	scene*					get_scene(const std::string& name);
+	scene*					get_scene(std::string name);
 	
 	entity*					get_perspective_entity();
 	void					initialize();

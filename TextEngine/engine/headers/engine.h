@@ -143,6 +143,7 @@ public:
 		else if (c == dummy_period) { c = '.'; }
 		else if (c == dummy_left_brace) { c = '{'; }
 		else if (c == dummy_right_brace) { c = '}'; }
+		else if (c == var_val_space_char) { c = ' '; }
 		//else if (c == dummy_array_delimeter) { c = ','; }
 	}
 
@@ -221,9 +222,9 @@ public:
 	}
 	inline void				print_lines() const {}
 
-	inline void				print(char c) const { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; } std::cout << c; last_character_printed = c; std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS)); set_text_color(color::DEFAULT); print_mutex.unlock(); }
+	inline void				print(char c) const { if (c == variable_value_header_char) { return; } if (c == var_val_space_char) { c = ' '; } print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; } std::cout << c; last_character_printed = c; std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS)); set_text_color(color::DEFAULT); print_mutex.unlock(); }
 
-	inline void				println(char c) const { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; }  std::cout << c; std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS)); std::cout << std::endl; std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS)); last_character_printed = '\n'; set_text_color(color::DEFAULT); print_mutex.unlock(); }
+	inline void				println(char c) const { if (c == variable_value_header_char) { return; } if (c == var_val_space_char) { c = ' '; } print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; }  std::cout << c; std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS)); std::cout << std::endl; std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS)); last_character_printed = '\n'; set_text_color(color::DEFAULT); print_mutex.unlock(); }
 
 	inline void				print(std::string str) 
 	{ 
@@ -328,6 +329,10 @@ public:
 					set_text_color(color::WHITE);
 				}
 				++i;
+			}
+			else if (c == variable_value_header_char)
+			{
+				continue;
 			}
 			else
 			{
@@ -436,6 +441,10 @@ public:
 					set_text_color(color::WHITE);
 				}
 				++i;
+			}
+			else if (c == variable_value_header_char)
+			{
+				continue;
 			}
 			else
 			{
@@ -551,6 +560,10 @@ public:
 				}
 				++i;
 			}
+			else if (c == variable_value_header_char)
+			{
+				continue;
+			}
 			else
 			{
 				swap_from_dummy_char(c);
@@ -664,6 +677,10 @@ public:
 					set_text_color(color::WHITE);
 				}
 				++i;
+			}
+			else if (c == variable_value_header_char)
+			{
+				continue;
 			}
 			else
 			{

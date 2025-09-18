@@ -19,14 +19,15 @@ scene::scene()
 
 	register_innate_function("describe_scene");
 	register_innate_function("clear");
-
+	
 	register_innate_function("clone");
 }
 
 void transfer_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	scene* new_scene = s;
-	entity* c = game_instance->get_entity_by_name(args[0], source);
+	string_utils string_utils;
+	entity* c = game_instance->get_entity_by_name(string_utils.replace_all(args[0], { variable_value_header_char }, "", false), source);
 	if (c)
 	{
 		const auto& followers = c->get_attached_entity_names();
@@ -60,26 +61,36 @@ void say_func(game* game_instance, scene* s, std::vector<std::string>& args, std
 
 void set_global_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	game_instance->set_value(args[0], args[1]);
+	string_utils string_utils;
+	const std::string& a = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	std::string b = string_utils.replace_all(args[1], { variable_value_header_char }, "", false);
+	b = string_utils.replace_all(b, " ", var_val_space, false);
+	game_instance->set_value(a, b);
 }
 
 
 void set_meta_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	game_instance->set_meta_value(args[0], args[1]);
+	string_utils string_utils;
+	const std::string& a = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	std::string b = string_utils.replace_all(args[1], { variable_value_header_char }, "", false);
+	b = string_utils.replace_all(b, " ", var_val_space, false);
+	game_instance->set_meta_value(a, b);
 }
 
 void set_value_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	const std::string& var_name = args[0];
-	const std::string& var_val = args[1];
-	//std::cout << "DEBUG: " << var_name << std::endl;
-	s->set_value(var_name, var_val);
+	string_utils string_utils;
+	//const std::string& var_name = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	//std::string var_val = string_utils.replace_all(args[1], { variable_value_header_char }, "", false);
+	//var_val = string_utils.replace_all(var_val, " ", var_val_space, false);
+	s->set_value(args[0], args[1]);
 }
 
 void set_clear_on_scene_change_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	const std::string& arg = args[0];
+	string_utils string_utils;
+	std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
 	std::vector<std::string> variable_names;
 	std::vector<std::string> variable_values;
 	bool val = c->evaluate_condition(game_instance, arg, err, variable_names, variable_values);
@@ -89,7 +100,9 @@ void set_clear_on_scene_change_func(game* game_instance, scene* c, std::vector<s
 
 void set_save_any_time_func(game* game_instance, scene* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	const std::string& arg = args[0];
+	string_utils string_utils;
+	std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+
 	std::vector<std::string> variable_names;
 	std::vector<std::string> variable_values;
 	bool val = c->evaluate_condition(game_instance, arg, err, variable_names, variable_values);
@@ -111,7 +124,8 @@ void clear_func(game* game_instance, scene* c, std::vector<std::string>& args, s
 
 void clone_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	scene* new_scene = game_instance->load_scene_from_file(args[0], s->get_filename());
+	string_utils string_utils;
+	scene* new_scene = game_instance->load_scene_from_file(string_utils.replace_all(args[0], { variable_value_header_char }, "", false), s->get_filename());
 	new_scene->copy_data_from(s);
 }
 
@@ -161,6 +175,7 @@ const std::vector<entity*> scene::get_entities_in_scene() const
 		auto& children = (*(get_children().begin()))->get_children();
 		list.reserve(children.size());
 		if (children.size() == 0)
+
 		{
 			return list;
 		}
@@ -225,6 +240,7 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 				{
 					if (current_entity->get_turn_number() >= game_instance->get_current_turn() - 1 && this_scene != game_instance->get_perspective_entity()->get_scene())
 					{
+						//std::cout << "Passing for " << current_entity->get_name();
 						continue;
 					}
 					else
@@ -240,10 +256,12 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 
 		auto act_on_entity = [&](entity* current_entity)
 			{
+				//std::cout << "Actig on " << current_entity->get_name() << std::endl;
 				if (current_entity)
 				{
 					if (current_entity->idle() && this_scene != game_instance->get_perspective_entity()->get_scene())//current_entity->get_turn_number() >= game_instance->get_current_turn() - 1 && this_scene != game_instance->get_perspective_entity()->get_scene()
 					{
+						//std::cout << current_entity->get_name() << " idling\n";
 						return;
 					}
 					else
@@ -357,6 +375,12 @@ void scene::pair_innate_function(T internal_func, const std::string& checked_fun
 		if (args.size() == number_of_args)
 		{
 			err = "";
+			string_utils string_utils;
+			for (int i = 0; i < args.size(); ++i)
+			{
+				args[i] = string_utils.replace_all(args[i], variable_value_header, "", false);
+				args[i] = string_utils.replace_all(args[i], var_val_space, " ", false);
+			}
 			internal_func(game_instance, this, args, err, source);
 		}
 		else if (args.size() < number_of_args)
@@ -403,6 +427,12 @@ void scene::pair_innate_function(T internal_func, const std::string& checked_fun
 		if (args.size() >= min_args && args.size() <= max_args)
 		{
 			err = "";
+			string_utils string_utils;
+			for (int i = 0; i < args.size(); ++i)
+			{
+				args[i] = string_utils.replace_all(args[i], variable_value_header, "", false);
+				args[i] = string_utils.replace_all(args[i], var_val_space, " ", false);
+			}
 			internal_func(game_instance, this, args, err, source);
 		}
 		else if (args.size() < min_args)
@@ -477,15 +507,19 @@ bool scene::resolve_input(game* game_instance, entity* user, const std::string& 
 			custom_func_line = get_command_func_lines()[custom_func_line_index];
 			std::string line = get_line(custom_func_line);
 			std::vector<std::string> wildcards;
+
 			if (string_utils.matches_command("function command: $func ( $args )", line, wildcards, " ():"))
 			{
-				//std::cout << "MATCHED " << line << " AGAINST " << "function command: $func ( $args )" << std::endl;
+				
 				std::string actual_func_name = wildcards[0];
 				//std::cout << "FUNC: " << actual_func_name << std::endl;
 				std::string expected_args = wildcards[1];
 
 				std::string check = "function command:" + input + "( " + expected_args + " )";
+
 				//std::cout << "Checking '" << check << "' vs '" << line << "'" << std::endl;
+				//std::cout << "CHECKING " << line << " AGAINST " << "function command: $func ( $args )" << std::endl;
+				
 				if (string_utils.matches_command(line, check, wildcards, " ():"))
 				{
 					//std::cout << input << " Matches with " << check << std::endl;
@@ -495,14 +529,18 @@ bool scene::resolve_input(game* game_instance, entity* user, const std::string& 
 						args.push_back(wildcards[i]);
 
 					std::string err = call_function(game_instance, "command:" + actual_func_name, args, return_val);
-					if (return_val == "NO_MATCH" || return_val == "NO MATCH")
+					return_val = string_utils.replace_all(return_val, var_val_space, " ",false);
+					return_val = string_utils.replace_all(return_val, variable_value_header, "", false);
+					string_utils.make_lowercase(return_val);
+					string_utils.strip(return_val);
+					if (return_val == "no_match" || return_val == "no match")
 						continue;
 					if (err == "")
 						return true;
 				}
 				else
 				{
-					//std::cout << "HERE (  \'" << input << "\' / '" << line << "'  /  '" << check << "'  )" << std::endl;
+					//std::cout << "NO MATCH WITH (  \'" << input << "\' / '" << line << "'  /  '" << check << "'  )" << std::endl;
 				}
 			}
 		}

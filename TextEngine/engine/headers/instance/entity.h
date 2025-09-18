@@ -71,7 +71,7 @@ public:
 	uint64_t						get_turn_number() const;
 	bool							idle() const;
 	void							interrupt();
-	bool							knows_alias(const std::string& potential_alias, const entity* other_entity) const;
+	bool							knows_alias(std::string potential_alias, const entity* other_entity) const;
 protected:
 	virtual void					on_destroyed();
 public:

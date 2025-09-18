@@ -29,6 +29,11 @@ const static char delay_marker_char = 137; //Acts like braces around a number in
 
 const static char set_print_color_header = 138; //This character denotes a change in text color. The following character is not printed, but determines what the new color is.
 
+const static char variable_value_header_char = 141; //Used to flag variable values so substitution doesn't get them mixed up.
+const static std::string variable_value_header = { variable_value_header_char };
+const static char var_val_space_char = 142; //Variable values have to be "continous" (i.e, no spaces) internally, so a different character acts as a space-substitute in variable values.
+const static std::string var_val_space = { var_val_space_char };
+
 const static bool FULL_CLEAR = true;
 
 const static std::string PRINT_PREAMBLE = "  ";

@@ -3,7 +3,7 @@ However, within blocks of code, comments must be denoted by writing // at the be
 
 function initialize()
 
-	player_start = random(1,5)
+	player_start = 1
 	merchant_start = random(1,5)
 	merchant_finish = random(1,5)
 	while(player_start == merchant_finish)

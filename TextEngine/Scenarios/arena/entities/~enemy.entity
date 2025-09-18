@@ -3,7 +3,9 @@
 //This is responsible for setting various variables as a part of this entity's setup
 function initialize()
 	add_title("enemy");
-	add_alias("guy");
+	//add_alias("enemy");
+	//add_title("gladiator");
+	//add_alias("guy");
 	set_max_hp(10);
 	set_hp(10);
 end
@@ -46,18 +48,35 @@ function before_leave(room)
 
 end
 
-/////////////////////
-
-function command:fight $enmy(caller, enmy)
-	if(entity(caller).knows_alias(enmy, get_true_name())) then
-		start = entity(caller).prompt_boolean("yes", concat("Start combat against ", get_display_name(), "?") );
+function fight(caller, enmy)
+	if(    or( entity(caller).knows_alias(enmy, get_true_name()) , enmy == get_true_name())   ) then
+		start = entity(caller).prompt_boolean("yes", concat("Start combat against ", get_display_name(caller), "?") );
 		if(start) then
-			scene().start_fight({caller}, {get_true_name()})
+			scene().start_fight({caller},{get_true_name()})
 		else
-			entity(caller).tell(concat("Didn't start a fight with ", get_display_name()));
-			return NO_MATCH;
+			entity(caller).tell(concat("Didn't start a fight with ", get_display_name(caller)));
+			return concat("Chose not to fight ", get_display_name(caller));
 		end
 	else
 		return NO_MATCH;
 	end
 end
+
+/////////////////////
+
+function command:fight $enmy(caller, enmy)
+	return fight(caller, enmy);
+end
+
+function command:fight(caller)
+	return fight(caller, get_true_name());
+end
+
+function command:test(caller)
+{
+		i = 0;
+		while (i < 100) {
+			say(get_display_name());
+			i = i + 1;
+		}
+}

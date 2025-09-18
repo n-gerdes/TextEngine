@@ -151,20 +151,26 @@ void tell_func(game* game_instance, entity* c, std::vector<std::string>& args, s
 	{
 		disp += args[i];
 	}
-	c->println(game_instance, game_instance->get_engine()->correct_tokenizer_bug(disp)); //Should I correct_tokenizer_bug on the whole thing or each individual one?
+	std::string text = game_instance->get_engine()->correct_tokenizer_bug(disp);
+
+	c->println(game_instance, text); //Should I correct_tokenizer_bug on the whole thing or each individual one?
 }
 
 void set_value_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	//string_utils string_utils;
-	std::string& val_name = args[0];
-	std::string& arg_value = args[1];
-	c->set_value(val_name, arg_value);
+	string_utils string_utils;
+	std::string var_name = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	std::string var_val = string_utils.replace_all(args[1], { variable_value_header_char }, "", false);
+	var_val = string_utils.replace_all(var_val, var_val_space, " ", false);
+	var_name = string_utils.replace_all(var_name, var_val_space, " ", false);
+	c->set_value(var_name, var_val);
 }
 
 void set_scene_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	std::string& scene_name = args[0];
+	string_utils string_utils;
+	std::string scene_name = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	scene_name = string_utils.replace_all(scene_name, var_val_space, " ", false);
 
 	scene* found_scene = c->set_to_scene(scene_name);
 
@@ -176,13 +182,21 @@ void set_scene_func(game* game_instance, entity* c, std::vector<std::string>& ar
 
 void add_alias_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	std::string& alias = args[0];
+	std::string alias = args[0];
+	string_utils string_utils;
+	alias = string_utils.replace_all(alias, variable_value_header, "", false);
+	std::string& vsub = alias;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
 	c->add_alias(alias);
 }
 
 void add_title_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	std::string& title = args[0];
+	std::string title = args[0];
+	string_utils string_utils;
+	title = string_utils.replace_all(title, variable_value_header, "", false);
+	std::string& vsub = title;
+	vsub = string_utils.replace_all(vsub, " ", var_val_space, false);
 	c->add_title(title);
 }
 
@@ -197,9 +211,13 @@ void say_func(game* game_instance, entity* c, std::vector<std::string>& args, st
 void learn_alias_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	string_utils string_utils;
-	std::string& ent_name = args[0];
-	std::string alias_category = string_utils.get_lowercase(args[1]);
-	std::string alias = string_utils.get_lowercase(args[2]);
+	std::string ent_name = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	std::string& vsub = ent_name;
+	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+	std::string alias_category = string_utils.get_lowercase(string_utils.replace_all(args[1], { variable_value_header_char }, "", false));
+	alias_category = string_utils.replace_all(alias_category, " ", var_val_space, false);
+	std::string alias = string_utils.get_lowercase(string_utils.replace_all(args[2], { variable_value_header_char }, "", false));
+	alias = string_utils.replace_all(alias, var_val_space, " ", false);
 
 	c->learn_alias_for_entity(ent_name, alias_category, alias);
 }
@@ -207,17 +225,22 @@ void learn_alias_func(game* game_instance, entity* c, std::vector<std::string>& 
 void learn_title_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	string_utils string_utils;
-	std::string ent_name = args[0];
-	std::string alias_category = string_utils.get_lowercase(args[1]);
-	std::string alias = string_utils.get_lowercase(args[2]);
-	
+	std::string ent_name = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	ent_name = string_utils.replace_all(ent_name, var_val_space, " ", false);
+	std::string alias_category = string_utils.get_lowercase(string_utils.replace_all(args[1], { variable_value_header_char }, "", false));
+	alias_category = string_utils.replace_all(alias_category, var_val_space, " ", false);
+	std::string alias = string_utils.get_lowercase(string_utils.replace_all(args[2], { variable_value_header_char }, "", false));
+	alias = string_utils.replace_all(alias, var_val_space, " ", false);
 	c->learn_alias_for_entity(ent_name, alias_category, alias);
 	c->learn_alias_for_entity(ent_name, alias_category, "the "+alias);
 }
 
 void transfer_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	std::string& new_scene_name = args[0];
+	string_utils string_utils;
+	std::string new_scene_name = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	new_scene_name = string_utils.replace_all(new_scene_name, var_val_space, " ", false);
+
 	if (new_scene_name == c->get_scene_name())
 	{
 		return;
@@ -249,8 +272,9 @@ void transfer_func(game* game_instance, entity* c, std::vector<std::string>& arg
 
 void damage_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& code_source)
 {
-	std::string& dmg_arg = args[0];
 	string_utils string_utils;
+	std::string dmg_arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	dmg_arg = string_utils.replace_all(dmg_arg, var_val_space, " ", false);
 	if (string_utils.is_integer(dmg_arg))
 	{
 		entity::hp_t amount = std::stoi(dmg_arg);
@@ -261,14 +285,17 @@ void damage_func(game* game_instance, entity* c, std::vector<std::string>& args,
 		}
 		else if (args.size() == 2)
 		{
-			source = game_instance->get_entity_by_name(args[1], code_source);
+			std::string ent_name = string_utils.replace_all(args[1], { variable_value_header_char }, "", false);
+			ent_name = string_utils.replace_all(ent_name, var_val_space, " ", false);
+
+			source = game_instance->get_entity_by_name(ent_name, code_source);
 			if (source)
 			{
 				c->damage(game_instance, source, amount);
 			}
 			else
 			{
-				err = "Error: Found no entity by the name of " + args[1];
+				err = "Error: Found no entity by the name of " + ent_name;
 			}
 		}
 		else
@@ -284,8 +311,9 @@ void damage_func(game* game_instance, entity* c, std::vector<std::string>& args,
 
 void heal_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& code_source)
 {
-	std::string& heal_arg = args[0];
 	string_utils string_utils;
+	std::string heal_arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	heal_arg = string_utils.replace_all(heal_arg, var_val_space, " ", false);
 	if (string_utils.is_integer(heal_arg))
 	{
 		entity::hp_t amount = std::stoi(heal_arg);
@@ -296,14 +324,16 @@ void heal_func(game* game_instance, entity* c, std::vector<std::string>& args, s
 		}
 		else if (args.size() == 2)
 		{
-			source = game_instance->get_entity_by_name(args[1], code_source);
+			std::string ent_name = string_utils.replace_all(args[1], { variable_value_header_char }, "", false);
+			ent_name = string_utils.replace_all(ent_name, var_val_space, " ", false);
+			source = game_instance->get_entity_by_name(ent_name, code_source);
 			if (source)
 			{
 				c->recover(source, amount);
 			}
 			else
 			{
-				err = "Error: Found no entity by the name of " + args[1] + "(" + code_source + ")";
+				err = "Error: Found no entity by the name of " + ent_name + "(" + code_source + ")";
 			}
 		}
 		else
@@ -319,7 +349,9 @@ void heal_func(game* game_instance, entity* c, std::vector<std::string>& args, s
 
 void attach_to_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	std::string& arg = args[0];
+	string_utils string_utils;
+	std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	arg = string_utils.replace_all(arg, var_val_space, " ", false);
 	entity* target = game_instance->get_entity_by_name(arg, source);
 	if (target)
 	{
@@ -333,7 +365,9 @@ void attach_to_func(game* game_instance, entity* c, std::vector<std::string>& ar
 
 void attach_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	std::string& arg = args[0];
+	string_utils string_utils;
+	std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	arg = string_utils.replace_all(arg, var_val_space, " ", false);
 	entity* target = game_instance->get_entity_by_name(arg, source);
 	if (target)
 	{
@@ -353,7 +387,10 @@ void unattach_func(game* game_instance, entity* c, std::vector<std::string>& arg
 	}
 	else if (args.size() == 1)
 	{
-		c->unattach(args[0]);
+		string_utils string_utils;
+		std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+		arg = string_utils.replace_all(arg, var_val_space, " ", false);
+		c->unattach(arg);
 	}
 	else
 	{
@@ -363,13 +400,21 @@ void unattach_func(game* game_instance, entity* c, std::vector<std::string>& arg
 
 void clone_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	entity* new_ent = game_instance->load_entity_from_file(args[0], c->get_filename(), source);
+	string_utils string_utils;
+	std::string ent_name = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	ent_name = string_utils.replace_all(ent_name, var_val_space, " ", false);
+	entity* new_ent = game_instance->load_entity_from_file(ent_name, c->get_filename(), source);
 	new_ent->copy_data_from(c);
 }
 
 void set_global_value_func(game* game_instance, entity* s, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	game_instance->set_value(args[0], args[1]);
+	string_utils string_utils;
+	std::string a = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	a = string_utils.replace_all(a, var_val_space, " ", false);
+	std::string b = string_utils.replace_all(args[1], { variable_value_header_char }, "", false);
+	b = string_utils.replace_all(b, var_val_space, " ", false);
+	game_instance->set_value(a, b);
 }
 
 void wipe_aliases_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
@@ -379,15 +424,22 @@ void wipe_aliases_func(game* game_instance, entity* c, std::vector<std::string>&
 
 void set_meta_value_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	game_instance->set_meta_value(args[0], args[1]);
+	string_utils string_utils;
+	std::string a = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	a = string_utils.replace_all(a, var_val_space, " ", false);
+	std::string b = string_utils.replace_all(args[1], { variable_value_header_char }, "", false);
+	b = string_utils.replace_all(b, var_val_space, " ", false);
+	game_instance->set_meta_value(a, b);
 }
 
 void set_max_hp_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	string_utils string_utils;
-	if (string_utils.is_integer(args[0]))
+	std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	arg = string_utils.replace_all(arg, var_val_space, " ", false);
+	if (string_utils.is_integer(arg))
 	{
-		entity::hp_t val = std::stoi(args[0]);
+		entity::hp_t val = std::stoi(arg);
 		c->set_max_hp(val);
 	}
 	else
@@ -399,9 +451,11 @@ void set_max_hp_func(game* game_instance, entity* c, std::vector<std::string>& a
 void set_hp_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
 	string_utils string_utils;
-	if (string_utils.is_integer(args[0]))
+	std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	arg = string_utils.replace_all(arg, var_val_space, " ", false);
+	if (string_utils.is_integer(arg))
 	{
-		entity::hp_t new_hp = std::stoi(args[0]);
+		entity::hp_t new_hp = std::stoi(arg);
 		c->set_hp(new_hp);
 	}
 	else
@@ -412,7 +466,9 @@ void set_hp_func(game* game_instance, entity* c, std::vector<std::string>& args,
 
 void set_clear_on_scene_change_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	const std::string& arg = args[0];
+	string_utils string_utils;
+	std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	arg = string_utils.replace_all(arg, var_val_space, " ", false);
 	std::vector<std::string> variable_names;
 	std::vector<std::string> variable_values;
 	bool val = c->evaluate_condition(game_instance, arg, err, variable_names, variable_values);
@@ -422,7 +478,9 @@ void set_clear_on_scene_change_func(game* game_instance, entity* c, std::vector<
 
 void set_save_any_time_func(game* game_instance, entity* c, std::vector<std::string>& args, std::string& err, const std::string& source)
 {
-	const std::string& arg = args[0];
+	string_utils string_utils;
+	std::string arg = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
+	arg = string_utils.replace_all(arg, var_val_space, " ", false);
 	std::vector<std::string> variable_names;
 	std::vector<std::string> variable_values;
 	bool val = c->evaluate_condition(game_instance, arg, err, variable_names, variable_values);
@@ -607,6 +665,16 @@ int32_t entity::get_max_hp() const
 	return val;
 }
 
+std::string entity::get_display_name(bool randomize, bool allow_titles, const std::vector<std::string>& known_names) const
+{
+	string_utils string_utils;
+	std::string base = game_obj::get_display_name(randomize, allow_titles, known_names);
+	if (base.length() >= 4 && base[0] == 't' && base[1] == 'h' && base[2] == 'e' && base[3] == ' ')
+		return base;
+	else
+		return string_utils.format_as_name(base);
+}
+
 std::string entity::get_display_name(bool randomize, bool allow_titles) const
 {
 	std::string base = game_obj::get_display_name(randomize, allow_titles);
@@ -697,16 +765,6 @@ std::vector<std::string> entity::get_display_names_of_other_entity(bool allow_ti
 }
 
 
-std::string entity::get_display_name(bool randomize, bool allow_titles, const std::vector<std::string>& known_names) const
-{
-	string_utils string_utils;
-	std::string base = game_obj::get_display_name(randomize, allow_titles, known_names);
-	if (base.length() >= 4 && base[0] == 't' && base[1] == 'h' && base[2] == 'e' && base[3] == ' ')
-		return base;
-	else
-		return string_utils.format_as_name(base);
-}
-
 const std::string& entity::get_attachment_name() const
 {
 	return attached_to;
@@ -751,19 +809,22 @@ uint64_t entity::get_turn_number() const
 bool entity::idle() const
 {
 	waiting_for_pc_mutex.lock();
-	bool return_val = (waiting_for_pc || has_never_entered_scene || current_turn >= get_game_instance()->get_perspective_entity()->get_turn_number()) && (!is_in_transfer_queue);
+	bool return_val = (has_never_entered_scene || current_turn >= get_game_instance()->get_perspective_entity()->get_turn_number()) && (!is_in_transfer_queue); // || waiting_for_pc
 	waiting_for_pc_mutex.unlock();
 	return return_val;
 }
 
-bool entity::knows_alias(const std::string& potential_alias, const entity* other_entity) const
+bool entity::knows_alias(std::string potential_alias, const entity* other_entity) const
 {
+	string_utils string_utils;
+	potential_alias = string_utils.replace_all(potential_alias, variable_value_header, "", false);
+
 	if (other_entity->has_alias(get_game_instance(),potential_alias))
 		return true;
 
 	engine* engine = get_game_instance()->get_engine();
 	auto i = known_aliases.find(other_entity->get_name());
-	string_utils string_utils;
+	
 	if (i != known_aliases.end())
 	{
 		while (i != known_aliases.end())
@@ -993,7 +1054,12 @@ bool entity::resolve_input(game* game_instance, entity* user, const std::string&
 						args.push_back(wildcards[i]);
 
 					std::string err = call_function(game_instance, "command:" + actual_func_name, args, reason_for_failure);
-					if (reason_for_failure == "NO_MATCH" || reason_for_failure == "NO MACH")
+					reason_for_failure = string_utils.replace_all(reason_for_failure, variable_value_header, "", false);
+					reason_for_failure = string_utils.replace_all(reason_for_failure, {dummy_space}, " ", false);
+					reason_for_failure = string_utils.replace_all(reason_for_failure, var_val_space, " ", false);
+					string_utils.strip(reason_for_failure);
+					string_utils.make_lowercase(reason_for_failure);
+					if (reason_for_failure == "no_match" || reason_for_failure == "no match")
 						continue;
 					//std::string lowercase_last_command_return_value = string_utils.get_lowercase(reason_for_failure);
 					
@@ -1188,7 +1254,8 @@ bool entity::take_turn(game* game_instance, std::string& reason_for_failure)
 
 		lowercase_last_command_return_value = string_utils.get_lowercase(last_command_return_value);
 		string_utils.strip(lowercase_last_command_return_value);
-
+		lowercase_last_command_return_value = string_utils.replace_all(lowercase_last_command_return_value, variable_value_header, "", false);
+		lowercase_last_command_return_value = string_utils.replace_all(lowercase_last_command_return_value, var_val_space, " ", false);
 		if (lowercase_last_command_return_value == "failure" || lowercase_last_command_return_value == "fail" || lowercase_last_command_return_value == "no match" || lowercase_last_command_return_value == "no_match")
 		{
 			//std::cout << "HERE1\n";
