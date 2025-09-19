@@ -1038,7 +1038,7 @@ bool entity::resolve_input(game* game_instance, entity* user, const std::string&
 			custom_func_line = get_command_func_lines()[custom_func_line_index];
 			std::string line = get_line(custom_func_line);
 			std::vector<std::string> wildcards;
-			if (string_utils.matches_command("function command: $func ( $args )", line, wildcards, " ():"))
+			if (string_utils.matches_command("function command: $func ( $args )", line, wildcards, " ():", false))
 			{
 				//std::cout << "MATCHED " << line << " AGAINST " << "function command: $func ( $args )" << std::endl;
 				std::string actual_func_name = wildcards[0];
@@ -1046,7 +1046,7 @@ bool entity::resolve_input(game* game_instance, entity* user, const std::string&
 
 				std::string check = "function command:" + input + "( " + expected_args + " )";
 
-				if (string_utils.matches_command(line, check, wildcards, " ():"))
+				if (string_utils.matches_command(line, check, wildcards, " ():", false))
 				{
 					std::vector<std::string> args;
 					args.push_back(user->get_name());

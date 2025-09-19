@@ -25,6 +25,9 @@ const static char dummy_right_brace = 140;
 
 const static char dummy_array_delimeter = 136;
 
+const static char dummy_ampersand = 142;
+const static char dummy_bar = 143;
+
 const static char delay_marker_char = 137; //Acts like braces around a number in order to make it delay during a print.
 
 const static char set_print_color_header = 138; //This character denotes a change in text color. The following character is not printed, but determines what the new color is.

@@ -144,6 +144,8 @@ public:
 		else if (c == dummy_left_brace) { c = '{'; }
 		else if (c == dummy_right_brace) { c = '}'; }
 		else if (c == var_val_space_char) { c = ' '; }
+		else if (c == dummy_bar) { c = '|'; }
+		else if (c == dummy_ampersand) { c = '&'; }
 		//else if (c == dummy_array_delimeter) { c = ','; }
 	}
 
@@ -164,6 +166,8 @@ public:
 		else if (c == '.') { c = dummy_period; }
 		else if (c == '{') { c = dummy_left_brace; }
 		else if (c == '}') { c = dummy_right_brace; }
+		else if (c == '&') { c = dummy_ampersand; }
+		else if (c == '|') { c = dummy_bar; }
 	}
 
 private:

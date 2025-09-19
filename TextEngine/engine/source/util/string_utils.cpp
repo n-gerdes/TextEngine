@@ -627,22 +627,50 @@ bool string_utils::matches_command(const std::string& command, const std::string
 
 bool string_utils::matches_command(const std::string& command, const std::string& input, std::vector<std::string>& variable_tokens) const
 {
-	return matches_command(command, input, variable_tokens, " ().,:;+*/-=");
+	return matches_command(command, input, variable_tokens, " ().,:;+*/-=", false);
 }
 
-bool string_utils::matches_command(const std::string& command, const std::string& input, std::vector<std::string>& variable_tokens, const std::string& delimeters) const
+bool string_utils::matches_command(const std::string& command, const std::string& input, std::vector<std::string>& variable_tokens, const std::string& delimeters, bool already_knows_answer) const
 {
 	variable_tokens.clear();
 	string_utils string_utils;
 	auto command_tokens = string_utils.extract_tokens(replace_all(replace_all(command, var_val_space, " ",false), variable_value_header, "", false), delimeters);
+
+	if (!already_knows_answer)
+	{
+		//Real quick check to see if it's even REMOTELY the same before doing a lot of work.
+		for (int i = 0; i < command_tokens.size(); ++i)
+		{
+			if (command_tokens[i].find("$") == std::string::npos)
+			{
+				if (input.find(command_tokens[i]) == std::string::npos)
+				{
+					return false;
+				}
+				else
+				{
+					break;
+				}
+			}
+			else
+			{
+				continue;
+			}
+
+		}
+	}
+	//std::cout << "\n";
+
 	auto input_tokens = string_utils.extract_tokens(replace_all(replace_all(input, var_val_space, " ", false), variable_value_header, "", false), delimeters);
 
 	size_t num_of_command_tokens = command_tokens.size();
 	size_t num_of_input_tokens = input_tokens.size();
 
 	if (num_of_input_tokens < num_of_command_tokens) //There must be at LEAST as many input tokens as command tokens
+	{
 		return false; //Potentially more to account for wildcards
-
+	}
+	
 	size_t max_tokens = num_of_command_tokens;
 	size_t min_tokens = num_of_input_tokens;
 

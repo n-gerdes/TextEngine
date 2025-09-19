@@ -477,7 +477,7 @@ void engine::start_new_game(const std::string& scenario_name)
 				println("Error on ", settings_directory, " line ", i + 1, ": invalid value for setting, defaulting to false.");
 			};
 			allow_custom_character = false;
-			if (string_utils.matches_command("allow_custom_character : $bool", line, wildcards, ": ") && false) //dummied out for now. Custom characters must be implemented per-scenario
+			if (string_utils.matches_command("allow_custom_character : $bool", line, wildcards, ": ", false) && false) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
 				if (val == "yes" || val == "true" || val == "y" || val == "t")
@@ -487,7 +487,7 @@ void engine::start_new_game(const std::string& scenario_name)
 				else
 					print_settings_bool_error();
 			}
-			else if (string_utils.matches_command("save_any_time : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
+			else if (string_utils.matches_command("save_any_time : $bool", line, wildcards, ": ", false)) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
 				if (val == "yes" || val == "true" || val == "y" || val == "t")
@@ -497,7 +497,7 @@ void engine::start_new_game(const std::string& scenario_name)
 				else
 					print_settings_bool_error();
 			}
-			else if (string_utils.matches_command("clear_on_scene_change : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
+			else if (string_utils.matches_command("clear_on_scene_change : $bool", line, wildcards, ": ", false)) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
 				if (val == "yes" || val == "true" || val == "y" || val == "t")
@@ -507,7 +507,7 @@ void engine::start_new_game(const std::string& scenario_name)
 				else
 					print_settings_bool_error();
 			}
-			else if (string_utils.matches_command("input_substitution_override : $bool", line, wildcards, ": ")) //dummied out for now. Custom characters must be implemented per-scenario
+			else if (string_utils.matches_command("input_substitution_override : $bool", line, wildcards, ": ", false)) //dummied out for now. Custom characters must be implemented per-scenario
 			{
 				std::string& val = wildcards[0];
 				if (val == "yes" || val == "true" || val == "y" || val == "t")
@@ -517,14 +517,14 @@ void engine::start_new_game(const std::string& scenario_name)
 				else
 					print_settings_bool_error();
 			}
-			else if (string_utils.matches_command("allow_character : $name : $alias", line, wildcards, ": "))
+			else if (string_utils.matches_command("allow_character : $name : $alias", line, wildcards, ": ", false))
 			{
 				std::string& char_name = wildcards[0];
 				std::string& char_alias = wildcards[1];
 				allowed_starter_characters.push_back(char_name);
 				starter_character_aliases.push_back(string_utils.format_as_name(char_alias));
 			}
-			else if (string_utils.matches_command("allow_character : $name", line, wildcards, ": "))
+			else if (string_utils.matches_command("allow_character : $name", line, wildcards, ": ", false))
 			{
 				std::string& char_name = wildcards[0];
 				allowed_starter_characters.push_back(char_name);

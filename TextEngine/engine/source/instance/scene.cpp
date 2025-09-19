@@ -508,7 +508,7 @@ bool scene::resolve_input(game* game_instance, entity* user, const std::string& 
 			std::string line = get_line(custom_func_line);
 			std::vector<std::string> wildcards;
 
-			if (string_utils.matches_command("function command: $func ( $args )", line, wildcards, " ():"))
+			if (string_utils.matches_command("function command: $func ( $args )", line, wildcards, " ():", false))
 			{
 				
 				std::string actual_func_name = wildcards[0];
@@ -520,7 +520,7 @@ bool scene::resolve_input(game* game_instance, entity* user, const std::string& 
 				//std::cout << "Checking '" << check << "' vs '" << line << "'" << std::endl;
 				//std::cout << "CHECKING " << line << " AGAINST " << "function command: $func ( $args )" << std::endl;
 				
-				if (string_utils.matches_command(line, check, wildcards, " ():"))
+				if (string_utils.matches_command(line, check, wildcards, " ():", false))
 				{
 					//std::cout << input << " Matches with " << check << std::endl;
 					std::vector<std::string> args;

@@ -29,7 +29,7 @@ public:
 	void						make_uppercase(std::string& str) const;
 	bool						matches_command(const std::string& command, const std::string& input);
 	bool						matches_command(const std::string& command, const std::string& input, std::vector<std::string>& wildcards) const;
-	bool						matches_command(const std::string& command, const std::string& input, std::vector<std::string>& wildcards, const std::string& delimeters) const;
+	bool						matches_command(const std::string& command, const std::string& input, std::vector<std::string>& wildcards, const std::string& delimeters, bool already_knows_answer) const;
 	std::string					replace_all(const std::string& original, const std::string& original_substring, const std::string& new_substring, bool whole_word_only) const;
 	std::string					replace_all(const std::string& original, const std::string& original_substring, const std::string& new_substring, bool whole_word_only, bool case_sensitive) const;
 	std::string					replace_first(const std::string& original, const std::string& original_substring, const std::string& new_substring) const;

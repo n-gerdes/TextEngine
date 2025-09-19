@@ -1979,12 +1979,15 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	const std::string delimeters = " ()+=[].";
 	auto substitute_alias_function = [&](const std::string& alias_func, const std::string& original_func)
 	{
-		for (size_t i = 0; i < delimeters.size(); ++i)
+		if (line.find(alias_func) != std::string::npos)
 		{
-			std::string delimeter = "0";
-			delimeter[0] = delimeters[i];
-			line = string_utils.replace_all(line, delimeter + alias_func + "(", delimeter + original_func + "(", false);
-			line = string_utils.replace_all(line, delimeter + alias_func + " (", delimeter + original_func + "(", false);
+			for (size_t i = 0; i < delimeters.size(); ++i)
+			{
+				std::string delimeter = "0";
+				delimeter[0] = delimeters[i];
+				line = string_utils.replace_all(line, delimeter + alias_func + "(", delimeter + original_func + "(", false);
+				line = string_utils.replace_all(line, delimeter + alias_func + " (", delimeter + original_func + "(", false);
+			}
 		}
 	};
 
@@ -2307,9 +2310,8 @@ void res_file::check_line_match(const std::string& line, line_num line_num)
 	for (size_t i = 0; i < execution_registry.size(); ++i)
 	{
 		execution_registry_entry& entry = execution_registry[i];
-		if (string_utils.matches_command(entry.pattern, line, dummy_wildcards, entry.delimeters))
+		if (string_utils.matches_command(entry.pattern, line, dummy_wildcards, entry.delimeters, false))
 		{
-			//std::cout << "Found match for command '" << line << "' in file " << filename <<  " = command #" << i << " ('" << entry.pattern << "'), line " << line_num << std::endl;
 			line_commands.push_back(i);
 			return;
 		}
@@ -2337,13 +2339,13 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 			file.getline(line);
 			//++current_line_number;
 			preprocess_line(line, string_utils, name);
-			if (string_utils.matches_command("function $func_name ( $args )", line, dummy_wildcards, " ()"))
+			if (string_utils.matches_command("function $func_name ( $args )", line, dummy_wildcards, " ()", false))
 			{
 				const std::string& func_name = dummy_wildcards[0];
 				scripted_functions.push_back(func_name);
 				line_commands.push_back(0);
 			}
-			else if (string_utils.matches_command("function $func_name ()", line, dummy_wildcards, " ()"))
+			else if (string_utils.matches_command("function $func_name ()", line, dummy_wildcards, " ()", false))
 			{
 				const std::string& func_name = dummy_wildcards[0];
 				scripted_functions.push_back(func_name);
@@ -2353,7 +2355,7 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 			{
 				check_line_match(line, line_data.size());
 			}
-			if (string_utils.matches_command("function command: $func ( $args )", line, dummy_wildcards, " ():"))
+			if (string_utils.matches_command("function command: $func ( $args )", line, dummy_wildcards, " ():", false))
 			{
 				line = "function command: " + engine->extra_text_processing(dummy_wildcards[0], game_instance) + "(" + dummy_wildcards[1] + ")";
 				command_func_lines.push_back(line_data.size());
@@ -2580,7 +2582,7 @@ void res_file::execute_line(game* game_instance, line_num& line, std::string& er
 		std::vector<std::string> wildcards;
 		auto try_call_func = [&]()
 		{
-			if (string_utils.matches_command(entry.pattern, code, wildcards, entry.delimeters))
+			if (string_utils.matches_command(entry.pattern, code, wildcards, entry.delimeters, true))
 			{
 				//std::cout << "Executed command #" << line_commands[line] << "(" << pattern << ") on line " << line << ": " << code << std::endl;
 				func(game_instance, *this, if_conditions, line, code, line_layer, execution_layer, variable_names, variable_values, wildcards, err_msg, early_return, return_value);
@@ -2766,7 +2768,7 @@ res_file::line_num res_file::find_match(line_num starting_line, const std::strin
 	string_utils string_utils;
 	for (line_num i = 0; i < lines(); ++i)
 	{
-		if (string_utils.matches_command(command, line_data[i], wildcards, delimeters))
+		if (string_utils.matches_command(command, line_data[i], wildcards, delimeters, false))
 			return i;
 	}
 	return NO_MATCH;
@@ -8187,6 +8189,69 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			raw_value = prestring + variable_value_header+sum + poststring;
 		}
 	}
+
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "$ && $", prestring, poststring, wildcards, " &", false);
+		if (has_subbed)
+		{
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
+
+			std::string err;
+
+			bool resolve_left = evaluate_condition(game_instance, left, err, variable_names, variable_values);
+			bool resolve_right = evaluate_condition(game_instance, right, err, variable_names, variable_values);
+
+			std::string equality;
+			if (resolve_left && resolve_right)
+				equality = "true";
+			else
+				equality = "false";
+			raw_value = prestring + variable_value_header + equality + poststring;
+		}
+		else
+			break;
+	}
+
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "$ || $", prestring, poststring, wildcards, " |", false);
+		if (has_subbed)
+		{
+			std::string left = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			left = string_utils.replace_all(left, var_val_space, " ", false);
+
+			std::string right = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			right = string_utils.replace_all(right, var_val_space, " ", false);
+
+			if (left == "" || right == "")
+				break;
+
+			std::string err;
+
+			bool resolve_left = evaluate_condition(game_instance, left, err, variable_names, variable_values);
+			bool resolve_right = evaluate_condition(game_instance, right, err, variable_names, variable_values);
+
+			std::string equality;
+			if (resolve_left || resolve_right)
+				equality = "true";
+			else
+				equality = "false";
+			raw_value = prestring + variable_value_header + equality + poststring;
+		}
+		else
+			break;
+	}
+
 	//DEBUG_BREAKPOINT(11);
 	//							HANDLES BOOLEAN INVERSION
 	string_utils.strip(raw_value);
