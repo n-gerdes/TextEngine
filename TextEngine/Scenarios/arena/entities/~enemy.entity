@@ -3,8 +3,9 @@
 //This is responsible for setting various variables as a part of this entity's setup
 function initialize()
 	add_title("enemy");
-	//add_alias("enemy");
-	//add_title("gladiator");
+	add_alias("enemy");
+	add_title("gladiator");
+	add_alias("him");
 	//add_alias("guy");
 	set_max_hp(10);
 	set_hp(10);
@@ -79,4 +80,9 @@ function command:test(caller)
 			say(get_display_name());
 			i = i + 1;
 		}
+}
+
+function command:describe()
+{
+	say("He wears armor and a shield");
 }

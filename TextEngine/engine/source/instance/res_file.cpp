@@ -2854,7 +2854,29 @@ bool res_file::read_raw_external(const std::string& filename)
 		finished_loading = true;
 	else
 		this->filename = "";
+
 	return added_lines;
+}
+
+bool res_file::has_function_named(const std::string& func_name)
+{
+	auto search_list = [&](const std::vector<std::string>& func_list) -> bool
+		{
+			string_utils string_utils;
+			for (int i = 0; i < func_list.size(); ++i)
+			{
+				if (string_utils.matches_command(func_name, func_list[i]))
+					return true;
+			}
+			return false;
+		};
+
+	if (search_list(innate_functions))
+		return true;
+	else if (search_list(scripted_functions))
+		return true;
+	else
+		return false;
 }
 
 bool res_file::read_raw(const std::string& filename)
@@ -2894,6 +2916,7 @@ bool res_file::read_raw(const std::string& filename)
 		finished_loading = true;
 	else
 		this->filename = "";
+
 	return added_lines;
 }
 

@@ -79,6 +79,8 @@ public:
 	//bool						read(const std::string& scenario_name, const std::string& filename);
 	bool						read_raw(const std::string& filename);
 	bool						read_raw_external(const std::string& filename);
+
+	bool						has_function_named(const std::string& func_name);
 protected:
 	void						register_innate_function(const std::string& innate_function_name);
 public:

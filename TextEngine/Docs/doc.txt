@@ -55,6 +55,11 @@ get_all_scenes() - returns an array contanng the true name of every loaded scene
 
 scene(name) - reference a scene by name
 
+describe() - a function that every scene and entity must define in its script. It gets called when it should be described to the player.
+command:describe() - a function that gets called when a player tries to look more closely at an entity. 
+					 Unlike all other command functions, this one has no arguments and is always prompted by the perspective entity.
+					 If it isn't defined then the engine falls back to the regular 'describe' function when the player examines the entity more closely.
+
 'concat(str1,str2)' can join two strings and output the response, tho the original strings are left untouched.
 to_uppercase(str) - outputs a string made uppercase
 to_lowercase(str) - outputs a string made lowercase

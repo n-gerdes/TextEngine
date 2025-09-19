@@ -504,6 +504,9 @@ std::string string_utils::format_as_name(const std::string& input) const
 	if (input.size() < 1)
 		return input;
 
+	if (input == "it" || input == "him" || input == "her" || input == "they")
+		input;
+
 	std::string base = input;
 	base[0] = std::toupper(base[0]);
 	for (size_t i = 1; i < base.size(); ++i)

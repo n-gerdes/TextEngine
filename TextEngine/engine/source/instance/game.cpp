@@ -960,9 +960,9 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 			return true;
 		}
 		else if (
-			string_utils.matches_command("describe", input) 
-			|| string_utils.matches_command("help", input) 
-			|| string_utils.matches_command("options", input)
+			input == "describe"
+			|| input == "help"
+			|| input == "options"
 			|| string_utils.matches_command("describe the surroundings", input)
 			|| string_utils.matches_command("describe my surroundings", input)
 			|| string_utils.matches_command("describe surroundings", input)
@@ -972,7 +972,7 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 			|| string_utils.matches_command("describe my surrounding area", input)
 			|| string_utils.matches_command("describe the surrounding area", input)
 
-			|| string_utils.matches_command("review", input)
+			|| input == "review"
 			|| string_utils.matches_command("review the surroundings", input)
 			|| string_utils.matches_command("review my surroundings", input)
 			|| string_utils.matches_command("review surroundings", input)
@@ -982,7 +982,7 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 			|| string_utils.matches_command("review my surrounding area", input)
 			|| string_utils.matches_command("review the surrounding area", input)
 
-			|| string_utils.matches_command("display", input)
+			|| input == "display"
 			|| string_utils.matches_command("display the surroundings", input)
 			|| string_utils.matches_command("display my surroundings", input)
 			|| string_utils.matches_command("display surroundings", input)
@@ -992,7 +992,7 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 			|| string_utils.matches_command("display my surrounding area", input)
 			|| string_utils.matches_command("display the surrounding area", input)
 
-			|| string_utils.matches_command("look", input)
+			|| input == "look"
 			|| string_utils.matches_command("look around", input)
 			|| string_utils.matches_command("look all around", input)
 			|| string_utils.matches_command("look at the surroundings", input)
@@ -1082,6 +1082,45 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 
 			return_val = "DONE";
 			return true;
+		}
+		else
+		{
+			std::vector<std::string> wildcards;
+			bool matches_desc = false;
+
+			std::vector<std::string> options = {"describe $ent", "examine $ent", "look at $ent", "I look at $ent", "I look at the $ent", "I look more closely at $ent"};
+
+			for (int i = 0; i < options.size(); ++i)
+			{
+				options[i] = get_engine()->extra_text_processing(options[i], this);
+				if (string_utils.matches_command(options[i], input, wildcards))
+				{
+					matches_desc = true;
+					break;
+				}
+				else
+				{
+					continue;
+				}
+			}
+
+			if (matches_desc)
+			{
+				std::string ent_alias = wildcards[0];
+				entity* found = get_entity_in_scene(ent_alias, get_perspective_entity()->get_scene_name(), get_perspective_entity(), "game.cpp");
+				if (found != nullptr)
+				{
+					if (found->has_function_named("command:describe"))
+					{
+						found->call_function(this, "command:describe");
+					}
+					else
+					{
+						found->call_function(this, "describe");
+					}
+					return true;
+				}
+			}
 		}
 	}
 	return false;
