@@ -1,0 +1,4 @@
+save_any_time : true
+clear_on_scene_change : false
+input_substitution_override : false
+allow_character: ~player : The Wanderer

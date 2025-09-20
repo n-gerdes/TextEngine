@@ -204,7 +204,12 @@ void say_func(game* game_instance, entity* c, std::vector<std::string>& args, st
 {
 	if (c->get_scene_name()!="NULL" && (c->get_scene() == game_instance->get_perspective_entity()->get_scene()))
 	{
-		game_instance->get_perspective_entity()->println(game_instance, game_instance->get_engine()->correct_tokenizer_bug(args[0]));
+		for (int i = 0; i < args.size(); ++i)
+		{
+			game_instance->get_perspective_entity()->print(game_instance, game_instance->get_engine()->correct_tokenizer_bug(args[i]));
+		}
+		game_instance->get_perspective_entity()->print(game_instance, "\n");
+		game_instance->get_engine()->set_text_color(color::DEFAULT);
 	}
 }
 
@@ -511,7 +516,7 @@ std::string entity::call_innate_function(game* game_instance, const std::string&
 	pair_innate_function(&learn_alias_func, function_name, "learn_alias", args, game_instance, err, 3, source);
 	pair_innate_function(&learn_title_func, function_name, "learn_title", args, game_instance, err, 3, source);
 	pair_innate_function(&transfer_func, function_name, "transfer", args, game_instance, err, 1, source);
-	pair_innate_function(&say_func, function_name, "say", args, game_instance, err, 1, source);
+	pair_innate_function(&say_func, function_name, "say", args, game_instance, err, 0, 99, source);
 	pair_innate_function(&damage_func, function_name, "damage", args, game_instance, err, 1, 2, source);
 	pair_innate_function(&attach_func, function_name, "attach", args, game_instance, err, 1, source);
 	pair_innate_function(&attach_to_func, function_name, "attach_to", args, game_instance, err, 1, source);

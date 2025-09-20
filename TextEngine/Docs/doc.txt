@@ -48,7 +48,7 @@ entity_by_alias(alias_or_name) - gets an entity using an alias OR true name only
 	called from.
 
 get_all_entities() - returns an array containing the true name of every loaded entity
-get_all_scenes() - returns an array contanng the true name of every loaded scene
+get_all_scenes() - returns an array containng the true name of every loaded scene
 
 'scene()' can get a reference to the current scene; when called from a scene, it returns that scene - but when called from an entity, it returns
 	the scene that entity currently occupies.
@@ -66,6 +66,7 @@ to_lowercase(str) - outputs a string made lowercase
 substr(start_index, substring_length, full_string) - returns a substring of the final argument, starting at the index specified by the first
 argument, and as long as substring_length
 substr(length, full_string) - Gets the first 'length' characters from full_string
+find_substring(string, potential_substring) - returns the index of the found substring within the greater string, or NULL if it couldn't find it.
 
 random(min,max) - returns a random number in the interval [min,max]
 

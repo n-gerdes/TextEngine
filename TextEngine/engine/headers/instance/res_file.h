@@ -16,7 +16,7 @@ class res_file
 public:
 	typedef int64_t line_num;
 private:
-	std::map<std::string, line_num> function_line_nums;
+	std::map<std::pair<std::string, int>, line_num> function_line_nums;
 	std::vector<line_num> command_func_lines;
 	std::vector<std::string> innate_functions;
 	std::vector<std::string> scripted_functions;

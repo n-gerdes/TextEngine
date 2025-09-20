@@ -1,0 +1,62 @@
+Notes can be freely written outside of functions and the first line & other settings commands without interfering with anything.
+However, within blocks of code, comments must be denoted by writing // at the beginning of the line.
+
+function initialize()
+	set_global_value("rooms_generated","1");
+	set_global_variable("open_halls", 4);
+	set_global_variable("room_0_0_shape", "RNESW");
+	set_global_variable("generated_exit",false);
+	scene(room).clone("room_0_0");
+	entity(~player).set_var("x", 0);
+	entity(~player).set_var("y", 0);
+	entity(~player).transfer(room_0_0);
+end
+
+function describe()
+	
+end
+
+function on_enter_scene(char)
+	
+end
+
+function before_turn(c)
+	
+end
+
+function before_leave(c)
+
+end
+
+//Functions with this name scheme are how custom commands are registered for scenes.
+function command:go north(char)
+	entity(char).transfer(B)
+end
+
+function command:I'd like to eat an $stuff(char, thing_eaten)
+	entity(char).tell("Ate " thing_eaten)
+end
+
+function rng(ent)
+	entity(ent).tell("You rolled a " random(1,6))
+end
+
+function command:roll die(ent)
+	rng(ent)
+end
+
+function command:roll dice(ent)
+	rng(ent)
+end
+
+function command:roll(ent)
+	rng(ent)
+end
+
+function command:roll d6(ent)
+	rng(ent)
+end
+
+function command:roll 1d6(ent)
+	rng(ent)
+end

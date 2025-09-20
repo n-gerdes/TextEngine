@@ -1,0 +1,101 @@
+#include labyrinth_core
+
+function initialize()
+	
+end
+
+function describe()
+	say("X: ",get_x(),", Y: ",get_y());
+	shape_var_name = concat( get_name() ,"_shape");
+	shape = get_global_var( shape_var_name );
+	say("SHAPE VAR NAME: ", shape_var_name);
+	say("SHAPE: ", shape);
+	say(concat("NORTH: ",room_open_north(get_name())));
+	say(concat("EAST: ",room_open_east(get_name())));
+	say(concat("SOUTH: ",room_open_south(get_name())));
+	say(concat("WEST: ",room_open_west(get_name())));
+	say("Unexplored Halls: ", get_open_halls());
+	say("Rooms Generated: ", get_global_var("rooms_generated"));
+end
+
+function on_enter_scene(c)
+	
+end
+
+function before_turn(c)
+	
+end
+
+function north(c)
+	generate_room(get_x(), get_y() + 1);
+	change_room(c, get_x(), get_y() + 1);
+end
+
+function east(c)
+	generate_room(get_x() + 1, get_y());
+	change_room(c, get_x() + 1, get_y());
+end
+
+function south(c)
+	generate_room(get_x(), get_y() - 1);
+	change_room(c, get_x(), get_y() - 1);
+end
+
+function west(c)
+	generate_room(get_x() - 1, get_y());
+	change_room(c, get_x() - 1, get_y());
+end
+
+
+
+//COMMANDS
+
+function command:go north(caller)
+	return north(caller);
+end
+
+function command:go east(caller)
+	return east(caller);
+end
+
+function command:go south(caller)
+	return south(caller);
+end
+
+function command:go west(caller)
+	return west(caller);
+end
+
+function command:north(caller)
+	return north(caller);
+end
+
+function command:east(caller)
+	return east(caller);
+end
+
+function command:south(caller)
+	return south(caller);
+end
+
+function command:west(caller)
+	return west(caller);
+end
+
+function command:n(caller)
+	return north(caller);
+end
+
+function command:e(caller)
+	return east(caller);
+end
+
+function command:s(caller)
+	return south(caller);
+end
+
+function command:w(caller)
+	return west(caller);
+end
+
+

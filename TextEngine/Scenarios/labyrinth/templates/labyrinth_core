@@ -1,0 +1,195 @@
+function get_room_shape( x , y )
+	room_name = get_room_name ( x , y );
+	return get_room_shape(room_name);
+end
+
+function room_open_north( x , y )
+	return room_open_north( get_room_name ( x , y ) );
+end
+
+function room_open_east( x , y )
+	return room_open_east( get_room_name ( x , y ) );
+end
+
+function room_open_south( x , y )
+	return room_open_south( get_room_name ( x , y ) );
+end
+
+function room_open_west( x , y )
+	return room_open_west( get_room_name ( x , y ) );
+end
+
+function get_room_name( x , y )
+	return concat("room_",x,"_",y);
+end
+
+function get_open_halls()
+	return get_global_variable("open_halls");
+end
+
+function increment_open_halls()
+	set_global_variable("open_halls", get_global_variable("open_halls")+1);
+end
+
+function decrement_open_halls()
+	set_global_variable("open_halls", get_global_variable("open_halls")-1);
+end
+
+
+
+
+function get_room_shape(room_name)
+	val = get_global_variable(concat(room_name,"_shape"));
+	return val;
+end
+
+function room_open_north(room_name)
+	shape = get_room_shape(room_name);
+	if(shape==0) then
+		return NULL;
+	end
+	index = find_substr(shape,"N");
+	if(index == NULL) then
+		return false;
+	else
+		return true;
+	end
+end
+
+function room_open_east(room_name)
+	shape = get_room_shape(room_name);
+	if(shape==0) then
+		return NULL;
+	end
+	index = find_substr(shape,"E");
+	if(index == NULL) then
+		return false;
+	else
+		return true;
+	end
+end
+
+function room_open_south(room_name)
+	shape = get_room_shape(room_name);
+	if(shape==0) then
+		return NULL;
+	end
+	index = find_substr(shape,"S");
+	if(index == NULL) then
+		return false;
+	else
+		return true;
+	end
+end
+
+function room_open_west(room_name)
+	shape = get_room_shape(room_name)
+	if(shape==0) then
+		return NULL;
+	end
+	index = find_substr(shape,"W");
+	if(index == NULL) then
+		return false;
+	else
+		return true;
+	end
+end
+
+function generate_room(x, y)
+	cur_shape = get_room_shape(x,y);
+	
+	if(cur_shape == 0) then //Only generate rooms in spaces where none exist already.
+		
+		room_name = get_room_name(x, y);
+		
+		north_open = room_open_south(x, y+1);
+		south_open = room_open_north(x, y-1);
+		west_open = room_open_west(x+1,y);
+		east_open = room_open_west(x-1,y);
+		
+		//For each open hall this closes, decrement the count.
+		if(north_open == true)
+			decrement_open_halls();
+		end
+		if(east_open == true)
+			decrement_open_halls();
+		end
+		if(south_open == true)
+			decrement_open_halls();
+		end
+		if(west_open == true)
+			decrement_open_halls();
+		end
+		
+		//Then, for each ungenerated adjacent room, there is a 50% chance of generating another connecting room.
+		if(north_open == NULL)
+			north_open = random(1,100) <= 50;
+			if(north_open)
+				increment_open_halls();
+			end
+		end
+		
+		if(east_open == NULL)
+			east_open = random(1,100) <= 50;
+			if(east_open)
+				increment_open_halls();
+			end
+		end
+		
+		if(south_open == NULL)
+			south_open = random(1,100) <= 50;
+			if(south_open)
+				increment_open_halls();
+			end
+		end
+		
+		if(west_open == NULL)
+			west_open = random(1,100) <= 50;
+			if(west_open)
+				increment_open_halls();
+			end
+		end
+		
+		new_room_shape = "R";
+		
+		if(north_open)
+			new_room_shape = concat(new_room_shape, "N");
+		end
+		if(east_open)
+			new_room_shape = concat(new_room_shape, "E");
+		end
+		if(south_open)
+			new_room_shape = concat(new_room_shape, "S");
+		end
+		if(west_open)
+			new_room_shape = concat(new_room_shape, "W");
+		end
+		
+		set_global_variable(concat(room_name,"_shape"), new_room_shape);
+		
+		scene(room).clone(room_name);
+		
+		scene(room_name).set_var("x", x);
+		scene(room_name).set_var("y", y);
+		
+		set_global_variable("rooms_generated", get_global_variable("rooms_generated")+1);
+		
+		return room_name;
+	else
+		return NULL;
+	end
+end
+
+function get_x()
+	return get_var("x");
+end
+
+function get_y()
+	return get_var("y");
+end
+
+function change_room(ent, x, y)
+	entity(ent).set_var("x", x);
+	entity(ent).set_var("y", y);
+	entity(ent).transfer(get_room_name(x, y));
+end

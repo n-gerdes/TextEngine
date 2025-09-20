@@ -836,7 +836,9 @@ scene* game::load_scene_from_file(const std::string& scene_name, const std::stri
 		get(this, "scenes")->add_child(loaded_scene);
 		loaded_scene->call_function(this, "initialize");
 		if (did_get_data)
+		{
 			return loaded_scene;
+		}
 		else
 		{
 			loaded_scene->destroy();

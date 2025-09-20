@@ -55,7 +55,12 @@ void say_func(game* game_instance, scene* s, std::vector<std::string>& args, std
 		return;
 	if (game_instance->get_perspective_entity()->get_scene() == s)
 	{
-		game_instance->get_perspective_entity()->println(game_instance, game_instance->get_engine()->correct_tokenizer_bug(args[0]));
+		for (int i = 0; i < args.size(); ++i)
+		{
+			game_instance->get_perspective_entity()->print(game_instance, game_instance->get_engine()->correct_tokenizer_bug(args[i]));
+		}
+		game_instance->get_perspective_entity()->print(game_instance, "\n");
+		game_instance->get_engine()->set_text_color(color::DEFAULT);
 	}
 }
 
@@ -135,7 +140,7 @@ std::string scene::call_innate_function(game* game_instance, const std::string& 
 
 	pair_innate_function(&transfer_func, function_name, "transfer", args, game_instance, err, 1, source);
 	pair_innate_function(&set_global_value_func, function_name, "set_global_value", args, game_instance, err, 2, source);
-	pair_innate_function(&say_func, function_name, "say", args, game_instance, err, 1, source);
+	pair_innate_function(&say_func, function_name, "say", args, game_instance, err, 0, 99, source);
 	pair_innate_function(&set_meta_value_func, function_name, "set_meta_value", args, game_instance, err, 2, source);
 	pair_innate_function(&set_value_func, function_name, "set_value", args, game_instance, err, 2, source);
 

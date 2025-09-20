@@ -1520,7 +1520,7 @@ void call_scene_func_func(game* game_instance, res_file& script, std::vector<uin
 	if (scene_reference == nullptr)
 	{
 		//std::cout << "HERE\n";
-		err_msg = "There is scene by the name of \'" + scene_name + "\'";
+		err_msg = "There is no scene by the name of \'" + scene_name + "\'";
 	}
 	else
 	{
@@ -1544,7 +1544,7 @@ void call_scene_func_argless_func(game* game_instance, res_file& script, std::ve
 	if (scene_reference == nullptr)
 	{
 		//std::cout << "HERE\n";
-		err_msg = "There is scene by the name of \'" + scene_name + "\'";
+		err_msg = "There is no scene by the name of \'" + scene_name + "\'";
 	}
 	else
 	{
@@ -2246,6 +2246,9 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 
 	substitute_alias_function("get_scene", "get_scene_name");
 
+	substitute_alias_function("find_substr","find_substring");
+	substitute_alias_function("find", "find_substring");
+
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
 	{
@@ -2409,14 +2412,20 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 		{
 			std::string& other_file = included_files[i];
 			if (!add_lines_from_file(engine, scenario_name, other_file, game_instance))
+			{
+				std::cout << "Error reading " << name << "; failed to read lines from '" << other_file << std::endl;
 				return false;
+			}
 		}
 
 		for (i = 0; i < imported_files.size(); ++i)
 		{
 			std::string& other_file = imported_files[i];
 			if (!add_lines_from_file(engine, scenario_name, other_file, game_instance))
+			{
+				std::cout << "Error reading " << name << "; failed to read lines from '" << other_file << std::endl;
 				return false;
+			}
 		}
 		return true;
 	}
@@ -2722,18 +2731,52 @@ custom commands for scenes & entities
 */
 res_file::line_num res_file::find_match_remove_wildcards_from_function_name(line_num starting_line, std::string function, const std::string& args_string, std::vector<std::string>& wildcards)
 {
-	//string_utils string_utils;
-	//std::cout << function << std::endl;
 	string_utils string_utils;
-	auto found = function_line_nums.find(function);
-	if (found != function_line_nums.end())
+	int num_args = 0;
+	if (args_string != "" && args_string != " " && args_string != "()" && args_string != "( )")
+		num_args = 1;
+	for (int i = 0; i < args_string.size(); ++i)
+	{
+		if (args_string[i] == ',')
+			++num_args;
+	}
+
+	auto found = function_line_nums.find(std::pair<std::string, int>(function, num_args)); //Essentially caches the lines where functions are found to improve lookup speed later.
+
+	auto get_args_in_line = [&](const std::string& line) -> int
+		{
+			int args = 0;
+			
+			bool found_first_param = false;
+			for (int i = 0; i < line.size() && line[i] != ')'; ++i)
+			{
+				if (found_first_param)
+				{
+					if (args == 0 && line[i] != ' ')
+					{
+						args = 1;
+					}
+					else if (line[i] == ',')
+						++args;
+				}
+				else
+				{
+					if (line[i] == '(')
+						found_first_param = true;
+				}
+			}
+
+			return args;
+		};
+	
+	if (found != function_line_nums.end()) //If an exsting one is found, it returns that.
 	{
 		line_num i = found->second;
 		if (i == NO_MATCH)
 			return NO_MATCH;
 		std::string line = string_utils.replace_all(line_data[i], "$", "", false);
-
-		if (string_utils.matches_command(function + args_string, line, wildcards))
+		int args_in_line = get_args_in_line(line);
+		if (string_utils.matches_command(function + args_string, line, wildcards) && num_args==args_in_line)
 		{
 			//function_line_nums.insert_or_assign(function, i);
 			//std::cout << function << " is at LINE " << i << std::endl;
@@ -2750,15 +2793,15 @@ res_file::line_num res_file::find_match_remove_wildcards_from_function_name(line
 		for (line_num i = 0; i < lines(); ++i)
 		{
 			std::string line = string_utils.replace_all(line_data[i], "$", "", false);
-
-			if (string_utils.matches_command(function + args_string, line, wildcards))
+			int args_in_line = get_args_in_line(line);
+			if (string_utils.matches_command(function + args_string, line, wildcards) && num_args==args_in_line)
 			{
-				function_line_nums.insert_or_assign(function, i);
+				function_line_nums.insert_or_assign(std::pair<std::string, int>(function, num_args), i);
 				//std::cout << function << " is at LINE " << i << std::endl;
 				return i;
 			}
 		}
-		function_line_nums.insert_or_assign(function, NO_MATCH);
+		function_line_nums.insert_or_assign(std::pair<std::string, int>(function, num_args), NO_MATCH);
 		return NO_MATCH;
 	}
 }
@@ -5217,7 +5260,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						all_args += ", ";
 					all_args += args[i];
 				}
-				return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
+				return "INVALID ARGS FOR 'get_all_entities'; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
 			}
 			else
 			{
@@ -5257,7 +5300,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						all_args += ", ";
 					all_args += args[i];
 				}
-				return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
+				return "INVALID ARGS FOR 'get_all_scenes'; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
 			}
 			else
 			{
@@ -5742,6 +5785,17 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 			}
 
+			has_subbed = true;
+			while (has_subbed)
+			{
+				has_subbed = string_utils.complex_replacement(raw_value, scene_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
+				if (has_subbed)
+				{
+					std::vector<std::string> args;
+					scene* scene_ptr = this_scene;
+					raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
+				}
+			}
 
 			has_subbed = true;
 			while (has_subbed)
@@ -5763,17 +5817,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				}
 			}
 
-			has_subbed = true;
-			while (has_subbed)
-			{
-				has_subbed = string_utils.complex_replacement(raw_value, scene_script_func_name + "()", prestring, poststring, wildcards, ".() ", false);
-				if (has_subbed)
-				{
-					std::vector<std::string> args;
-					scene* scene_ptr = this_scene;
-					raw_value = prestring + variable_value_header + func(game_instance, scene_ptr, args, variable_names, variable_values, this) + poststring;
-				}
-			}
+			
 		}
 
 	};
@@ -5790,7 +5834,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					all_args += ", ";
 				all_args += args[i];
 			}
-			return "INVALID ARGS; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
+			return "INVALID ARGS FOR 'get_name'; EXPECTED 0, GOT " + std::to_string(args.size()) + "(" + all_args + ")";
 		}
 		else
 		{
@@ -7465,6 +7509,41 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 
 				}
 			}
+		}
+	}
+
+
+	//THIS HANDLES SUBSTRING FINDING
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "find_substring ( $ , $ )", prestring, poststring, wildcards, ",() ", false, true);
+		if (has_subbed)
+		{
+			std::string string = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
+			string = string_utils.replace_all(string, variable_value_header, "", false);
+			string = string_utils.replace_all(string, var_val_space, " ", false);
+			game_instance->get_engine()->swap_from_dummy_string(string);
+
+			std::string substr = resolve_expression(wildcards[1], variable_names, variable_values, game_instance);
+			substr = string_utils.replace_all(substr, variable_value_header, "", false);
+			substr = string_utils.replace_all(substr, var_val_space, " ", false);
+			game_instance->get_engine()->swap_from_dummy_string(substr);
+
+			int fnd = string.find(substr);
+
+			std::string val;
+
+			if (fnd == std::string::npos)
+			{
+				val = "NULL";
+			}
+			else
+			{
+				val = std::to_string(fnd);
+			}
+			
+			raw_value = prestring + val + poststring;
 		}
 	}
 

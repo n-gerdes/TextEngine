@@ -170,6 +170,14 @@ public:
 		else if (c == '|') { c = dummy_bar; }
 	}
 
+	static void swap_from_dummy_string(std::string& str)
+	{
+		for (int i = 0; i < str.size(); ++i)
+		{
+			swap_from_dummy_char(str[i]);
+		}
+	}
+
 private:
 
 	static char last_character_printed;
