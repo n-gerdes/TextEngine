@@ -21,6 +21,8 @@ scene::scene()
 	register_innate_function("clear");
 	
 	register_innate_function("clone");
+
+	register_innate_function("pause");
 }
 
 void transfer_func(game* game_instance, scene* s, std::vector<std::string>& args, std::string& err, const std::string& source)

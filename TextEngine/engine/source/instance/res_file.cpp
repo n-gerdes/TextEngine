@@ -1678,10 +1678,11 @@ void sleep_func(game* game_instance, res_file& script, std::vector<uint32_t>& if
 	std::string time = string_utils.replace_all(script.resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
 	std::string& vsub = time;
 	vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
+	//std::cout << "WAITING\n";
 	if (string_utils.is_numeric(time))
 	{
 		long double delay_in_seconds = std::stod(time);
-		long long int delay_in_milliseconds = delay_in_seconds * 1000;
+		long long int delay_in_milliseconds = delay_in_seconds * 1000.0L;
 		std::this_thread::sleep_for(std::chrono::milliseconds(delay_in_milliseconds));
 	}
 	else
@@ -1700,6 +1701,8 @@ std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 
 	res_file::execution_registry_entry("println : $text", &println_func, false, ": "),
 	res_file::execution_registry_entry("print : $text", &print_func, false, ": "),
+
+	res_file::execution_registry_entry("pause ( $arg )", sleep_func, false),
 
 
 	res_file::execution_registry_entry("$var [ $index ] = $val", &set_arr_func, false, " []"),
@@ -1764,8 +1767,6 @@ std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 	res_file::execution_registry_entry("describe_scene", describe_scene_func, false),
 
 	res_file::execution_registry_entry("finish", finish_func, false),
-
-	res_file::execution_registry_entry("pause ( $arg )", sleep_func, false),
 
 	res_file::execution_registry_entry("BREAKPOINT", &breakpoint_func, false)
 };
@@ -2340,6 +2341,7 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 		while (file.good() && file.is_open() && !file.eof())
 		{
 			file.getline(line);
+			line = string_utils.replace_all(line, { 13 }, "", false);
 			//++current_line_number;
 			preprocess_line(line, string_utils, name);
 			if (string_utils.matches_command("function $func_name ( $args )", line, dummy_wildcards, " ()", false))
@@ -2383,12 +2385,14 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 				}
 				else
 				{
+					line = string_utils.replace_all(line, { 13 }, "", false);
 					line_data.push_back(line);
 					process_line_from_file(line);
 				}
 			}
 			else
 			{
+				line = string_utils.replace_all(line, { 13 }, "", false);
 				line_data.push_back(line);
 				process_line_from_file(line);
 			}
@@ -2883,6 +2887,7 @@ bool res_file::read_raw_external(const std::string& filename)
 				{
 					//std::getline(file, line);
 					file.getline(line);
+					line = string_utils.replace_all(line, { 13 }, "", false);
 					line_data.push_back(line);
 				}
 			}
@@ -2890,6 +2895,7 @@ bool res_file::read_raw_external(const std::string& filename)
 			{
 				return false;
 			}
+			return true;
 		};
 
 	bool added_lines = add_raw_lines();
@@ -2945,6 +2951,7 @@ bool res_file::read_raw(const std::string& filename)
 			{
 				//std::getline(file, line);
 				file.getline(line);
+				line = string_utils.replace_all(line, { 13 }, "", false);
 				line_data.push_back(line);
 			}
 		}
@@ -2952,6 +2959,7 @@ bool res_file::read_raw(const std::string& filename)
 		{
 			return false;
 		}
+		return true;
 	};
 
 	bool added_lines = add_raw_lines();

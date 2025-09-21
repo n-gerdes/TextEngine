@@ -19,7 +19,7 @@ public:
 	std::vector<std::string>	extract_tokens_with_potential_subfunctions(const std::string& input, const std::string& delimeters) const;
 	std::vector<std::string>	extract_tokens(const std::string& input, char delimeter) const;
 	std::vector<std::string>	extract_tokens(const std::string& input) const;
-	std::string					format_as_name(const std::string& input) const;
+	std::string					format_as_name(std::string input) const;
 	std::string					get_lowercase(const std::string& str) const;
 	bool						is_command_char(char c) const;
 	bool						is_decimal(const std::string& str) const;

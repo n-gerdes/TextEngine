@@ -102,6 +102,8 @@ function generate_room(x, y)
 		
 		room_name = get_room_name(x, y);
 		
+		open_paths = 0;
+		
 		north_open = room_open_south(x, y+1);
 		south_open = room_open_north(x, y-1);
 		west_open = room_open_west(x+1,y);
@@ -110,21 +112,26 @@ function generate_room(x, y)
 		//For each open hall this closes, decrement the count.
 		if(north_open == true)
 			decrement_open_halls();
+			open_paths = open_paths + 1;
 		end
 		if(east_open == true)
 			decrement_open_halls();
+			open_paths = open_paths + 1;
 		end
 		if(south_open == true)
 			decrement_open_halls();
+			open_paths = open_paths + 1;
 		end
 		if(west_open == true)
 			decrement_open_halls();
+			open_paths = open_paths + 1;
 		end
 		
 		//Then, for each ungenerated adjacent room, there is a 50% chance of generating another connecting room.
 		if(north_open == NULL)
 			north_open = random(1,100) <= 50;
 			if(north_open)
+				open_paths = open_paths + 1;
 				increment_open_halls();
 			end
 		end
@@ -132,6 +139,7 @@ function generate_room(x, y)
 		if(east_open == NULL)
 			east_open = random(1,100) <= 50;
 			if(east_open)
+				open_paths = open_paths + 1;
 				increment_open_halls();
 			end
 		end
@@ -139,6 +147,7 @@ function generate_room(x, y)
 		if(south_open == NULL)
 			south_open = random(1,100) <= 50;
 			if(south_open)
+				open_paths = open_paths + 1;
 				increment_open_halls();
 			end
 		end
@@ -146,6 +155,7 @@ function generate_room(x, y)
 		if(west_open == NULL)
 			west_open = random(1,100) <= 50;
 			if(west_open)
+				open_paths = open_paths + 1;
 				increment_open_halls();
 			end
 		end

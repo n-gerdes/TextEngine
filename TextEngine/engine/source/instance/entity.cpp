@@ -33,6 +33,8 @@ entity::entity()
 
 	register_innate_function("describe_scene");
 	register_innate_function("clear");
+
+	register_innate_function("pause");
 }
 
 void entity::save_variables(std::ofstream& file, const std::string& scenario_name, engine* engine) const

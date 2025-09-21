@@ -499,25 +499,26 @@ std::vector<std::string> string_utils::extract_tokens(const std::string& input) 
 	return extract_tokens(input, " ");
 }
 
-std::string string_utils::format_as_name(const std::string& input) const
+std::string string_utils::format_as_name(std::string input) const
 {
 	if (input.size() < 1)
 		return input;
-
+	input = replace_all(input, variable_value_header, "", false);
+	strip(input);
+	make_lowercase(input);
 	if (input == "it" || input == "him" || input == "her" || input == "they")
-		input;
+		return input;
 
-	std::string base = input;
-	base[0] = std::toupper(base[0]);
-	for (size_t i = 1; i < base.size(); ++i)
+	input[0] = std::toupper(input[0]);
+	for (size_t i = 1; i < input.size(); ++i)
 	{
-		if (base[i - 1] == ' ')
-			base[i] = std::toupper(base[i]);
+		if (input[i - 1] == ' ')
+			input[i] = std::toupper(input[i]);
 		else
-			base[i] = std::tolower(base[i]);
+			input[i] = std::tolower(input[i]);
 	}
 	
-	return base;
+	return input;
 }
 
 std::string string_utils::get_lowercase(const std::string& str) const

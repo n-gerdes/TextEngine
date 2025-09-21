@@ -6,6 +6,8 @@ end
 
 function describe()
 	say("You step into the arena");
+	wait(10);
+	say("TEST");
 end
 
 

@@ -2,6 +2,9 @@
 #define MASTER_HEADER_FILE
 
 #include <string>
+#include <algorithm>
+#include <math.h>
+#include <thread>
 
 const static char dummy_command_character = 1; //Using the ASCII-reserved "Start of Header" character to replace content in quotes so it doesn't get processed, then gonna swap it back in later. I use this character because it's untypable, usually invisible in text, and not really used by modern systems for anything else, making it ideal as a control character.
 const static char pair_delimeter_character = 1; //Used by arrays to denote a pair between an index-value and its value - much like a hashmap.
