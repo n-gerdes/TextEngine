@@ -50,3 +50,15 @@ end
 function command:roll 1d6(ent)
 	rng(ent)
 end
+
+function command:att (caller)
+	entity(caller).tell(a.b());
+end
+
+function a.b()
+	return a.c();
+end
+
+function a.c()
+	return "TEST";
+end

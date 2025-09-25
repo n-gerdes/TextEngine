@@ -86,7 +86,7 @@ public:
 
 	inline void set_text_color(color text_color) const
 	{
-		std::cout << get_formatting(text_color, color::DEFAULT);
+		std::cout << get_formatting(text_color, color::DEFAULT) << std::flush;
 	}
 
 	static int				count_baked_scenarios() { return baked_scenarios_registry.size(); };
@@ -204,9 +204,9 @@ public:
 
 	inline void				inst_println(char c) const { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; }  std::cout << c << std::endl; last_character_printed = '\n'; print_mutex.unlock(); }
 
-	inline void				inst_print(std::string str) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; } } string_utils string_utils; string_utils.strip(str); std::cout << str; if (str.size() > 0) { last_character_printed = str[str.size() - 1]; } print_mutex.unlock(); }
+	inline void				inst_print(std::string str) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; } } string_utils string_utils; std::cout << str; if (str.size() > 0) { last_character_printed = str[str.size() - 1]; } print_mutex.unlock(); }
 
-	inline void				inst_println(std::string str) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; } } string_utils string_utils; string_utils.strip(str); std::cout << str << std::endl; last_character_printed = '\n'; print_mutex.unlock(); }
+	inline void				inst_println(std::string str) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } for (size_t i = 0; i < str.size(); ++i) { char& c = str[i]; swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; } } string_utils string_utils; std::cout << str << std::endl; last_character_printed = '\n'; print_mutex.unlock(); }
 
 	inline void				inst_print(const char str[]) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } bool did_print = false; size_t i = 0;  for (i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; }  did_print = true; } std::cout << str; if (did_print) { --i; last_character_printed = str[i]; } print_mutex.unlock(); }
 	inline void				inst_println(const char str[]) { print_mutex.lock(); if (last_character_printed == '\n') { std::cout << PRINT_PREAMBLE; } bool did_print = false; size_t i = 0; for (i = 0; str[i] != 0; ++i) { char& c = *const_cast<char*>(&(str[i])); swap_from_dummy_char(c); if (c == dummy_array_delimeter) { c = ','; }  did_print = true; } std::cout << str << std::endl; last_character_printed = '\n'; print_mutex.unlock(); }
@@ -240,10 +240,12 @@ public:
 
 	inline void				print(std::string str) 
 	{ 
-		print_mutex.lock(); 
+		string_utils string_utils;
+		//string_utils.strip(str);
+		print_mutex.lock();
 		if (last_character_printed == '\n') 
 		{ 
-			std::cout << PRINT_PREAMBLE; 
+			std::cout << PRINT_PREAMBLE << std::flush;
 		} 
 		for (size_t i = 0; i < str.size(); ++i) 
 		{ 
@@ -254,8 +256,7 @@ public:
 				c = ','; 
 			} 
 		} 
-		string_utils string_utils; 
-		string_utils.strip(str);
+		
 		for (int i = 0; i < str.size(); ++i) { 
 			char c = str[i];
 			if (c == delay_marker_char)
@@ -271,6 +272,7 @@ public:
 				long double delay_in_seconds = std::stod(arg);
 				int delay_ms = delay_in_seconds * 1000.0L;
 				//std::cout << std::endl << arg << " / " << delay_in_seconds << " / " << delay_ms << std::endl;
+				std::cout << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
 			}
 			else if (c == set_print_color_header)
@@ -349,6 +351,7 @@ public:
 			else
 			{
 				std::cout << str[i];
+				std::cout << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS));
 			}
 		} 
@@ -360,13 +363,14 @@ public:
 
 	inline void				println(std::string str) 
 	{
+		string_utils string_utils;
+		//string_utils.strip(str);
 		print_mutex.lock();
 		if (last_character_printed == '\n') 
 		{ 
-			std::cout << PRINT_PREAMBLE; 
+			std::cout << PRINT_PREAMBLE << std::flush;
 		}
-		string_utils string_utils;
-		string_utils.strip(str);
+		
 		for (size_t i = 0; i < str.size(); ++i) 
 		{
 			char& c = str[i]; 
@@ -383,6 +387,7 @@ public:
 				long double delay_in_seconds = std::stod(arg);
 				int delay_ms = delay_in_seconds * 1000.0L;
 				//std::cout << std::endl << arg << " / " << delay_in_seconds << " / " << delay_ms << std::endl;
+				std::cout << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
 			}
 			else if (c == set_print_color_header)
@@ -463,6 +468,7 @@ public:
 				swap_from_dummy_char(c);
 				if (c == dummy_array_delimeter) { c = ','; }
 				std::cout << str[i];
+				std::cout << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS));
 			}
 		}
@@ -480,7 +486,7 @@ public:
 		print_mutex.lock(); 
 		if (last_character_printed == '\n') 
 		{ 
-			std::cout << PRINT_PREAMBLE;
+			std::cout << PRINT_PREAMBLE << std::flush;
 		} 
 		bool did_print = false; 
 		size_t i = 0;  
@@ -501,6 +507,7 @@ public:
 				long double delay_in_seconds = std::stod(arg);
 				int delay_ms = delay_in_seconds * 1000.0L;
 				//std::cout << std::endl << arg << " / " << delay_in_seconds << " / " << delay_ms << std::endl;
+				std::cout << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
 			}
 			else if (c == set_print_color_header)
@@ -582,6 +589,7 @@ public:
 				if (c == dummy_array_delimeter) { c = ','; }
 				did_print = true;
 				std::cout << str[i];
+				std::cout << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS));
 			}
 		}
@@ -596,10 +604,10 @@ public:
 	inline void				println(const char str[]) 
 	{ 
 		print_mutex.lock(); 
-		if (last_character_printed == '\n') 
-		{ 
-			std::cout << PRINT_PREAMBLE; 
-		} 
+		if (last_character_printed == '\n')
+		{
+			std::cout << PRINT_PREAMBLE << std::flush;
+		}
 		bool did_print = false;
 		size_t i = 0; 
 		for (i = 0; str[i] != 0; ++i) 
@@ -619,6 +627,7 @@ public:
 				long double delay_in_seconds = std::stod(arg);
 				int delay_ms = delay_in_seconds * 1000.0L;
 				//std::cout << std::endl << arg << " / " << delay_in_seconds << " / " << delay_ms << std::endl;
+				std::cout << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
 			}
 			else if (c == set_print_color_header)
@@ -700,6 +709,7 @@ public:
 				if (c == dummy_array_delimeter) { c = ','; }
 				did_print = true;
 				std::cout << str[i];
+				std::cout << std::flush;
 				std::this_thread::sleep_for(std::chrono::milliseconds(MILLISECONDS_BETWEEN_CHARACTERS));
 			}
 		} 

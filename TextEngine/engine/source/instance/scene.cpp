@@ -59,7 +59,9 @@ void say_func(game* game_instance, scene* s, std::vector<std::string>& args, std
 	{
 		for (int i = 0; i < args.size(); ++i)
 		{
+			//game_instance->get_perspective_entity()->print(game_instance, args[i]);
 			game_instance->get_perspective_entity()->print(game_instance, game_instance->get_engine()->correct_tokenizer_bug(args[i]));
+			//std::cout << args[i];
 		}
 		game_instance->get_perspective_entity()->print(game_instance, "\n");
 		game_instance->get_engine()->set_text_color(color::DEFAULT);
@@ -386,7 +388,8 @@ void scene::pair_innate_function(T internal_func, const std::string& checked_fun
 			for (int i = 0; i < args.size(); ++i)
 			{
 				args[i] = string_utils.replace_all(args[i], variable_value_header, "", false);
-				args[i] = string_utils.replace_all(args[i], var_val_space, " ", false);
+				if(checked_func_name != "tell" && checked_func_name != "say")
+					args[i] = string_utils.replace_all(args[i], var_val_space, " ", false);
 			}
 			internal_func(game_instance, this, args, err, source);
 		}

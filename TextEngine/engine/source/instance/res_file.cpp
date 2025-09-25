@@ -1932,8 +1932,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 			for (int c_index = 0; c_index < quote.size(); ++c_index)
 			{
 				char& c = quote[c_index];
-				if (c == '=' || c == ':' || c == '!' || c == '.' || true)
-					engine::swap_to_dummy_char(c); //Originally only swapped '=', but now I'm giving more of them a go. Did this 9/4/2025, may need to revert if it created bugs.
+				engine::swap_to_dummy_char(c); //Originally only swapped '=', but now I'm giving more of them a go. Did this 9/4/2025, may need to revert if it created bugs.
 			}
 
 			//quote = string_utils.replace_all(quote, "=", dummy_equals_string, false);
@@ -1975,6 +1974,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	enforce_spaces('{');
 	enforce_spaces('}');
 	enforce_spaces('!');
+	enforce_spaces('.');
 
 	line = " " + line + " ";
 	const std::string delimeters = " ()+=[].";
