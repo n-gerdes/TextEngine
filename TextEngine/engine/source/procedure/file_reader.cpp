@@ -91,11 +91,19 @@ void file_reader::getline(std::string& destination)
 	if (fs_reader.is_open())
 	{
 		std::getline(fs_reader, destination);
+		if (destination[destination.size() - 1] == 13)
+		{
+			destination.resize(destination.size() - 1);
+		}
 	}
 	else if (internal_lines && reading_internal_file)
 	{
 		std::vector<std::string>& v = *internal_lines;
 		destination = v[internal_line];
+		if (destination[destination.size() - 1] == 13)
+		{
+			destination.resize(destination.size() - 1);
+		}
 		++internal_line;
 	}
 	else
