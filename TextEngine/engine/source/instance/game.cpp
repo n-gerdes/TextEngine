@@ -220,6 +220,30 @@ std::vector<entity*> game::get_entities()
 	return return_val;
 }
 
+std::vector<scene*> game::get_scenes()
+{
+	game_obj* entity_folder = find_first_child(this, "scenes");
+	if (entity_folder == nullptr)
+	{
+		get_engine()->println("A grave error has been encountered in game.cpp on line ", __LINE__);
+		throw;
+	}
+
+	const auto& entities = entity_folder->get_children();
+
+	std::vector<scene*> return_val;
+	return_val.reserve(entities.size());
+
+	for (auto i = entities.begin(); i != entities.end(); ++i)
+	{
+		scene* ent = dynamic_cast<scene*>(*i);
+		if (ent)
+			return_val.push_back(ent);
+	}
+
+	return return_val;
+}
+
 entity* game::get_entity(std::string name, bool allow_alias, const std::string& source)
 {
 	string_utils string_utils;
@@ -1214,6 +1238,19 @@ void game::save_game_to_file()
 		}
 
 		std::string full_save_file_directory = saves_directory + save_file_name;
+
+		const auto& ents = get_entities();
+		const auto& scenes = get_scenes();
+
+		for (size_t i = 0; i < ents.size(); ++i)
+		{
+			ents[i]->call_function(this, "before_save");
+		}
+
+		for (size_t i = 0; i < scenes.size(); ++i)
+		{
+			scenes[i]->call_function(this, "before_save");
+		}
 
 		std::ofstream main_save_file;
 		main_save_file.open(full_save_file_directory, std::ios::binary);

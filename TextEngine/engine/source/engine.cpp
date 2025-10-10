@@ -306,6 +306,16 @@ game* engine::load_game(const std::string& scenario_name, const std::string& sav
 			{
 				clear_screen();
 				game_instance->load_from_file(input_file, *this, scenario_name, this);
+				const auto& entities = game_instance->get_entities();
+				const auto& scenes = game_instance->get_scenes();
+				for (size_t i = 0; i < scenes.size(); ++i)
+				{
+					scenes[i]->call_function(game_instance, "after_load");
+				}
+				for (size_t i = 0; i < entities.size(); ++i)
+				{
+					entities[i]->call_function(game_instance, "after_load");
+				}
 				game_instance->describe_scene(game_instance->get_perspective_entity()->get_scene());
 				/*
 				

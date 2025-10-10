@@ -52,6 +52,7 @@ public:
 	entity*					get_any_entity_in_scene(std::string entity_name, const std::string& scene_name, const std::string& source);
 
 	std::vector<entity*>	get_entities();
+	std::vector<scene*>		get_scenes();
 
 	entity*					get_entity(std::string name, bool allow_alias, const std::string& source);
 	entity*					get_entity_in_scene(std::string entity_name, const std::string& scene_name, bool allow_alias, const std::string& source);
