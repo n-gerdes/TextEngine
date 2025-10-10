@@ -1115,7 +1115,8 @@ scene* entity::set_to_scene(const std::string& scene_name)
 		remove_from_scene();
 		current_scene = scene_name; //Update my reference
 		std::string dummy_return_value;
-		new_scene->get(get_game_instance(), "entities")->add_child(new dummy(get_name())); //Add a reference to myself to the new scene
+		this;
+		new_scene->get(get_game_instance(), "entities")->add_child(new dummy(get_name())); //Add a reference to my name to the new scene
 		scene_ptr = new_scene;
 		has_never_entered_scene = false;
 		set_in_transfer_queue(false, "");

@@ -39,10 +39,10 @@ private:
 	mutable std::mutex max_hp_mutex;
 public:
 	const std::string&				get_transfer_destination() { return transferring_to; }
-	inline bool						is_perspective_entity() const;
+	bool							is_perspective_entity() const;
 	inline void						advance_turn_count() { ++current_turn; };
-	inline bool						in_transfer_queue();
-	inline void						set_in_transfer_queue(bool val, const std::string& transfer_to);
+	bool							in_transfer_queue();
+	void							set_in_transfer_queue(bool val, const std::string& transfer_to);
 	void							attach(entity* follower);
 	void							attach_to(entity* entity_to_attach_to);
 	virtual std::string				call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args, const std::string& source) override;

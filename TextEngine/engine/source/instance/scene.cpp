@@ -223,19 +223,55 @@ int scene::count_entities_in_scene() const
 	return entities_in_scene;
 }
 
-static std::mutex threads_launched_mutex;
+void scene::load_transfer_entities(game* game_instance)
+{
+	//std::cout << "Checking for transfer entities\n";
 
+	const auto& entities = game_instance->get_entities();
+	for (size_t i = 0; i < entities.size(); ++i)
+	{
+		entity* ent = entities[i];
+		//std::cout << "Loading transfer entity '" << ent->get_name() << "'\n";
+		queuetex.lock();
+		if (ent->get_transfer_destination() == get_name() || std::find(transfer_queue.begin(), transfer_queue.end(), ent) != transfer_queue.end()) //If this entity was waiting in the transfer queue
+		{
+			queuetex.unlock();
+			if (ent == game_instance->get_perspective_entity())
+			{
+				transferred_perspective_character = true; //This is so when transferring the PC to a scene, it knows to read off a description to them.
+				if (!has_read_description_after_loading_from_file)
+					has_read_description_after_loading_from_file = true;
+				if (game_instance->get_clear_on_scene_change())
+					game_instance->get_engine()->clear_screen();
+			}
+
+			//queuetex.lock();
+			ent->set_to_scene(get_name());
+			//queuetex.unlock();
+			++entities_in_scene;
+		}
+		else
+		{
+			queuetex.unlock();
+		}
+	}
+	queuetex.lock();
+	transfer_queue.clear();
+	queuetex.unlock();
+}
+
+static std::mutex threads_launched_mutex;
 void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* threads_launched)
 {
 	srand(time(NULL)); //Every thread needs to randomize the RNG separately
 	while (game_instance->game_is_active())
 	{
-
-		const std::vector<entity*> children = this_scene->get_entities_in_scene(); //Crashing error comes from here
-
 		this_scene->transferred_perspective_character = false;
 		this_scene->load_transfer_entities(game_instance);
 		this_scene->load_transfer_entities(game_instance);
+
+		const std::vector<entity*> children = this_scene->get_entities_in_scene(); //Crashing error comes from here
+
 		if (this_scene->loaded_from_file && !this_scene->has_read_description_after_loading_from_file)
 		{
 			this_scene->has_read_description_after_loading_from_file = true;
@@ -256,6 +292,7 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 					}
 					else
 					{
+						//std::cout << "Describing " << current_entity->get_name() << std::endl;
 						if (current_entity != game_instance->get_perspective_entity())
 							current_entity->call_function(game_instance, "describe");
 					}
@@ -340,44 +377,6 @@ void scene::launch(game* game_instance, int* threads_launched_ptr)
 		std::thread my_thread(scene_friend_funcs::game_loop, game_instance, this, threads_launched_ptr);
 		my_thread.detach();
 	}
-}
-
-void scene::load_transfer_entities(game* game_instance)
-{
-	//std::cout << "Checking for transfer entities\n";
-	
-	const auto& entities = game_instance->get_entities();
-	for (size_t i = 0; i < entities.size(); ++i)
-	{
-		entity* ent = entities[i];
-		//std::cout << "Loading transfer entity '" << ent->get_name() << "'\n";
-		queuetex.lock();
-		if (ent->get_transfer_destination()==get_name() || std::find(transfer_queue.begin(), transfer_queue.end(), ent) != transfer_queue.end()) //If this entity was waiting in the transfer queue
-		{
-			queuetex.unlock();
-			if (ent == game_instance->get_perspective_entity())
-			{
-				transferred_perspective_character = true; //This is so when transferring the PC to a scene, it knows to read off a description to them.
-				if (!has_read_description_after_loading_from_file)
-					has_read_description_after_loading_from_file = true;
-				if (game_instance->get_clear_on_scene_change())
-					game_instance->get_engine()->clear_screen();
-			}
-			else
-			{
-				
-			}
-			ent->set_to_scene(get_name());
-			++entities_in_scene;
-		}
-		else
-		{
-			queuetex.unlock();
-		}
-	}
-	queuetex.lock();
-	transfer_queue.clear();
-	queuetex.unlock();
 }
 
 void scene::copy_data_from(scene* other_scene)

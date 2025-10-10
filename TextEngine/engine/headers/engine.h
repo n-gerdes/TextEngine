@@ -95,8 +95,8 @@ public:
 	static bool				forces_baked_scenario() { return INCLUDE_BAKED_SCENARIOS && !DEV_MODE && baked_scenarios_registry.size() > 0; };
 
 	entity*					AMBIGUOUS_CHARACTER() const;
-	inline void				clear_screen();
-	inline void				clear_screen(bool print_extra_line);
+	void				clear_screen();
+	void				clear_screen(bool print_extra_line);
 	std::string				correct_tokenizer_bug(const std::string original) const;
 							~engine();
 							engine();
@@ -194,7 +194,7 @@ private:
 	*/
 public:
 
-	inline void				bake_scenarios();
+	void					bake_scenarios();
 
 	inline void				inst_print() const {}
 	inline void				inst_println() const { print_mutex.lock(); std::cout << std::endl;  last_character_printed = '\n'; print_mutex.unlock(); }

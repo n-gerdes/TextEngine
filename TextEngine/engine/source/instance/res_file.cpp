@@ -7057,7 +7057,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		
 		if (has_subbed)
 		{
-			std::string secs = std::to_string(time(NULL));
+			std::string secs = variable_value_header + std::to_string(time(NULL));
 			raw_value = prestring + secs + poststring;
 		}
 	}
