@@ -30,6 +30,9 @@ function describe()
 			i = i + 1;
 		end
 	end
+
+	arr = {};
+	say(sizeof(arr));
 end
 
 function on_enter_scene(char)

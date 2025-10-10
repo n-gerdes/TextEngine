@@ -7090,7 +7090,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				{
 					size_t size = 0;
 					std::string whole_arr = arr;
-					if (is_array_format(whole_arr))
+					if (whole_arr == "{}" || whole_arr == "{ }")
+					{
+						raw_value = prestring + variable_value_header + "0" + poststring;
+					}
+					else if (is_array_format(whole_arr))
 					{
 						whole_arr = whole_arr.substr(1);
 						whole_arr.resize(whole_arr.size() - 1);
@@ -7101,10 +7105,6 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 								++size;
 						}
 						raw_value = prestring + variable_value_header + std::to_string(size) + poststring;
-					}
-					else if (whole_arr == "{}" || whole_arr == "{ }")
-					{
-						raw_value = prestring + variable_value_header + "0" + poststring;
 					}
 					else
 					{
