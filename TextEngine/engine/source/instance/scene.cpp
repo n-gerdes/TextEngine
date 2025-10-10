@@ -196,7 +196,7 @@ const std::vector<entity*> scene::get_entities_in_scene() const
 		}
 		else
 		{
-			for (auto i = children.begin(); i != children.end(); ++i) //crashing error caused here. 'cannot increment value-initialized list iterator'. Only child was the mercant.
+			for (auto i = children.begin(); i != children.end(); ++i)
 			{
 				std::string child_name = (*i)->get_name();
 				entity* found = game_instance->get_entity(child_name, false, "FROM SCENE: " + get_name());
@@ -230,15 +230,17 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 	srand(time(NULL)); //Every thread needs to randomize the RNG separately
 	while (game_instance->game_is_active())
 	{
+
+		const std::vector<entity*> children = this_scene->get_entities_in_scene(); //Crashing error comes from here
+
 		this_scene->transferred_perspective_character = false;
+		this_scene->load_transfer_entities(game_instance);
 		this_scene->load_transfer_entities(game_instance);
 		if (this_scene->loaded_from_file && !this_scene->has_read_description_after_loading_from_file)
 		{
 			this_scene->has_read_description_after_loading_from_file = true;
 			this_scene->transferred_perspective_character = true;
 		}
-		const std::vector<entity*> children = this_scene->get_entities_in_scene(); //Crashing error comes from here
-
 		if (this_scene->transferred_perspective_character)
 		{
 			//this_scene->call_function(game_instance, "describe");
@@ -254,12 +256,13 @@ void scene_friend_funcs::game_loop(game* game_instance, scene* this_scene, int* 
 					}
 					else
 					{
-						if(current_entity != game_instance->get_perspective_entity())
+						if (current_entity != game_instance->get_perspective_entity())
 							current_entity->call_function(game_instance, "describe");
 					}
 				}
 			}
 		}
+		//this_scene->load_transfer_entities(game_instance);
 
 		entity* perspective_entity_found = nullptr;
 

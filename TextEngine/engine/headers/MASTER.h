@@ -44,7 +44,7 @@ const static bool FULL_CLEAR = true;
 
 const static std::string PRINT_PREAMBLE = "  ";
 
-const static int MILLISECONDS_BETWEEN_CHARACTERS = 1;
+const static int MILLISECONDS_BETWEEN_CHARACTERS = 5;
 
 //Dev mode requires C++17 or newer.
 #define DEV_MODE false

@@ -1120,13 +1120,13 @@ scene* entity::set_to_scene(const std::string& scene_name)
 		has_never_entered_scene = false;
 		set_in_transfer_queue(false, "");
 
+		new_scene->call_function(get_game_instance(), "on_enter_scene", { get_name() }, dummy_return_value);
+		call_function(get_game_instance(), "on_enter_scene");
+
 		if (get_game_instance()->get_perspective_entity() == this)
 		{
 			new_scene->call_function(get_game_instance(), "describe");
 		}
-
-		new_scene->call_function(get_game_instance(), "on_enter_scene", { get_name() }, dummy_return_value);
-		call_function(get_game_instance(), "on_enter_scene");
 
 		const std::vector<entity*>& other_entities_in_scene = new_scene->get_entities_in_scene();
 		for (size_t i = 0; i < other_entities_in_scene.size(); ++i)
