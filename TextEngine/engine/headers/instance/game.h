@@ -44,6 +44,8 @@ public:
 	inline bool				get_save_any_time() const { return save_any_time; };
 	inline bool				get_clear_on_scene_change() const {return clear_on_scene_change;};
 
+	bool					entity_exists(const std::string& name);
+
 							game(const std::string& scenario_name, engine* engine_instance) : game_engine(engine_instance) { set_name(scenario_name); initialize(); }
 	bool					game_is_active() const;
 	entity*					get_any_entity(std::string name, const std::string& source);

@@ -44,3 +44,7 @@ function command:clone $name(ent, name)
 	//println: name
 	scene().transfer(name)
 end
+
+function command:realtime(caller)
+	entity(caller).tell(time());
+end

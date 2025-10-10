@@ -1,6 +1,19 @@
 Notes can be freely written outside of functions and the first line & other settings commands without interfering with anything.
 However, within blocks of code, comments must be denoted by writing // at the beginning of the line.
 
+function gen_obj()
+	num_generated = get_global_var("obj_generated");
+	num_generated = num_generated+1;
+	
+	obj_name = num_generated;
+	
+	entity(~dummy).clone(obj_name);
+	
+	set_global_var("obj_generated", obj_name);
+	
+	return obj_name;
+end
+
 function initialize()
 	transfer(~timer)
 end
@@ -8,6 +21,15 @@ end
 function describe()
 	say("You find yourself inside a cave")
 	say("It's cold and dark.")
+	
+	i = 0;
+	if(!entity_exists("1")) then
+		while(i < 10) do
+			cl = gen_obj();
+			transfer(cl);
+			i = i + 1;
+		end
+	end
 end
 
 function on_enter_scene(char)

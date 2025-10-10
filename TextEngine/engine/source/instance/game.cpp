@@ -103,6 +103,17 @@ void game::load_variables(std::ifstream& file, const std::string& scenario_name,
 	load_string(file, perspective_entity);
 }
 
+bool game::entity_exists(const std::string& name)
+{
+	const auto& l = get_entities();
+	for (size_t i = 0; i < l.size(); ++i)
+	{
+		if (l[i]->get_name() == name)
+			return true;
+	}
+	return false;
+}
+
 bool game::game_is_active() const
 {
 	return game_going;
@@ -754,7 +765,7 @@ entity* game::load_entity_from_file(const std::string& entity_name, const std::s
 		if (get(this, "entities")->find_first_child(this, entity_name, true, false) != nullptr)
 		{
 			loaded_entity->destroy();
-			get_engine()->println("Error: Already loaded entity ", entity_name, " from file.");
+			//get_engine()->println("Error: Already loaded/created entity '", entity_name, "' from file.");
 			return nullptr;
 		}
 		get(this, "entities")->add_child(loaded_entity);
@@ -967,6 +978,8 @@ bool game::resolve_input(game* game_instance, entity* user, const std::string& i
 			|| input == "options"
 			|| string_utils.matches_command("describe the surroundings", input)
 			|| string_utils.matches_command("describe my surroundings", input)
+			|| string_utils.matches_command("describe everything", input)
+			|| string_utils.matches_command("describe it all", input)
 			|| string_utils.matches_command("describe surroundings", input)
 			|| string_utils.matches_command("describe area", input)
 			|| string_utils.matches_command("describe the area", input)
@@ -1184,7 +1197,7 @@ void game::save_game_to_file()
 
 		save_file_name[0] = std::toupper(save_file_name[0]);
 
-		if (list_of_current_saves.find_match(0, save_file_name) == res_file::NO_MATCH)
+		if (list_of_current_saves.find_match(0, save_file_name) == RES_FILE_NO_MATCH)
 		{
 			saves_list_file.open(full_saves_list_directory, std::ios::app);
 			if (saves_list_file.is_open())

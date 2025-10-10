@@ -1,0 +1,10 @@
+#import base_item
+
+function initialize()
+	add_title("thing");
+	add_title("number");
+end
+
+function describe()
+	say("You see a floating number ",get_true_name());
+end

@@ -31,16 +31,18 @@ private:
 	uint64_t command_repeats = 0;
 	uint64_t current_turn = 0;
 	std::list<std::string> attached_entity_names;
+	std::string transferring_to = "";
 	std::string narrative_queue = ""; //At the start of each turn, it prints the queue to the screen for the perspective character before resetting it, and simply discards it for non-perspective entities.
 	std::map<std::string, std::map<std::string, std::vector<std::string>>> known_aliases; //This hashmap pairs true names with maps that pair alias types to vectors of known aliases for other entities.
 	std::mutex known_aliases_mutex;
 	mutable std::mutex hp_mutex;
 	mutable std::mutex max_hp_mutex;
 public:
+	const std::string&				get_transfer_destination() { return transferring_to; }
 	inline bool						is_perspective_entity() const;
 	inline void						advance_turn_count() { ++current_turn; };
 	inline bool						in_transfer_queue();
-	inline void						set_in_transfer_queue(bool val);
+	inline void						set_in_transfer_queue(bool val, const std::string& transfer_to);
 	void							attach(entity* follower);
 	void							attach_to(entity* entity_to_attach_to);
 	virtual std::string				call_innate_function(game* game_instance, const std::string& function_name, std::vector<std::string>& args, const std::string& source) override;

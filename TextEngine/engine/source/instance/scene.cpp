@@ -342,14 +342,16 @@ void scene::launch(game* game_instance, int* threads_launched_ptr)
 void scene::load_transfer_entities(game* game_instance)
 {
 	//std::cout << "Checking for transfer entities\n";
-	queuetex.lock();
+	
 	const auto& entities = game_instance->get_entities();
 	for (size_t i = 0; i < entities.size(); ++i)
 	{
 		entity* ent = entities[i];
 		//std::cout << "Loading transfer entity '" << ent->get_name() << "'\n";
-		if (std::find(transfer_queue.begin(), transfer_queue.end(), ent) != transfer_queue.end()) //If this entity was waiting in the transfer queue
+		queuetex.lock();
+		if (ent->get_transfer_destination()==get_name() || std::find(transfer_queue.begin(), transfer_queue.end(), ent) != transfer_queue.end()) //If this entity was waiting in the transfer queue
 		{
+			queuetex.unlock();
 			if (ent == game_instance->get_perspective_entity())
 			{
 				transferred_perspective_character = true; //This is so when transferring the PC to a scene, it knows to read off a description to them.
@@ -358,10 +360,19 @@ void scene::load_transfer_entities(game* game_instance)
 				if (game_instance->get_clear_on_scene_change())
 					game_instance->get_engine()->clear_screen();
 			}
+			else
+			{
+				
+			}
 			ent->set_to_scene(get_name());
 			++entities_in_scene;
 		}
+		else
+		{
+			queuetex.unlock();
+		}
 	}
+	queuetex.lock();
 	transfer_queue.clear();
 	queuetex.unlock();
 }
@@ -560,13 +571,15 @@ bool scene::resolve_input(game* game_instance, entity* user, const std::string& 
 
 void scene::queue_transfer(entity* ent)
 {
-	queuetex.lock();
+	
 	if ((ent->get_scene_name() == "" || ent->get_scene_name() == "NULL") && !ent->in_transfer_queue()) //It can only transfer entities that aren't currently in a scene
 	{
+		queuetex.lock();
 		transfer_queue.push_back(ent);
-		ent->set_in_transfer_queue(true);
+		ent->set_in_transfer_queue(true, get_name());
+		queuetex.unlock();
 	}
-	queuetex.unlock();
+	
 }
 
 void scene::load_variables(std::ifstream& file, const std::string& scenario_name, engine* engine) {

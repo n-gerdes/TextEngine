@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 
+#define RES_FILE_NO_MATCH -1
 /*
 This class offers the framework for loading text files and processing them as scripts. It forms the foundation of the scripting
 system.
@@ -43,8 +44,6 @@ private:
 
 	void						check_line_match(const std::string& line, line_num line_num);
 public:
-
-	const static line_num NO_MATCH = -1;
 
 	//Calls a function in the file's script, and returns an error message if it encounters one.
 	std::string					call_function(game* game_instance, const std::string& function_name);

@@ -6,6 +6,7 @@
 #include "engine/headers/MASTER.h"
 #include "engine/headers/procedure/file_reader.h"
 #include <deque>
+#include <ctime>
 
 //This class is for reading/loading/executing resource/script files. It forms the basis for both entities and scenes
 
@@ -254,7 +255,7 @@ void set_arr_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 		std::string var_val = string_utils.replace_all(script.resolve_expression(rval, variable_names, variable_values, game_instance), variable_value_header, "", false);
 		std::string& vsub = var_val;
 		vsub = string_utils.replace_all(vsub, var_val_space, " ", false);
-		if (script.find_match(0, "function " + var_name + "( $args )") == res_file::NO_MATCH)
+		if (script.find_match(0, "function " + var_name + "( $args )") == RES_FILE_NO_MATCH)
 		{
 			size_t existing_variable_index;
 			for (existing_variable_index = 0; existing_variable_index < variable_names.size(); ++existing_variable_index)
@@ -442,7 +443,7 @@ void set_var_func(game* game_instance, res_file& script, std::vector<uint32_t>& 
 			std::string& vsub = var_val;
 			vsub = string_utils.replace_all(vsub, " ", var_val_space, false);
 		//std::cout << "Setting " << var_name << " to " << var_val << std::endl;
-		if (script.find_match(0, "function " + var_name + "( $args )") == res_file::NO_MATCH)
+		if (script.find_match(0, "function " + var_name + "( $args )") == RES_FILE_NO_MATCH)
 		{
 			size_t existing_variable_index;
 			for (existing_variable_index = 0; existing_variable_index < variable_names.size(); ++existing_variable_index)
@@ -1758,8 +1759,9 @@ std::vector<res_file::execution_registry_entry> res_file::execution_registry = {
 	res_file::execution_registry_entry("scene() . $func_name ()", &call_this_scene_func_argless_func, false),
 	res_file::execution_registry_entry("scene() . $func_name ( $args )", &call_this_scene_func_func, false),
 
-	res_file::execution_registry_entry("$func_name ( $args )", &call_generic_func_func, false),
 	res_file::execution_registry_entry("$func_name ()", &call_generic_func_argless_func, false),
+	res_file::execution_registry_entry("$func_name ( $args )", &call_generic_func_func, false),
+	
 
 	res_file::execution_registry_entry("save", save_from_script_func, false),
 
@@ -1975,6 +1977,9 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	enforce_spaces('}');
 	enforce_spaces('!');
 	enforce_spaces('.');
+	enforce_spaces(',');
+	//enforce_spaces('(');
+	//enforce_spaces(')');
 
 	line = " " + line + " ";
 	const std::string delimeters = " ()+=[].";
@@ -2250,6 +2255,15 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("find_substr","find_substring");
 	substitute_alias_function("find", "find_substring");
 
+	substitute_alias_function("realtime", "time");
+	substitute_alias_function("seconds", "time");
+	substitute_alias_function("real_time", "time");
+	substitute_alias_function("real_seconds", "time");
+
+	substitute_alias_function("entity_is_here", "entity_exists_here");
+
+	//substitute_alias_function("get_display_name_of", "get_display_name");
+
 	//					RETURNING QUOTE LITERALS
 	while (quoted_material.size() > 0)
 	{
@@ -2344,13 +2358,13 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 			line = string_utils.replace_all(line, { 13 }, "", false);
 			//++current_line_number;
 			preprocess_line(line, string_utils, name);
-			if (string_utils.matches_command("function $func_name ( $args )", line, dummy_wildcards, " ()", false))
+			if (string_utils.matches_command("function $func_name ()", line, dummy_wildcards, " ()", false))
 			{
 				const std::string& func_name = dummy_wildcards[0];
 				scripted_functions.push_back(func_name);
 				line_commands.push_back(0);
 			}
-			else if (string_utils.matches_command("function $func_name ()", line, dummy_wildcards, " ()", false))
+			else if (string_utils.matches_command("function $func_name ( $args )", line, dummy_wildcards, " ()", false))
 			{
 				const std::string& func_name = dummy_wildcards[0];
 				scripted_functions.push_back(func_name);
@@ -2435,6 +2449,7 @@ bool res_file::add_lines_from_file(const engine* engine, const std::string& scen
 	}
 	else
 	{
+		std::cout << "Error: could not open '" << name << "'" << std::endl;
 		return false;
 	}
 }
@@ -2477,7 +2492,7 @@ std::string res_file::call_function(game* game_instance, const std::string& func
 	
 	if (std::find(innate_functions.begin(), innate_functions.end(), function_name) != innate_functions.end())
 	{
-		if (start != NO_MATCH) //If start ISN'T no match, then it means the user tried to override this innate function
+		if (start != RES_FILE_NO_MATCH) //If start ISN'T no match, then it means the user tried to override this innate function
 		{
 			err_msg = "Error: Cannot override innate function \'" + function_name + "\'";
 			game_instance->get_engine()->println(get_filename(),": ", err_msg);
@@ -2492,7 +2507,7 @@ std::string res_file::call_function(game* game_instance, const std::string& func
 		}
 	}
 	
-	if (start == NO_MATCH)
+	if (start == RES_FILE_NO_MATCH)
 	{
 		return_value = "NO_SUCH_FUNCTION_" + function_name;
 		std::string full_args;
@@ -2703,7 +2718,7 @@ res_file::line_num res_file::find_exact(line_num starting_line, const std::strin
 		if (line_data[i] == line)
 			return i;
 	}
-	return NO_MATCH;
+	return RES_FILE_NO_MATCH;
 }
 
 res_file::line_num res_file::find_match(line_num starting_line, const std::string& command)
@@ -2715,7 +2730,7 @@ res_file::line_num res_file::find_match(line_num starting_line, const std::strin
 		if (string_utils.matches_command(command, line_data[i], dummy_vec))
 			return i;
 	}
-	return NO_MATCH;
+	return RES_FILE_NO_MATCH;
 }
 
 res_file::line_num res_file::find_match(line_num starting_line, const std::string& command, std::vector<std::string>& wildcards)
@@ -2726,7 +2741,7 @@ res_file::line_num res_file::find_match(line_num starting_line, const std::strin
 		if (string_utils.matches_command(command, line_data[i], wildcards))
 			return i;
 	}
-	return NO_MATCH;
+	return RES_FILE_NO_MATCH;
 }
 
 /*Highly bespoke. Only used by call_function to sanitize function names so that wildcard function names work for the purpose 
@@ -2776,8 +2791,8 @@ res_file::line_num res_file::find_match_remove_wildcards_from_function_name(line
 	if (found != function_line_nums.end()) //If an exsting one is found, it returns that.
 	{
 		line_num i = found->second;
-		if (i == NO_MATCH)
-			return NO_MATCH;
+		if (i == RES_FILE_NO_MATCH)
+			return RES_FILE_NO_MATCH;
 		std::string line = string_utils.replace_all(line_data[i], "$", "", false);
 		int args_in_line = get_args_in_line(line);
 		if (string_utils.matches_command(function + args_string, line, wildcards) && num_args==args_in_line)
@@ -2788,7 +2803,7 @@ res_file::line_num res_file::find_match_remove_wildcards_from_function_name(line
 		}
 		else
 		{
-			return NO_MATCH; //In theory this should never execute, but including this eliminates a compiler warning.
+			return RES_FILE_NO_MATCH; //In theory this should never execute, but including this eliminates a compiler warning.
 		}
 	}
 	else
@@ -2805,8 +2820,8 @@ res_file::line_num res_file::find_match_remove_wildcards_from_function_name(line
 				return i;
 			}
 		}
-		function_line_nums.insert_or_assign(std::pair<std::string, int>(function, num_args), NO_MATCH);
-		return NO_MATCH;
+		function_line_nums.insert_or_assign(std::pair<std::string, int>(function, num_args), RES_FILE_NO_MATCH);
+		return RES_FILE_NO_MATCH;
 	}
 }
 
@@ -2818,7 +2833,7 @@ res_file::line_num res_file::find_match(line_num starting_line, const std::strin
 		if (string_utils.matches_command(command, line_data[i], wildcards, delimeters, false))
 			return i;
 	}
-	return NO_MATCH;
+	return RES_FILE_NO_MATCH;
 }
 
 const std::string& res_file::get_line(line_num line_number) const
@@ -4587,7 +4602,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			bool exists = game_instance->get_entity(args[0], char_ptr, self->get_filename() + "/entity_exists") != nullptr;
+
+			bool exists = game_instance->entity_exists(args[0]);
 
 			if (exists)
 			{
@@ -5997,7 +6013,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 		else
 		{
-			bool exists = game_instance->get_entity_by_name(args[0], self->get_filename()+"/entity_exists") != nullptr;
+			bool exists = game_instance->entity_exists(args[0]);
 
 			if (exists)
 			{
@@ -7032,8 +7048,22 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		}
 	}
 
+	//							THIS HANDLES TIME() FUNCTION THAT GETS NUMBER OF SECONDS SINCE THE EPOCH
+
+	has_subbed = true;
+	while (has_subbed)
+	{
+		has_subbed = string_utils.complex_replacement(raw_value, "time()", prestring, poststring, wildcards, "() ", false, true);
+		
+		if (has_subbed)
+		{
+			std::string secs = std::to_string(time(NULL));
+			raw_value = prestring + secs + poststring;
+		}
+	}
+
+
 	//							THIS HANDLES SIZE() FUNCTION THAT GETS THE SIZE OF AN ARRAY
-	
 
 	has_subbed = true;
 	while (has_subbed)

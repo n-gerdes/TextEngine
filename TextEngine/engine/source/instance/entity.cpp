@@ -411,7 +411,10 @@ void clone_func(game* game_instance, entity* c, std::vector<std::string>& args, 
 	std::string ent_name = string_utils.replace_all(args[0], { variable_value_header_char }, "", false);
 	ent_name = string_utils.replace_all(ent_name, var_val_space, " ", false);
 	entity* new_ent = game_instance->load_entity_from_file(ent_name, c->get_filename(), source);
-	new_ent->copy_data_from(c);
+	if (new_ent != nullptr)
+	{
+		new_ent->copy_data_from(c);
+	}
 }
 
 void set_global_value_func(game* game_instance, entity* s, std::vector<std::string>& args, std::string& err, const std::string& source)
@@ -554,9 +557,10 @@ bool entity::in_transfer_queue()
 	return is_in_transfer_queue;
 }
 
-void entity::set_in_transfer_queue(bool val)
+void entity::set_in_transfer_queue(bool val, const std::string& transfer_to)
 {
 	is_in_transfer_queue = val;
+	transferring_to = transfer_to;
 }
 
 void entity::attach(entity* follower)
@@ -1114,9 +1118,12 @@ scene* entity::set_to_scene(const std::string& scene_name)
 		new_scene->get(get_game_instance(), "entities")->add_child(new dummy(get_name())); //Add a reference to myself to the new scene
 		scene_ptr = new_scene;
 		has_never_entered_scene = false;
-		set_in_transfer_queue(false);
-		if(get_game_instance()->get_perspective_entity() == this)
+		set_in_transfer_queue(false, "");
+
+		if (get_game_instance()->get_perspective_entity() == this)
+		{
 			new_scene->call_function(get_game_instance(), "describe");
+		}
 
 		new_scene->call_function(get_game_instance(), "on_enter_scene", { get_name() }, dummy_return_value);
 		call_function(get_game_instance(), "on_enter_scene");
