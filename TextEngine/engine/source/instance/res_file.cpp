@@ -1971,12 +1971,80 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 				line.resize(line.size() - 1);
 				line += " " + special_char;
 			}
+	};
+
+	auto is_digit = [&](char c) -> bool
+		{
+			if (c == '0')
+			{
+				return true;
+			}
+			else if (c == '1')
+			{
+				return true;
+			}
+			else if (c == '2')
+			{
+				return true;
+			}
+			else if (c == '3')
+			{
+				return true;
+			}
+			else if (c == '4')
+			{
+				return true;
+			}
+			else if (c == '5')
+			{
+				return true;
+			}
+			else if (c == '6')
+			{
+				return true;
+			}
+			else if (c == '7')
+			{
+				return true;
+			}
+			else if (c == '8')
+			{
+				return true;
+			}
+			else if (c == '9')
+			{
+				return true;
+			}
+			return false;
+		};
+
+	auto enforce_period_spaces = [&]()
+		{
+			for (int i = 1; i < line.size(); ++i)
+			{
+				char& c = line[i - 1];
+				if (c == '.')
+				{
+					std::string prestring = line.substr(0, i - 1);
+					std::string poststring = line.substr(i);
+					if ( !(is_digit(prestring[prestring.size() - 1]) && is_digit(poststring[0])) )
+					{
+						line = prestring + " . " + poststring;
+						i += 2;
+					}
+				}
+			}
+			if (line.size() >= 1 && line[line.size() - 1] == '.')
+			{
+				line.resize(line.size() - 1);
+				line += " .";
+			}
 		};
 
 	enforce_spaces('{');
 	enforce_spaces('}');
 	enforce_spaces('!');
-	enforce_spaces('.');
+	enforce_period_spaces();
 	enforce_spaces(',');
 	//enforce_spaces('(');
 	//enforce_spaces(')');
@@ -2027,6 +2095,13 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("rand", "random");
 
 	substitute_alias_function("general_substitution", "generic_substitution");
+	substitute_alias_function("general_output_substitution", "generic_substitution");
+	substitute_alias_function("generic_output_substitution", "generic_substitution");
+
+	substitute_alias_function("medieval_output_substitution", "medieval_substitution");
+	substitute_alias_function("technical_output_substitution", "technical_substitution");
+	substitute_alias_function("casual_output_substitution", "casual_substitution");
+	substitute_alias_function("formal_output_substitution", "formal_substitution");
 
 	substitute_alias_function("get_var", "get_value");
 	substitute_alias_function("get_val", "get_value");
@@ -2242,6 +2317,10 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 	substitute_alias_function("input_matched", "string_matches_input");
 	substitute_alias_function("inputs_match", "string_matches_input");
 	substitute_alias_function("input_match", "string_matches_input");
+
+	substitute_alias_function("matches_command", "string_matches_input");
+	substitute_alias_function("matches_commands", "string_matches_input");
+	substitute_alias_function("command_matches", "string_matches_input");
 
 	substitute_alias_function("all_entities", "get_all_entities");
 	substitute_alias_function("all_scenes", "get_all_scenes");
@@ -7676,9 +7755,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		if (has_subbed)
 		{
 			std::string sub_expression = resolve_expression(wildcards[0], variable_names, variable_values, game_instance);
-			sub_expression = string_utils.replace_all(sub_expression, variable_value_header, "", false);
-			sub_expression = string_utils.replace_all(sub_expression, var_val_space, " ", false);
-			raw_value = prestring + sub_expression + poststring;
+			//sub_expression = string_utils.replace_all(sub_expression, variable_value_header, "", false);
+			sub_expression = string_utils.replace_all(sub_expression, " ", var_val_space, false);
+			raw_value = prestring + variable_value_header + sub_expression + poststring;
 		}
 	}
 

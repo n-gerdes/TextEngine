@@ -135,8 +135,8 @@ bool string_utils::complex_replacement(const std::string& original, const std::s
 	std::string& poststring = extracted_poststring = "";
 	wildcards.clear();
 
-	bool measure_parans = delimeters.find("(") != std::string::npos && delimeters.find(")") && std::string::npos;
-	bool measure_brackets = delimeters.find("[") != std::string::npos && delimeters.find("]") && std::string::npos;
+	bool measure_parans = (delimeters.find("(") != std::string::npos) && (delimeters.find(")") != std::string::npos);
+	bool measure_brackets = (delimeters.find("[") != std::string::npos) && (delimeters.find("]") != std::string::npos);
 	bool measure_commas = delimeters.find(",") != std::string::npos;
 	int paran_level = -1;
 	int bracket_level = -1;
@@ -286,10 +286,17 @@ bool string_utils::complex_replacement(const std::string& original, const std::s
 				if (pattern_token_index < search_pattern_tokens.size())
 				{
 					const std::string& pattern_token = search_pattern_tokens[pattern_token_index];
+					int temp_p_lev = paran_level;
+					int temp_b_lev = bracket_level;
 					if (compare_tokens(original_token, pattern_token))
 					{
 						if (pattern_token == "$")
 						{
+							if (paran_level > temp_p_lev)
+								paran_level = temp_p_lev;
+							if (bracket_level > temp_b_lev)
+								bracket_level = temp_b_lev;
+
 							if (pattern_token_index == search_pattern_tokens.size() - 1)
 							{
 								wildcards.push_back(original_token);
@@ -636,6 +643,14 @@ bool string_utils::matches_command(const std::string& command, const std::string
 
 bool string_utils::matches_command(const std::string& command, const std::string& input, std::vector<std::string>& variable_tokens, const std::string& delimeters, bool already_knows_answer) const
 {
+	if (command == "" || command == " ")
+	{
+		if (input == "" || input == " ")
+			return true;
+		else
+			return false;
+	}
+
 	variable_tokens.clear();
 	string_utils string_utils;
 	auto command_tokens = string_utils.extract_tokens(replace_all(replace_all(command, var_val_space, " ",false), variable_value_header, "", false), delimeters);
@@ -722,6 +737,10 @@ bool string_utils::matches_command(const std::string& command, const std::string
 				bool includes_brackets_in_delimeters = delimeters.find("[") != std::string::npos && delimeters.find("]") != std::string::npos;
 				auto input_token_does_not_match_next_command_token = [&](const std::string& input_token) -> bool
 					{
+						input_tokens_iterator;
+						command_tokens_iterator;
+						input_tokens;
+						command_tokens;
 						if (includes_parenthises_in_delimeters)
 						{
 							if (input_token == "(")
@@ -732,13 +751,13 @@ bool string_utils::matches_command(const std::string& command, const std::string
 							else if (input_token == ")")
 							{
 								if (input_parenthises_level == 0)
-								{
+								{ //The bug definitely originates here 10/14/2025. WAYPOINT, BEACON
 									return input_token != next_command_token;
 								}
 								else
 								{
 									--input_parenthises_level;
-									return true;
+										return true;
 								}
 							}
 						}
@@ -773,7 +792,8 @@ bool string_utils::matches_command(const std::string& command, const std::string
 				a matching command token or the end of the input tokens (if the end of the input tokens are reached then it
 				means this didn't include every token from the command pattern, is incomplete, and should return false).
 				*/
-
+				int temp_p_lev = input_parenthises_level;
+				int temp_b_lev = input_brackets_level;
 				if (!input_token_does_not_match_next_command_token(input_tokens[input_tokens_iterator])) //If the input wildcard is actually the same as the next command token it gets confused, so this special check was added 9/15/2025 to fix that.
 				{
 					++input_tokens_iterator;
@@ -781,6 +801,10 @@ bool string_utils::matches_command(const std::string& command, const std::string
 				}
 				else
 				{
+					if (input_parenthises_level > temp_p_lev)
+						input_parenthises_level = temp_p_lev;
+					if (input_brackets_level > temp_b_lev)
+						input_brackets_level = temp_b_lev;
 					while (input_tokens_iterator < num_of_input_tokens && input_token_does_not_match_next_command_token(input_tokens[input_tokens_iterator]))
 					{
 						if (potential_wildcard.size() > 0)

@@ -23,6 +23,11 @@ function describe()
 	say("It's cold and dark.")
 	
 	i = 0;
+	say("1: ",i);
+	var = ((i + 2)) * 3;
+	say("2: ",var);
+	say("3: ", ((0)));
+	say("4: ",(i));
 	if(!entity_exists("1")) then
 		while(i < 10) do
 			cl = gen_obj();
@@ -30,9 +35,6 @@ function describe()
 			i = i + 1;
 		end
 	end
-
-	arr = {};
-	say(sizeof(arr));
 end
 
 function on_enter_scene(char)
