@@ -639,6 +639,7 @@ std::string engine::output_substitution(game* game_instance, const std::string& 
 	}
 	else
 	{
+		std::cout << "Error: could not find output thesaurus '" << thesuarus << "'" << std::endl;
 		return sentence;
 	}
 }

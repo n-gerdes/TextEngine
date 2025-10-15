@@ -2096,6 +2096,7 @@ void preprocess_line(std::string& line, const string_utils& string_utils, const 
 
 	substitute_alias_function("general_substitution", "generic_substitution");
 	substitute_alias_function("general_output_substitution", "generic_substitution");
+	substitute_alias_function("general_output_substitition", "generic_substitution");
 	substitute_alias_function("generic_output_substitution", "generic_substitution");
 
 	substitute_alias_function("medieval_output_substitution", "medieval_substitution");
@@ -7153,6 +7154,7 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		if (has_subbed)
 		{
 			std::string arr = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			std::string raw_size = std::to_string(arr.size());
 			arr = string_utils.replace_all(arr, var_val_space, " ",false);
 			string_utils.strip(arr);
 			size_t existing_index;
@@ -7165,7 +7167,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 			if (existing_index == variable_names.size())
 			{
 				//std::cout << existing_index << std::endl;
-				if (is_array_format(arr))
+				if (arr == "{}" || arr == "{ }")
+				{
+					raw_value = prestring + variable_value_header + "0" + poststring;
+				}
+				else if (is_array_format(arr))
 				{
 					size_t size = 0;
 					std::string whole_arr = arr;
@@ -7187,12 +7193,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					}
 					else
 					{
-						raw_value = prestring + variable_value_header + std::to_string(whole_arr.size()) + poststring;
+						raw_value = prestring + variable_value_header + raw_size + poststring;
 					}
-				}
-				else if (arr == "{}" || arr == "{ }")
-				{
-					raw_value = prestring + variable_value_header + "0" + poststring;
 				}
 				else
 				{
@@ -7201,7 +7203,8 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 						name = this_entity->get_name();
 					else if (this_scene)
 						name = this_scene->get_name();
-					raw_value = prestring + variable_value_header + "NO_SUCH_ARR [" + wildcards[0] + "]" + "(" + get_filename() + " / " + name + ")" + poststring;
+					raw_value = prestring + variable_value_header + raw_size + poststring;
+					//raw_value = prestring + variable_value_header + "NO_SUCH_ARR [" + wildcards[0] + "]" + "(" + get_filename() + " / " + name + ")" + poststring;
 				}
 			}
 			else
@@ -7210,7 +7213,11 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 				std::string whole_arr = variable_values[existing_index];
 				whole_arr = string_utils.replace_all(whole_arr, var_val_space, " ", false);
 				whole_arr = string_utils.replace_all(whole_arr, variable_value_header, "", false);
-				if (is_array_format(whole_arr))
+				if (whole_arr == "{}" || whole_arr == "{ }")
+				{
+					raw_value = prestring + variable_value_header + "0" + poststring;
+				}
+				else if (is_array_format(whole_arr))
 				{
 					whole_arr = whole_arr.substr(1);
 					whole_arr.resize(whole_arr.size() - 1);
@@ -7222,13 +7229,9 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 					}
 					raw_value = prestring + variable_value_header + std::to_string(size) + poststring;
 				}
-				else if (whole_arr == "{}" || whole_arr == "{ }")
-				{
-					raw_value = prestring + variable_value_header + "0" + poststring;
-				}
 				else
 				{
-					raw_value = prestring + variable_value_header + std::to_string(whole_arr.size()) + poststring;
+					raw_value = prestring + variable_value_header + raw_size + poststring;
 				}
 			}
 		}
@@ -7282,12 +7285,13 @@ std::string res_file::resolve_expression(std::string raw_value, const std::vecto
 		has_subbed = string_utils.complex_replacement(raw_value, "substr( $ , $ , $ )", prestring, poststring, wildcards, "(), ", false, true);
 		if (has_subbed)
 		{
-			std::string start_str = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
-			start_str = string_utils.replace_all(start_str, var_val_space, " ", false);
-			std::string length_str = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
-			length_str = string_utils.replace_all(length_str, var_val_space, " ", false);
-			std::string string = string_utils.replace_all(resolve_expression(wildcards[2], variable_names, variable_values, game_instance), variable_value_header, "", false);
-			string = string_utils.replace_all(string, var_val_space, " ", false);
+			std::string start_str = string_utils.replace_all(resolve_expression(wildcards[1], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			//start_str = string_utils.replace_all(start_str, var_val_space, " ", false);
+			std::string length_str = string_utils.replace_all(resolve_expression(wildcards[2], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			//length_str = string_utils.replace_all(length_str, var_val_space, " ", false);
+			std::string string = string_utils.replace_all(resolve_expression(wildcards[0], variable_names, variable_values, game_instance), variable_value_header, "", false);
+			//string = string_utils.replace_all(string, var_val_space, " ", false);
+
 			if (string_utils.is_integer(start_str) && string_utils.is_integer(length_str))
 			{
 				int start = std::stoi(start_str);

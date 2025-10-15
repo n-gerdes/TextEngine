@@ -133,7 +133,7 @@ bool substitution_wizard::load_output_substitution_file(const std::string& direc
 	}
 	else
 	{
-		std::cout << "ERROR: Could not open " << filename << std::endl;
+		//std::cout << "ERROR: Could not open " << filename << std::endl;
 		known_thes.insert_or_assign(modifier, false);
 		return false;
 	}

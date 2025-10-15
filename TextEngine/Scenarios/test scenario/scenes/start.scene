@@ -21,13 +21,16 @@ end
 function describe()
 	say("You find yourself inside a cave")
 	say("It's cold and dark.")
+
+	st = "0123456789";
+	say(l);
+	sub = substring(st, 0, sizeof(st)-2);
+
+	say(general_output_substitition("This is a test."));
+
+	say(sub);
 	
 	i = 0;
-	say("1: ",i);
-	var = ((i + 2)) * 3;
-	say("2: ",var);
-	say("3: ", ((0)));
-	say("4: ",(i));
 	if(!entity_exists("1")) then
 		while(i < 10) do
 			cl = gen_obj();
